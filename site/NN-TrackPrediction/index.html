@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>NNtrack - Hurricanes in Atlantic</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "NNtrack";
+    var mkdocs_page_input_path = "NN-TrackPrediction.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Hurricanes in Atlantic</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../Exploratory_Data_Analysis/">EDA</a>
+                    </li>
+                </ul>
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">NNtrack</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#preparacao-dos-dados">Preparação dos dados</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#treino-validacao-e-teste">Treino, Validação e Teste</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#modelos-redes-neurais">Modelos - Redes Neurais</a>
+    </li>
+    </ul>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../PowerDissipationIndex/">Destructivity</a>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Hurricanes in Atlantic</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>NNtrack</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="redes-neurais-para-previsao-de-trajetoria">Redes Neurais para Previsão de Trajetória</h1>
+<p>Neste notebook, usaremos redes neurais para previsão de trajetória futura de uma tempestade. A ideia geral é dado as informações de um furacão de algumas horas atrás e do presente, projetaremos a sua posição futura. </p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">datetime</span> <span class="k">as</span> <span class="nn">dt</span>
+<span class="c1"># from sklearn.model_selection import train_test_split</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">r2_score</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+
+<span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">clear_session</span><span class="p">()</span>  
+
+<span class="nb">print</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">2.0.0</span>
+</code></pre></div>
+
+
+<h2 id="preparacao-dos-dados">Preparação dos dados</h2>
+<p>Iremos abaixo criar funções para preparar nossos dados para o modelo, e aplicá-las ao dataframe original</p>
+<div class="codehilite"><pre><span></span><code><span class="c1">#Leitura dos dados</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;Datasets/data_atl_merged2.csv&#39;</span><span class="p">,</span><span class="n">parse_dates</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Date&#39;</span><span class="p">])</span>
+<span class="n">data</span><span class="o">.</span><span class="n">columns</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">Index([&#39;ID&#39;, &#39;Name&#39;, &#39;Date&#39;, &#39;Time&#39;, &#39;Event&#39;, &#39;Status&#39;, &#39;Latitude&#39;,</span>
+<span class="err">       &#39;Longitude&#39;, &#39;Maximum Wind&#39;, &#39;Minimum Pressure&#39;, &#39;Date_c&#39;, &#39;Year&#39;,</span>
+<span class="err">       &#39;Month&#39;, &#39;Day&#39;, &#39;Latitude_c&#39;, &#39;Longitude_c&#39;, &#39;Duration&#39;, &#39;sst&#39;, &#39;rhum&#39;,</span>
+<span class="err">       &#39;wspd&#39;, &#39;slp&#39;, &#39;cldc&#39;],</span>
+<span class="err">      dtype=&#39;object&#39;)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1">## Funções de Padronização:</span>
+
+<span class="k">def</span> <span class="nf">standard_scale</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">cols</span><span class="p">):</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">:</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">std</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">-</span><span class="n">mean</span><span class="p">)</span><span class="o">/</span><span class="n">std</span>
+    <span class="k">return</span> <span class="n">df</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span>
+<span class="k">def</span> <span class="nf">standard_scale_back</span><span class="p">(</span><span class="n">scaled</span><span class="p">,</span><span class="n">original</span><span class="p">,</span><span class="n">cols</span><span class="p">):</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">scaled</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">:</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">original</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">std</span> <span class="o">=</span> <span class="n">original</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">*</span><span class="n">std</span><span class="o">+</span><span class="n">mean</span>
+    <span class="k">return</span> <span class="n">df</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># Função que divide os dados por ID da tempestade</span>
+<span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">ID</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">ID</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">ID</span><span class="o">==</span><span class="n">ID</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">st</span>
+<span class="n">splitted</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">splitted</span><span class="p">))</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">685</span>
+</code></pre></div>
+
+
+<p>A função "clean_data" formata o preditor Tempo, o convertendo para horas (por padrão, horas após Jan/1951), e padroniza os dados de input.</p>
+<p>A função "shift_data", faz um shift dos dados e dá como saída as matriz tridimensional X e o vetor Y, onde X é composto por matrizes <script type="math/tex">s\times n</script>:</p>
+<p>
+<script type="math/tex; mode=display">\left[\begin{matrix}
+x_1^{(t-s+1)} & x_2^{(t-s+1)} & ...& x_n^{(t-s+1)}\\
+x_1^{(t-s+2)} & x_2^{(t-s+2)} & ...& x_n^{(t-s+2)}\\
+\vdots &\vdots &\vdots &\vdots\\
+x_1^{(t)} & x_2^{(t)} & ...& x_n^{(t)}\end{matrix}\right]</script>
+</p>
+<p>na qual:</p>
+<ul>
+<li>
+<p>
+<script type="math/tex">x_1,~x_2, ~..., ~x_n</script> representam os <script type="math/tex">n</script> preditores usados (Usaremos 4 inicialmente: tempo latitude, longitude e velocidade de vento)</p>
+</li>
+<li>
+<p>
+<script type="math/tex">x_i^{(k)}</script> representa o preditor <script type="math/tex">i</script> no registro de tempo <script type="math/tex">k</script>. </p>
+</li>
+<li>
+<p>
+<script type="math/tex">s</script> é o parâmetros "shift", que representa em quantos períodos passados basearemos a previsão futura. Por padrão, inicialmente, deixamos <script type="math/tex">s=3</script>. Como cada registro é espaçado por 6 horas, neste formado estamos usando daados do presente e de 12 horas atrás, pra projetar o dado futuro.</p>
+</li>
+</ul>
+<p>O vetor <script type="math/tex">Y</script> é composto por:</p>
+<p>
+<script type="math/tex; mode=display">\left[\begin{matrix}lat^{(t+1)}&lon^{(t+1)}\\
+lat^{(t+2)}&lon^{(t+2)}\\
+\vdots & \vdots\\
+lat^{(t+p)}&lon^{(t+p)}\end{matrix}\right]</script>
+</p>
+<p>na qual:</p>
+<ul>
+<li>
+<script type="math/tex">lat^{(k)}</script> e <script type="math/tex">lon^{(k)}</script> representam latitude e longitude no registro de tempo <script type="math/tex">k</script>
+</li>
+<li>
+<script type="math/tex">p</script> é o parâmetro "pred", que diz quantos períodos à frente iremos prever. Por padrão, deixamos <script type="math/tex">p=1</script>, assim a matriz se resume em um vetor <script type="math/tex">[lat^{(t+1)},~ lon^{(t+1)}]</script>. Usamos previsões de 3 registros passados para prever o próximo registro após o último ponto de treino. Um trabalho futuro seria usar intervalos de previsões maiores, mas vamos nos ater aqui a apenas 1 registro à frete, o que equivale a 6 horas na grande maiorias dos pontos.</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="n">cols1</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Hours&#39;</span><span class="p">,</span><span class="s1">&#39;Latitude&#39;</span><span class="p">,</span><span class="s1">&#39;Longitude&#39;</span><span class="p">,</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">]</span>
+<span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">&#39;Time_new&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">Date</span><span class="o">+</span><span class="n">data</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="n">x</span><span class="o">/</span><span class="mi">100</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">clean_data</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">input_cols</span> <span class="o">=</span> <span class="n">cols1</span><span class="p">,</span> <span class="n">year0</span> <span class="o">=</span> <span class="mi">1951</span><span class="p">):</span>
+    <span class="n">df2</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">df2</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">&#39;Hours&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">df2</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">&#39;Time_new&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">year0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s1">&#39;1 hour&#39;</span><span class="p">)</span>
+    <span class="n">df2</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">input_cols</span><span class="p">]</span> <span class="o">=</span> <span class="n">standard_scale</span><span class="p">(</span><span class="n">df2</span><span class="p">,</span><span class="n">input_cols</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df2</span><span class="p">[[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">input_cols</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">shift_data</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">shift</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span><span class="n">pred</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">-</span><span class="n">shift</span><span class="p">):</span>
+        <span class="n">x_arr</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="o">+</span><span class="n">shift</span><span class="p">):</span>
+            <span class="n">x_arr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">j</span><span class="p">,:])</span>
+        <span class="k">if</span> <span class="n">pred</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">shift</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">shift</span><span class="o">+</span><span class="n">pred</span><span class="o">-</span><span class="mi">1</span><span class="p">,[</span><span class="s1">&#39;Latitude&#39;</span><span class="p">,</span><span class="s1">&#39;Longitude&#39;</span><span class="p">]])</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">shift</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">shift</span><span class="o">+</span><span class="n">pred</span><span class="o">-</span><span class="mi">1</span><span class="p">,[</span><span class="s1">&#39;Latitude&#39;</span><span class="p">,</span><span class="s1">&#39;Longitude&#39;</span><span class="p">]]))</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x_arr</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">),</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">data_cleaned</span> <span class="o">=</span> <span class="n">clean_data</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="n">data_cleaned</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
+</code></pre></div>
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Hours</th>
+      <th>Latitude</th>
+      <th>Longitude</th>
+      <th>Maximum Wind</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>count</th>
+      <td>2.238600e+04</td>
+      <td>2.238600e+04</td>
+      <td>2.238600e+04</td>
+      <td>2.238600e+04</td>
+    </tr>
+    <tr>
+      <th>mean</th>
+      <td>-1.312271e-17</td>
+      <td>3.398752e-15</td>
+      <td>4.449279e-15</td>
+      <td>5.249630e-16</td>
+    </tr>
+    <tr>
+      <th>std</th>
+      <td>1.000000e+00</td>
+      <td>1.000000e+00</td>
+      <td>1.000000e+00</td>
+      <td>1.000000e+00</td>
+    </tr>
+    <tr>
+      <th>min</th>
+      <td>-1.823465e+00</td>
+      <td>-1.939104e+00</td>
+      <td>-2.303286e+00</td>
+      <td>-1.644750e+00</td>
+    </tr>
+    <tr>
+      <th>25%</th>
+      <td>-8.725997e-01</td>
+      <td>-8.005268e-01</td>
+      <td>-7.741070e-01</td>
+      <td>-8.529203e-01</td>
+    </tr>
+    <tr>
+      <th>50%</th>
+      <td>1.595638e-01</td>
+      <td>-4.466462e-02</td>
+      <td>-5.884587e-02</td>
+      <td>-2.590479e-01</td>
+    </tr>
+    <tr>
+      <th>75%</th>
+      <td>9.229854e-01</td>
+      <td>6.250867e-01</td>
+      <td>7.057436e-01</td>
+      <td>5.327820e-01</td>
+    </tr>
+    <tr>
+      <th>max</th>
+      <td>1.499554e+00</td>
+      <td>5.121988e+00</td>
+      <td>6.195990e+00</td>
+      <td>4.491932e+00</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3 id="treino-validacao-e-teste">Treino, Validação e Teste</h3>
+<p>Para formatar os dados de treino, teste e validação, primeiramente, usamos a função "split", que separa os dados em uma lista de dataframes onde cada um deles representa uma tempestade diferente.</p>
+<p>Após isso atribuimos 70% da lista para treino, 20% para validação e 10% para teste. Cada dataframe é devidamente formatado para as matrizes acima usando a função "shift_data", e após isso, unimos as matrizes de saída para gerar a numpy array final, do modelo.</p>
+<p>Se fizéssemos o split diretamente, esse tipo de erro poderia acontecer. Suponha que uma tempestade tem seu último registro em 20 de Agosto em um determinado local, e uma outra tempestade se inicial dia 21 de Agosto em um local totalmente diferente. Um split direto poderia usar o registro de 20 de Agosto para prever o do dia 21, sendo que não há relação entre eles.</p>
+<p>Essa separação por tempestade é importante para garantir a integridade dos nossos dados de modelagem, de forma que o treinamento seja feito tempestade por tempestade.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">train_val_test_split</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">t</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span><span class="n">v</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span><span class="n">input_cols</span><span class="o">=</span><span class="n">cols1</span><span class="p">,</span><span class="n">shift</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">pred</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="c1"># t = fração de treino</span>
+    <span class="c1"># v = fração de validação</span>
+    <span class="c1"># fração de teste = 1-t-v</span>
+    <span class="c1"># df = dataset já limpo por clean_data</span>
+    <span class="n">splitted_data</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="c1"># Separamos os dados tempestade por tempestade para </span>
+    <span class="c1"># evitar cruzamento de dados entre eventos diferentes</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">splitted</span><span class="p">)</span>
+
+    <span class="n">train_storms</span> <span class="o">=</span> <span class="n">splitted_data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="n">t</span><span class="p">)]</span>
+    <span class="n">val_storms</span> <span class="o">=</span> <span class="n">splitted_data</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="n">t</span><span class="p">):</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="p">(</span><span class="n">t</span><span class="o">+</span><span class="n">v</span><span class="p">))]</span>
+    <span class="n">test_storms</span> <span class="o">=</span> <span class="n">splitted_data</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">t</span><span class="o">-</span><span class="n">v</span><span class="p">)):]</span>
+
+    <span class="c1">#Geramos uma lista de matrizes, onde cada lista se refere </span>
+    <span class="c1">#aos dados descocados de uma tempestade diferente</span>
+    <span class="n">xy_train</span> <span class="o">=</span> <span class="p">[</span><span class="n">shift_data</span><span class="p">(</span><span class="n">train</span><span class="p">[</span><span class="n">input_cols</span><span class="p">],</span><span class="n">shift</span><span class="p">,</span><span class="n">pred</span><span class="p">)</span> <span class="k">for</span> <span class="n">train</span> <span class="ow">in</span> <span class="n">train_storms</span><span class="p">]</span>
+    <span class="n">xy_val</span> <span class="o">=</span> <span class="p">[</span><span class="n">shift_data</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="n">input_cols</span><span class="p">],</span><span class="n">shift</span><span class="p">,</span><span class="n">pred</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">val_storms</span><span class="p">]</span>
+    <span class="n">xy_test</span> <span class="o">=</span> <span class="p">[</span><span class="n">shift_data</span><span class="p">(</span><span class="n">test</span><span class="p">[</span><span class="n">input_cols</span><span class="p">],</span><span class="n">shift</span><span class="p">,</span><span class="n">pred</span><span class="p">)</span> <span class="k">for</span> <span class="n">test</span> <span class="ow">in</span> <span class="n">test_storms</span><span class="p">]</span>
+
+    <span class="c1"># Concatenação das matrizes para gerar os dados finais</span>
+    <span class="n">xtrain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xy_train</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">ytrain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">xy_train</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">xval</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xy_val</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">yval</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">xy_val</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">xtest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xy_test</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">ytest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">xy_test</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">xtrain</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">,</span> <span class="n">xval</span><span class="p">,</span> <span class="n">yval</span><span class="p">,</span> <span class="n">xtest</span><span class="p">,</span> <span class="n">ytest</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="o">%%</span><span class="n">time</span>
+<span class="c1">#O processo de split pode ser lento à depender de seu computador</span>
+<span class="n">xtrain</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">,</span> <span class="n">xval</span><span class="p">,</span> <span class="n">yval</span><span class="p">,</span> <span class="n">xtest</span><span class="p">,</span> <span class="n">ytest</span> <span class="o">=</span> <span class="n">train_val_test_split</span><span class="p">(</span><span class="n">data_cleaned</span><span class="p">)</span>
+
+<span class="n">xtrain</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span><span class="n">ytrain</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span><span class="n">xval</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span><span class="n">yval</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span><span class="n">xtest</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span><span class="n">ytest</span><span class="o">.</span><span class="n">shape</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">CPU</span> <span class="n">times</span><span class="p">:</span> <span class="k">user</span> <span class="mi">1</span><span class="k">min</span> <span class="mi">1</span><span class="n">s</span><span class="p">,</span> <span class="n">sys</span><span class="p">:</span> <span class="mi">363</span> <span class="n">ms</span><span class="p">,</span> <span class="n">total</span><span class="p">:</span> <span class="mi">1</span><span class="k">min</span> <span class="mi">2</span><span class="n">s</span>
+<span class="n">Wall</span> <span class="k">time</span><span class="p">:</span> <span class="mi">1</span><span class="k">min</span> <span class="mi">1</span><span class="n">s</span>
+
+
+
+
+
+<span class="p">((</span><span class="mi">14010</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="mi">14010</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">4401</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="mi">4401</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">18482</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="mi">18482</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="o">%%</span><span class="n">time</span>
+<span class="c1">## Modelo que usa sst, rhum e slp (Temperatura do mar, Umidade e Pressão)</span>
+<span class="n">cols2</span> <span class="o">=</span> <span class="n">input_cols</span> <span class="o">+</span><span class="p">[</span><span class="s1">&#39;sst&#39;</span><span class="p">,</span><span class="s1">&#39;rhum&#39;</span><span class="p">,</span><span class="s1">&#39;slp&#39;</span><span class="p">,</span><span class="s1">&#39;cldc&#39;</span><span class="p">]</span>
+<span class="n">cleaned2</span> <span class="o">=</span> <span class="n">clean_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">cols2</span><span class="p">)</span>
+
+<span class="n">xtrain2</span><span class="p">,</span> <span class="n">ytrain2</span><span class="p">,</span> <span class="n">xval2</span><span class="p">,</span> <span class="n">yval2</span><span class="p">,</span> <span class="n">xtest2</span><span class="p">,</span> <span class="n">ytest2</span> <span class="o">=</span> <span class="n">train_val_test_split</span><span class="p">(</span><span class="n">cleaned2</span><span class="p">,</span><span class="n">input_cols</span><span class="o">=</span><span class="n">cols2</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">CPU times: user 1min 32s, sys: 470 ms, total: 1min 32s</span>
+<span class="err">Wall time: 1min 31s</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">xtrain2</span><span class="o">.</span><span class="n">shape</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">(14010, 3, 7)</span>
+</code></pre></div>
+
+
+<h2 id="modelos-redes-neurais">Modelos - Redes Neurais</h2>
+<p>Vamos criar alguns modelos determinísticos e depois comparar a médias dos erros ao quadrado (MSE) nos dados de validação e teste. (Uma espécie de cross-validation).</p>
+<p>Segundo os artigos na qual usamos como referência (Veja Bibliografia), apenas uma camada interna é suficiente. Resta saber quantos neurônios usar, para isso avaliaremos os modelos com 3, 6, e 9 neurônios internos.</p>
+<p>Usaremos a função de ativação sigmoid na camada interna. e linear na camada de output, já que os dados de saída são numéricos contínuos. Usamos também uma camada de dropout de 15% para evitar overfitting.</p>
+<p>Após eleger o melhor, incluiremos um fator probabilístico para gerar intervalos de confianças nas predições.</p>
+<p><strong>Índice de Modelos</strong></p>
+<ul>
+<li>
+<p><em>Model_ihj</em>  --&gt; Modelo com entrada de <script type="math/tex">i</script> variáveis, <script type="math/tex">h</script> neurônios na camada interna e <script type="math/tex">j</script> pontos de saída (no nosso caso <script type="math/tex">j=2</script> sempre)</p>
+</li>
+<li>
+<p><em>Model_4h2</em> --&gt; Modelo que usa as variáveis Tempo, Latitude, Longitude e Velocidame Máxima de Vento (4 variáveis) de três registros passados para prever a Latitude e Longitude do próximo registro (2 saídas) usando <script type="math/tex">h</script> neurônios na camada interna. Aqui geraremos 3 modelos para os valores de h sendo 3, 6 e 9.</p>
+</li>
+<li>
+<p><em>Model_8h2</em> --&gt; Modelo similar ao anterior, porém utiliza quatro variáveis a mais como entrada: sst, rhum, slp, cldc; Representando Temperatura a nível do mar, Umidade, Pressão a nível do mar e Cobertura de Nuvens.</p>
+</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Modelos tipo 4h2</span>
+<span class="n">model_432</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Sequential</span><span class="p">([</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.15</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+<span class="p">])</span>
+
+<span class="n">model_462</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Sequential</span><span class="p">([</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.15</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+<span class="p">])</span>
+
+<span class="n">model_492</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Sequential</span><span class="p">([</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.15</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+<span class="p">])</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># Modelos tipo 8h2</span>
+<span class="n">model_832</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Sequential</span><span class="p">([</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">8</span><span class="p">)),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.15</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+<span class="p">])</span>
+
+<span class="n">model_862</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Sequential</span><span class="p">([</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">8</span><span class="p">)),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.15</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+<span class="p">])</span>
+
+<span class="n">model_892</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Sequential</span><span class="p">([</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">8</span><span class="p">)),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.15</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+<span class="p">])</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">loss_fn</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">MeanSquaredError</span><span class="p">()</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">Adam</span><span class="p">()</span>
+
+<span class="n">model_432</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+              <span class="n">loss</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">)</span>
+<span class="n">model_462</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+              <span class="n">loss</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">)</span>
+<span class="n">model_492</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+              <span class="n">loss</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">)</span>
+<span class="n">model_832</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+              <span class="n">loss</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">)</span>
+<span class="n">model_862</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+              <span class="n">loss</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">)</span>
+<span class="n">model_892</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+              <span class="n">loss</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">)</span>
+<span class="n">model_432</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c">Model: &quot;sequential_6&quot;</span>
+<span class="err">_________________________________________________________________</span>
+<span class="err">Layer (type)                 Output Shape              Param #   </span>
+<span class="err">=================================================================</span>
+<span class="err">flatten_6 (Flatten)          (None, 12)                0         </span>
+<span class="err">_________________________________________________________________</span>
+<span class="err">dense_12 (Dense)             (None, 3)                 39        </span>
+<span class="err">_________________________________________________________________</span>
+<span class="err">dropout_6 (Dropout)          (None, 3)                 0         </span>
+<span class="err">_________________________________________________________________</span>
+<span class="err">dense_13 (Dense)             (None, 2)                 8         </span>
+<span class="err">=================================================================</span>
+<span class="err">Total params: 47</span>
+<span class="err">Trainable params: 47</span>
+<span class="err">Non-trainable params: 0</span>
+<span class="err">_________________________________________________________________</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="o">%%</span><span class="n">time</span>
+
+<span class="n">history_432</span> <span class="o">=</span> <span class="n">model_432</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">xtrain</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">xval</span><span class="p">,</span><span class="n">yval</span><span class="p">),</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> 
+                    <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">history_462</span> <span class="o">=</span> <span class="n">model_462</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">xtrain</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">xval</span><span class="p">,</span><span class="n">yval</span><span class="p">),</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> 
+                    <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">history_492</span> <span class="o">=</span> <span class="n">model_492</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">xtrain</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">xval</span><span class="p">,</span><span class="n">yval</span><span class="p">),</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> 
+                    <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">Train on 14010 samples, validate on 4401 samples</span>
+<span class="err">Epoch 1/45</span>
+<span class="err">14010/14010 [==============================] - 1s 80us/sample - loss: 0.0757 - val_loss: 0.0101</span>
+<span class="err">Epoch 2/45</span>
+<span class="err">14010/14010 [==============================] - 1s 77us/sample - loss: 0.0779 - val_loss: 0.0099</span>
+<span class="err">Epoch 3/45</span>
+<span class="err">14010/14010 [==============================] - 1s 92us/sample - loss: 0.0779 - val_loss: 0.0109</span>
+<span class="err">Epoch 4/45</span>
+<span class="err">14010/14010 [==============================] - 2s 121us/sample - loss: 0.0760 - val_loss: 0.0100</span>
+<span class="err">Epoch 5/45</span>
+<span class="err">14010/14010 [==============================] - 2s 111us/sample - loss: 0.0767 - val_loss: 0.0096</span>
+<span class="err">Epoch 6/45</span>
+<span class="err">14010/14010 [==============================] - 2s 152us/sample - loss: 0.0742 - val_loss: 0.0121</span>
+<span class="err">Epoch 7/45</span>
+<span class="err">14010/14010 [==============================] - 1s 90us/sample - loss: 0.0766 - val_loss: 0.0119</span>
+<span class="err">Epoch 8/45</span>
+<span class="err">14010/14010 [==============================] - 1s 73us/sample - loss: 0.0758 - val_loss: 0.0108</span>
+<span class="err">Epoch 9/45</span>
+<span class="err">14010/14010 [==============================] - 1s 71us/sample - loss: 0.0779 - val_loss: 0.0107</span>
+<span class="err">Epoch 10/45</span>
+<span class="err">14010/14010 [==============================] - 1s 78us/sample - loss: 0.0747 - val_loss: 0.0097</span>
+<span class="err">Epoch 11/45</span>
+<span class="err">14010/14010 [==============================] - 1s 74us/sample - loss: 0.0771 - val_loss: 0.0106</span>
+<span class="err">Epoch 12/45</span>
+<span class="err">14010/14010 [==============================] - 1s 74us/sample - loss: 0.0776 - val_loss: 0.0102</span>
+<span class="err">Epoch 13/45</span>
+<span class="err">14010/14010 [==============================] - 1s 75us/sample - loss: 0.0786 - val_loss: 0.0102</span>
+<span class="err">Epoch 14/45</span>
+<span class="err">14010/14010 [==============================] - 1s 75us/sample - loss: 0.0782 - val_loss: 0.0099</span>
+<span class="err">Epoch 15/45</span>
+<span class="err">14010/14010 [==============================] - 1s 77us/sample - loss: 0.0783 - val_loss: 0.0106</span>
+<span class="err">Epoch 16/45</span>
+<span class="err">14010/14010 [==============================] - 1s 75us/sample - loss: 0.0774 - val_loss: 0.0098</span>
+<span class="err">Epoch 17/45</span>
+<span class="err">14010/14010 [==============================] - 1s 77us/sample - loss: 0.0758 - val_loss: 0.0102</span>
+<span class="err">Epoch 18/45</span>
+<span class="err">14010/14010 [==============================] - 1s 78us/sample - loss: 0.0783 - val_loss: 0.0099</span>
+<span class="err">Epoch 19/45</span>
+<span class="err">14010/14010 [==============================] - 2s 115us/sample - loss: 0.0749 - val_loss: 0.0103</span>
+<span class="err">Epoch 20/45</span>
+<span class="err">14010/14010 [==============================] - 2s 134us/sample - loss: 0.0789 - val_loss: 0.0093</span>
+<span class="err">Epoch 21/45</span>
+<span class="err">14010/14010 [==============================] - 2s 135us/sample - loss: 0.0778 - val_loss: 0.0104</span>
+<span class="err">Epoch 22/45</span>
+<span class="err">14010/14010 [==============================] - 1s 83us/sample - loss: 0.0761 - val_loss: 0.0093</span>
+<span class="err">Epoch 23/45</span>
+<span class="err">14010/14010 [==============================] - 1s 91us/sample - loss: 0.0763 - val_loss: 0.0105</span>
+<span class="err">Epoch 24/45</span>
+<span class="err">14010/14010 [==============================] - 2s 115us/sample - loss: 0.0769 - val_loss: 0.0095</span>
+<span class="err">Epoch 25/45</span>
+<span class="err">14010/14010 [==============================] - 1s 99us/sample - loss: 0.0812 - val_loss: 0.0086</span>
+<span class="err">Epoch 26/45</span>
+<span class="err">14010/14010 [==============================] - 2s 114us/sample - loss: 0.0768 - val_loss: 0.0106</span>
+<span class="err">Epoch 27/45</span>
+<span class="err">14010/14010 [==============================] - 1s 100us/sample - loss: 0.0782 - val_loss: 0.0101</span>
+<span class="err">Epoch 28/45</span>
+<span class="err">14010/14010 [==============================] - 1s 78us/sample - loss: 0.0767 - val_loss: 0.0083</span>
+<span class="err">Epoch 29/45</span>
+<span class="err">14010/14010 [==============================] - 1s 77us/sample - loss: 0.0795 - val_loss: 0.0094</span>
+<span class="err">Epoch 30/45</span>
+<span class="err">14010/14010 [==============================] - 1s 75us/sample - loss: 0.0779 - val_loss: 0.0104</span>
+<span class="err">Epoch 31/45</span>
+<span class="err">14010/14010 [==============================] - 1s 75us/sample - loss: 0.0768 - val_loss: 0.0101</span>
+<span class="err">Epoch 32/45</span>
+<span class="err">14010/14010 [==============================] - 1s 77us/sample - loss: 0.0764 - val_loss: 0.0094</span>
+<span class="err">Epoch 33/45</span>
+<span class="err">14010/14010 [==============================] - 1s 74us/sample - loss: 0.0765 - val_loss: 0.0091</span>
+<span class="err">Epoch 34/45</span>
+<span class="err">14010/14010 [==============================] - 1s 76us/sample - loss: 0.0767 - val_loss: 0.0106</span>
+<span class="err">Epoch 35/45</span>
+<span class="err">14010/14010 [==============================] - 1s 70us/sample - loss: 0.0780 - val_loss: 0.0099</span>
+<span class="err">Epoch 36/45</span>
+<span class="err">14010/14010 [==============================] - 1s 74us/sample - loss: 0.0755 - val_loss: 0.0094</span>
+<span class="err">Epoch 37/45</span>
+<span class="err">14010/14010 [==============================] - 1s 72us/sample - loss: 0.0764 - val_loss: 0.0095</span>
+<span class="err">Epoch 38/45</span>
+<span class="err">14010/14010 [==============================] - 1s 72us/sample - loss: 0.0782 - val_loss: 0.0098</span>
+<span class="err">Epoch 39/45</span>
+<span class="err">14010/14010 [==============================] - 1s 73us/sample - loss: 0.0783 - val_loss: 0.0087</span>
+<span class="err">Epoch 40/45</span>
+<span class="err">14010/14010 [==============================] - 1s 72us/sample - loss: 0.0737 - val_loss: 0.0091</span>
+<span class="err">Epoch 41/45</span>
+<span class="err">14010/14010 [==============================] - 1s 72us/sample - loss: 0.0775 - val_loss: 0.0094</span>
+<span class="err">Epoch 42/45</span>
+<span class="err">14010/14010 [==============================] - 1s 75us/sample - loss: 0.0792 - val_loss: 0.0101</span>
+<span class="err">Epoch 43/45</span>
+<span class="err">14010/14010 [==============================] - 1s 78us/sample - loss: 0.0762 - val_loss: 0.0087</span>
+<span class="err">Epoch 44/45</span>
+<span class="err">14010/14010 [==============================] - 1s 73us/sample - loss: 0.0754 - val_loss: 0.0100</span>
+<span class="err">Epoch 45/45</span>
+<span class="err">14010/14010 [==============================] - 1s 73us/sample - loss: 0.0767 - val_loss: 0.0093</span>
+<span class="err">CPU times: user 3min 50s, sys: 15.8 s, total: 4min 6s</span>
+<span class="err">Wall time: 2min 50s</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="o">%%</span><span class="n">time</span>
+
+<span class="n">history_832</span> <span class="o">=</span> <span class="n">model_832</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">xtrain2</span><span class="p">,</span> <span class="n">ytrain2</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">xval2</span><span class="p">,</span><span class="n">yval2</span><span class="p">),</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> 
+                    <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">history_862</span> <span class="o">=</span> <span class="n">model_862</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">xtrain2</span><span class="p">,</span> <span class="n">ytrain2</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">xval2</span><span class="p">,</span><span class="n">yval2</span><span class="p">),</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> 
+                    <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">history_892</span> <span class="o">=</span> <span class="n">model_892</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">xtrain2</span><span class="p">,</span> <span class="n">ytrain2</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">xval2</span><span class="p">,</span><span class="n">yval2</span><span class="p">),</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> 
+                    <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">Train on 14010 samples, validate on 4401 samples</span>
+<span class="err">Epoch 1/45</span>
+<span class="err">14010/14010 [==============================] - 2s 111us/sample - loss: 0.3210 - val_loss: 0.0874</span>
+<span class="err">Epoch 2/45</span>
+<span class="err">14010/14010 [==============================] - 1s 58us/sample - loss: 0.1670 - val_loss: 0.0666</span>
+<span class="err">Epoch 3/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.1460 - val_loss: 0.0563</span>
+<span class="err">Epoch 4/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.1326 - val_loss: 0.0473</span>
+<span class="err">Epoch 5/45</span>
+<span class="err">14010/14010 [==============================] - 1s 66us/sample - loss: 0.1232 - val_loss: 0.0398</span>
+<span class="err">Epoch 6/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.1170 - val_loss: 0.0334</span>
+<span class="err">Epoch 7/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.1055 - val_loss: 0.0274</span>
+<span class="err">Epoch 8/45</span>
+<span class="err">14010/14010 [==============================] - 1s 62us/sample - loss: 0.1025 - val_loss: 0.0236</span>
+<span class="err">Epoch 9/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0974 - val_loss: 0.0209</span>
+<span class="err">Epoch 10/45</span>
+<span class="err">14010/14010 [==============================] - 1s 63us/sample - loss: 0.0945 - val_loss: 0.0191</span>
+<span class="err">Epoch 11/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0924 - val_loss: 0.0179</span>
+<span class="err">Epoch 12/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0893 - val_loss: 0.0174</span>
+<span class="err">Epoch 13/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0884 - val_loss: 0.0182</span>
+<span class="err">Epoch 14/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0874 - val_loss: 0.0178</span>
+<span class="err">Epoch 15/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0844 - val_loss: 0.0163</span>
+<span class="err">Epoch 16/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0847 - val_loss: 0.0155</span>
+<span class="err">Epoch 17/45</span>
+<span class="err">14010/14010 [==============================] - 1s 58us/sample - loss: 0.0852 - val_loss: 0.0161</span>
+<span class="err">Epoch 18/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0871 - val_loss: 0.0157</span>
+<span class="err">Epoch 19/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0825 - val_loss: 0.0161</span>
+<span class="err">Epoch 20/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0817 - val_loss: 0.0148</span>
+<span class="err">Epoch 21/45</span>
+<span class="err">14010/14010 [==============================] - 1s 62us/sample - loss: 0.0853 - val_loss: 0.0149</span>
+<span class="err">Epoch 22/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0833 - val_loss: 0.0158</span>
+<span class="err">Epoch 23/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0804 - val_loss: 0.0156</span>
+<span class="err">Epoch 24/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0819 - val_loss: 0.0144</span>
+<span class="err">Epoch 25/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0836 - val_loss: 0.0142</span>
+<span class="err">Epoch 26/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0830 - val_loss: 0.0146</span>
+<span class="err">Epoch 27/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0834 - val_loss: 0.0146</span>
+<span class="err">Epoch 28/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0831 - val_loss: 0.0153</span>
+<span class="err">Epoch 29/45</span>
+<span class="err">14010/14010 [==============================] - 1s 62us/sample - loss: 0.0812 - val_loss: 0.0141</span>
+<span class="err">Epoch 30/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0820 - val_loss: 0.0141</span>
+<span class="err">Epoch 31/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0822 - val_loss: 0.0132</span>
+<span class="err">Epoch 32/45</span>
+<span class="err">14010/14010 [==============================] - 1s 58us/sample - loss: 0.0810 - val_loss: 0.0129</span>
+<span class="err">Epoch 33/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0824 - val_loss: 0.0147</span>
+<span class="err">Epoch 34/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0812 - val_loss: 0.0138</span>
+<span class="err">Epoch 35/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0816 - val_loss: 0.0138</span>
+<span class="err">Epoch 36/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0803 - val_loss: 0.0121</span>
+<span class="err">Epoch 37/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0767 - val_loss: 0.0133</span>
+<span class="err">Epoch 38/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0780 - val_loss: 0.0125</span>
+<span class="err">Epoch 39/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0783 - val_loss: 0.0133</span>
+<span class="err">Epoch 40/45</span>
+<span class="err">14010/14010 [==============================] - 1s 57us/sample - loss: 0.0795 - val_loss: 0.0121</span>
+<span class="err">Epoch 41/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0784 - val_loss: 0.0121</span>
+<span class="err">Epoch 42/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0807 - val_loss: 0.0121</span>
+<span class="err">Epoch 43/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0780 - val_loss: 0.0125</span>
+<span class="err">Epoch 44/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0811 - val_loss: 0.0144</span>
+<span class="err">Epoch 45/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0791 - val_loss: 0.0134</span>
+<span class="err">CPU times: user 3min 13s, sys: 12.5 s, total: 3min 25s</span>
+<span class="err">Wall time: 2min 20s</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># Salvando os modelos para uso futuro</span>
+<span class="n">model_432</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;Saved_NN_Models/model_432.h5&#39;</span><span class="p">)</span>
+<span class="n">model_462</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;Saved_NN_Models/model_462.h5&#39;</span><span class="p">)</span>
+<span class="n">model_492</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;Saved_NN_Models/model_492.h5&#39;</span><span class="p">)</span>
+<span class="n">model_832</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;Saved_NN_Models/model_832.h5&#39;</span><span class="p">)</span>
+<span class="n">model_862</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;Saved_NN_Models/model_862.h5&#39;</span><span class="p">)</span>
+<span class="n">model_892</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;Saved_NN_Models/model_892.h5&#39;</span><span class="p">)</span>
+
+<span class="c1"># Recreando os modelos dos arquivos salvos</span>
+<span class="c1"># model_432 = tf.keras.models.load_model(&#39;Saved_NN_Models/model_432.h5&#39;)</span>
+<span class="c1"># model_462 = tf.keras.models.load_model(&#39;Saved_NN_Models/model_462.h5&#39;)</span>
+<span class="c1"># model_492 = tf.keras.models.load_model(&#39;Saved_NN_Models/model_492.h5&#39;)</span>
+<span class="c1"># model_832 = tf.keras.models.load_model(&#39;Saved_NN_Models/model_832.h5&#39;)</span>
+<span class="c1"># model_862 = tf.keras.models.load_model(&#39;Saved_NN_Models/model_862.h5&#39;)</span>
+<span class="c1"># model_892 = tf.keras.models.load_model(&#39;Saved_NN_Models/model_892.h5&#39;)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">models4</span> <span class="o">=</span> <span class="p">[</span><span class="n">model_432</span><span class="p">,</span><span class="n">model_462</span><span class="p">,</span><span class="n">model_492</span><span class="p">]</span>
+<span class="n">models8</span> <span class="o">=</span> <span class="p">[</span><span class="n">model_832</span><span class="p">,</span><span class="n">model_862</span><span class="p">,</span><span class="n">model_892</span><span class="p">]</span>
+<span class="n">history_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">history_432</span><span class="p">,</span><span class="n">history_462</span><span class="p">,</span><span class="n">history_492</span><span class="p">,</span><span class="n">history_832</span><span class="p">,</span><span class="n">history_862</span><span class="p">,</span><span class="n">history_892</span><span class="p">]</span>
+
+<span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;4-3-2&quot;</span><span class="p">,</span><span class="s1">&#39;4-6-2&#39;</span><span class="p">,</span><span class="s1">&#39;4-9-2&#39;</span><span class="p">,</span><span class="s2">&quot;8-3-2&quot;</span><span class="p">,</span><span class="s1">&#39;8-6-2&#39;</span><span class="p">,</span><span class="s1">&#39;8-9-2&#39;</span><span class="p">]</span>
+<span class="n">fig</span><span class="p">,</span><span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+
+<span class="n">test_mse</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">train_mse</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">val_mse</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models4</span><span class="p">:</span>
+    <span class="n">test_mse</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">xtest</span><span class="p">,</span><span class="n">ytest</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models8</span><span class="p">:</span>
+    <span class="n">test_mse</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">xtest2</span><span class="p">,</span><span class="n">ytest2</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">history</span> <span class="ow">in</span> <span class="n">history_list</span><span class="p">:</span>
+    <span class="n">train_mse</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;loss&#39;</span><span class="p">]))</span>
+    <span class="n">val_mse</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;val_loss&#39;</span><span class="p">]))</span>
+<span class="n">wid</span> <span class="o">=</span> <span class="mf">0.8</span><span class="o">/</span><span class="mi">3</span><span class="o">-</span><span class="mf">0.0001</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Perda (MSE) dos Modelos - Dados de Teste&quot;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;MSE&quot;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">6</span><span class="p">)</span><span class="o">-</span><span class="n">wid</span><span class="p">,</span><span class="n">train_mse</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Treino&quot;</span><span class="p">,</span><span class="n">width</span> <span class="o">=</span> <span class="n">wid</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">6</span><span class="p">),</span><span class="n">val_mse</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;Validação&#39;</span><span class="p">,</span><span class="n">width</span> <span class="o">=</span> <span class="n">wid</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">6</span><span class="p">)</span><span class="o">+</span><span class="n">wid</span><span class="p">,</span><span class="n">test_mse</span><span class="p">,</span><span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;Teste&quot;</span><span class="p">,</span><span class="n">width</span> <span class="o">=</span> <span class="n">wid</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([</span><span class="s1">&#39;0&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">labels</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;figs/NN_Models_MSE.jpg&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../NN-TrackPrediction_files/NN-TrackPrediction_22_0.png" /></p>
+<p>Vemos que os modelos 4-9-2 e 8-9-2 performaram melhor em todos os conjuntos de dados. Vemos que 9 neurônios internos performam muito bem. Vamos trabalhar com esses modelos a partir daqui. Em especial, com o 8-9-2 que apesar de ter uma maior perda do que o 4-9-2, ele utiliza uma maior quantidade de informações climáticas.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># plot accuracy and loss for the test set</span>
+<span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax</span><span class="p">,</span><span class="n">ax1</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history_492</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;loss&#39;</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history_492</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;val_loss&#39;</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;4-9-2 MSE&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;MSE&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;epoch&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s1">&#39;Treino&#39;</span><span class="p">,</span> <span class="s1">&#39;Validação&#39;</span><span class="p">],</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history_892</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;loss&#39;</span><span class="p">])</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history_892</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;val_loss&#39;</span><span class="p">])</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;8-9-2 MSE&#39;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">16</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;MSE&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;epoch&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s1">&#39;Treino&#39;</span><span class="p">,</span> <span class="s1">&#39;Validação&#39;</span><span class="p">],</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;figs/MSE-epoch.jpg&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../NN-TrackPrediction_files/NN-TrackPrediction_24_0.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">r2_score</span>
+<span class="n">ypred</span> <span class="o">=</span> <span class="n">model_892</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">xtest2</span><span class="p">)</span>
+<span class="c1"># from sklearn.linear_model import LinearRegression</span>
+<span class="c1"># lr = LinearRegression().fit(ytest,ypred)</span>
+<span class="c1"># lr.score(ytest,ypred)</span>
+<span class="n">lat_r2</span> <span class="o">=</span> <span class="n">r2_score</span><span class="p">(</span><span class="n">ytest2</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span><span class="n">ypred</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">lon_r2</span> <span class="o">=</span> <span class="n">r2_score</span><span class="p">(</span><span class="n">ytest2</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span><span class="n">ypred</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">tot_r2</span> <span class="o">=</span> <span class="n">r2_score</span><span class="p">(</span><span class="n">ytest2</span><span class="p">,</span><span class="n">ypred</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;R2 Latitude Teste - </span><span class="si">{</span><span class="n">lat_r2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;R2 Longitude Teste - </span><span class="si">{</span><span class="n">lon_r2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;R2 Total Teste - </span><span class="si">{</span><span class="n">tot_r2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax</span><span class="p">,</span><span class="n">ax1</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Latitude Real vs Prevista (Teste 8-9-2)&quot;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Real&quot;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Prevista&quot;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ytest2</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span><span class="n">ypred</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span><span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;g&#39;</span><span class="p">,</span><span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;R2 = </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">lat_r2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">,</span> <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">13</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Longitude Real vs Prevista (Teste 8-9-2)&quot;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Real&quot;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">13</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Prevista&quot;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">13</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ytest2</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span><span class="n">ypred</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span><span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;g&#39;</span><span class="p">,</span><span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;R2 = </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">lon_r2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">,</span> <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">13</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;figs/lat_lon_teste.jpg&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">R2 Latitude Teste - 0.988149240276217</span>
+<span class="err">R2 Longitude Teste - 0.9864725794069319</span>
+<span class="err">R2 Total Teste - 0.9873109098415744</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../NN-TrackPrediction_files/NN-TrackPrediction_25_1.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">plot_model</span><span class="p">(</span>
+    <span class="n">model_892</span><span class="p">,</span>
+    <span class="n">to_file</span><span class="o">=</span><span class="s1">&#39;figs/model_892.png&#39;</span><span class="p">,</span> 
+    <span class="n">show_shapes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+    <span class="n">show_layer_names</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">rankdir</span><span class="o">=</span><span class="s1">&#39;TB&#39;</span><span class="p">,</span>
+    <span class="n">expand_nested</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">dpi</span><span class="o">=</span><span class="mi">96</span>
+<span class="p">)</span>
+<span class="c1"># plt.savefig(&#39;figs/model892.jpg&#39;)</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../NN-TrackPrediction_files/NN-TrackPrediction_26_0.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="n">data_test</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="mf">0.9</span><span class="p">):,:]</span>
+<span class="n">data_test</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">&#39;Hours&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">data_test</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">&#39;Time_new&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="mi">1951</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s1">&#39;1 hour&#39;</span><span class="p">)</span>
+<span class="c1"># data_test[data_test.Category==&quot;Category 3&quot;]</span>
+<span class="n">irene</span> <span class="o">=</span> <span class="n">data_test</span><span class="p">[</span><span class="n">data_test</span><span class="o">.</span><span class="n">ID</span><span class="o">==</span><span class="s1">&#39;AL092011&#39;</span><span class="p">]</span>
+<span class="n">irene</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">cols2</span><span class="p">]</span><span class="o">=</span><span class="n">standard_scale</span><span class="p">(</span><span class="n">irene</span><span class="p">,</span><span class="n">cols2</span><span class="p">)</span>
+<span class="n">ir</span> <span class="o">=</span> <span class="n">irene</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">cols2</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">storm</span><span class="p">,</span><span class="n">model</span><span class="p">,</span><span class="n">shift</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">pred</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">storm</span> <span class="o">=</span> <span class="n">storm</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">storm</span><span class="p">)))</span>
+    <span class="n">y_pred</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">storm</span><span class="p">)</span><span class="o">-</span><span class="n">shift</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="o">+</span><span class="n">shift</span><span class="p">):</span>
+            <span class="n">x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">storm</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">j</span><span class="p">,:])</span>
+<span class="c1">#         if i == 0:</span>
+<span class="c1">#             print(np.expand_dims(np.asarray(x), axis=0).shape)</span>
+<span class="c1">#             print(np.expand_dims(np.asarray(x),axis=0)[0,0,0])</span>
+        <span class="n">y_pred</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>
+        <span class="k">del</span> <span class="n">x</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span>
+<span class="n">y_pred</span> <span class="o">=</span> <span class="n">predict</span><span class="p">(</span><span class="n">ir</span><span class="p">,</span><span class="n">model_892</span><span class="p">)</span>
+<span class="n">y_pred</span><span class="o">.</span><span class="n">shape</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">(39, 2)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">ir_plot</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">4</span><span class="p">,:]</span>
+<span class="n">fig</span><span class="p">,</span><span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;Hurricane Irene - 2011&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mf">1.08</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Latitude&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Longitude&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">r2_score</span><span class="p">(</span><span class="n">ir_plot</span><span class="o">.</span><span class="n">Latitude</span><span class="p">,</span><span class="n">y_pred</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">r2_score</span><span class="p">(</span><span class="n">ir_plot</span><span class="o">.</span><span class="n">Longitude</span><span class="p">,</span><span class="n">y_pred</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ir_plot</span><span class="o">.</span><span class="n">Hours</span><span class="p">,</span><span class="n">ir_plot</span><span class="o">.</span><span class="n">Latitude</span><span class="p">,</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;True&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ir_plot</span><span class="o">.</span><span class="n">Hours</span><span class="p">,</span><span class="n">y_pred</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Predicted&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ir_plot</span><span class="o">.</span><span class="n">Hours</span><span class="p">,</span><span class="n">ir_plot</span><span class="o">.</span><span class="n">Longitude</span><span class="p">,</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;True&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ir_plot</span><span class="o">.</span><span class="n">Hours</span><span class="p">,</span><span class="n">y_pred</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Predicted&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="mi">0</span><span class="p">.</span><span class="mi">9124620701244499</span>
+<span class="mi">0</span><span class="p">.</span><span class="mi">8651593770302984</span>
+
+
+
+
+
+<span class="o">&lt;</span><span class="n">matplotlib</span><span class="p">.</span><span class="n">legend</span><span class="p">.</span><span class="n">Legend</span> <span class="k">at</span> <span class="mi">0</span><span class="n">x7fcb1e25b390</span><span class="o">&gt;</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../NN-TrackPrediction_files/NN-TrackPrediction_28_2.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># input_cols = [&#39;Hours&#39;,&#39;Latitude&#39;,&#39;Longitude&#39;,&#39;Maximum Wind&#39;]</span>
+<span class="n">joaquin</span> <span class="o">=</span> <span class="n">data_test</span><span class="p">[</span><span class="n">data_test</span><span class="o">.</span><span class="n">ID</span><span class="o">==</span><span class="s1">&#39;AL112015&#39;</span><span class="p">]</span>
+<span class="n">joaquin</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">cols2</span><span class="p">]</span><span class="o">=</span><span class="n">standard_scale</span><span class="p">(</span><span class="n">joaquin</span><span class="p">,</span><span class="n">cols2</span><span class="p">)</span>
+<span class="n">y_jq</span> <span class="o">=</span> <span class="n">predict</span><span class="p">(</span><span class="n">joaquin</span><span class="p">[</span><span class="n">cols2</span><span class="p">],</span><span class="n">model_892</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">jq_plot</span> <span class="o">=</span> <span class="n">joaquin</span><span class="p">[</span><span class="n">input_cols</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">4</span><span class="p">,:]</span>
+<span class="n">fig</span><span class="p">,</span><span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;Hurricane Joaquin - 2015&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mf">1.08</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Latitude&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Longitude&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">r2_score</span><span class="p">(</span><span class="n">jq_plot</span><span class="o">.</span><span class="n">Latitude</span><span class="p">,</span><span class="n">y_jq</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">r2_score</span><span class="p">(</span><span class="n">jq_plot</span><span class="o">.</span><span class="n">Longitude</span><span class="p">,</span><span class="n">y_jq</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">jq_plot</span><span class="o">.</span><span class="n">Hours</span><span class="p">,</span><span class="n">jq_plot</span><span class="o">.</span><span class="n">Latitude</span><span class="p">,</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;True&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">jq_plot</span><span class="o">.</span><span class="n">Hours</span><span class="p">,</span><span class="n">y_jq</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Predicted&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">jq_plot</span><span class="o">.</span><span class="n">Hours</span><span class="p">,</span><span class="n">jq_plot</span><span class="o">.</span><span class="n">Longitude</span><span class="p">,</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;True&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">jq_plot</span><span class="o">.</span><span class="n">Hours</span><span class="p">,</span><span class="n">y_jq</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Predicted&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="mi">0</span><span class="p">.</span><span class="mi">9645696502595049</span>
+<span class="mi">0</span><span class="p">.</span><span class="mi">9816239209481076</span>
+
+
+
+
+
+<span class="o">&lt;</span><span class="n">matplotlib</span><span class="p">.</span><span class="n">legend</span><span class="p">.</span><span class="n">Legend</span> <span class="k">at</span> <span class="mi">0</span><span class="n">x7fcb1c9b9b50</span><span class="o">&gt;</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../NN-TrackPrediction_files/NN-TrackPrediction_30_2.png" /></p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../PowerDissipationIndex/" class="btn btn-neutral float-right" title="Destructivity">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../Exploratory_Data_Analysis/" class="btn btn-neutral" title="EDA"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../Exploratory_Data_Analysis/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../PowerDissipationIndex/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
