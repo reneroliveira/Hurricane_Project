@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Destructivity - Hurricanes in Atlantic</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Destructivity";
+    var mkdocs_page_input_path = "PowerDissipationIndex.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Hurricanes in Atlantic</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../Exploratory_Data_Analysis/">EDA</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../NN-TrackPrediction/">NNtrack</a>
+                    </li>
+                </ul>
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">Destructivity</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#definitions">Definitions</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#the-pdi-dataset">The PDI Dataset</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#atlantic-mdr-climate-data">Atlantic MDR Climate Data</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#analysing-correlation">Analysing Correlation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#simple-linear-model">Simple Linear Model</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#time-series-analysis">Time series Analysis</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#count">Count</a>
+    </li>
+    </ul>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../Exploratory_Data_Analysis/">EDA2</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../EDA_weather_hurricane_cleaning_and_filtering/">EDA</a>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Hurricanes in Atlantic</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Destructivity</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="power-dissipation-index-pdi-analysis">Power Dissipation Index (PDI) Analysis</h1>
+<h2 id="definitions">Definitions</h2>
+<p>PDI is an index that represents the destructive power of a storm combining together, intensity, duration, and frequency.</p>
+<p>References: <a href="ftp://texmex.mit.edu/pub/emanuel/PAPERS/NATURE03906.pdf">Emanuel, 2005</a> and <a href="ftp://texmex.mit.edu/pub/emanuel/PAPERS/Factors.pdf">Emanuel, 2007</a></p>
+<p>In the references, Kerry Emanuel defines the index as:</p>
+<p>
+<script type="math/tex; mode=display">PDI\equiv\int_0^{\tau}V^3_{max}dt~,</script>
+</p>
+<p>where <script type="math/tex">V_{max}</script> is the maximum sustained wind speed, and <script type="math/tex">\tau</script> is the lifetime of the storm event.</p>
+<h2 id="the-pdi-dataset">The PDI Dataset</h2>
+<p>We're gonna use the PDI calculated by <a href="https://www.noaa.gov">National Oceanic &amp; Atmospheric Administration (NOAA)</a> which data is avaible at <a href="https://ourworldindata.org/grapher/cyclone-power-dissipation-index">Our World in Data</a>. It covers the North Atlantic, Caribbean and Gulf of Mexico storms.</p>
+<p>The data has been smoothed through a five-year weighted average plotted at the center, in order to remove interannual variability. We're gonna o the same smooth with our climate dataset of Atlantic MDR.</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="kn">import</span> <span class="nn">statsmodels.api</span> <span class="k">as</span> <span class="nn">sm</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">r2_score</span>
+<span class="kn">import</span> <span class="nn">scipy.stats</span> <span class="k">as</span> <span class="nn">stats</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">statsmodels.graphics.tsaplots</span> <span class="kn">import</span> <span class="n">plot_acf</span><span class="p">,</span> <span class="n">plot_pacf</span>
+<span class="kn">from</span> <span class="nn">statsmodels.tsa.holtwinters</span> <span class="kn">import</span> <span class="n">ExponentialSmoothing</span><span class="p">,</span> <span class="n">HoltWintersResults</span>
+<span class="kn">from</span> <span class="nn">statsmodels.tsa.stattools</span> <span class="kn">import</span> <span class="n">adfuller</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">TimeSeriesSplit</span>
+<span class="kn">import</span> <span class="nn">datetime</span> <span class="k">as</span> <span class="nn">dt</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">raw_pdi</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;Datasets/cyclone-power-dissipation-index.csv&#39;</span><span class="p">)</span>
+<span class="n">raw_pdi</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</code></pre></div>
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Entity</th>
+      <th>Code</th>
+      <th>Year</th>
+      <th>Cyclone Power Dissipation Index (PDI) (HUDRAT, NOAA)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>North Atlantic</td>
+      <td>NaN</td>
+      <td>1951</td>
+      <td>2.7846</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>North Atlantic</td>
+      <td>NaN</td>
+      <td>1952</td>
+      <td>2.3445</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>North Atlantic</td>
+      <td>NaN</td>
+      <td>1953</td>
+      <td>2.2639</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>North Atlantic</td>
+      <td>NaN</td>
+      <td>1954</td>
+      <td>2.4730</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>North Atlantic</td>
+      <td>NaN</td>
+      <td>1955</td>
+      <td>2.4041</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="codehilite"><pre><span></span><code><span class="n">raw_pdi</span><span class="o">.</span><span class="n">dtypes</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">Entity                                                   object</span>
+<span class="err">Code                                                    float64</span>
+<span class="err">Year                                                      int64</span>
+<span class="err">Cyclone Power Dissipation Index (PDI) (HUDRAT, NOAA)    float64</span>
+<span class="c">dtype: object</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">PDI</span> <span class="o">=</span> <span class="n">raw_pdi</span><span class="p">[[</span><span class="s1">&#39;Year&#39;</span><span class="p">,</span><span class="s1">&#39;Cyclone Power Dissipation Index (PDI) (HUDRAT, NOAA)&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+    <span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Year&#39;</span><span class="p">:</span> <span class="s1">&#39;Year&#39;</span><span class="p">,</span><span class="s1">&#39;Cyclone Power Dissipation Index (PDI) (HUDRAT, NOAA)&#39;</span><span class="p">:</span><span class="s1">&#39;PDI&#39;</span><span class="p">})</span>
+<span class="n">PDI</span> <span class="o">=</span> <span class="n">PDI</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;Year&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">fig</span><span class="p">,</span><span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span><span class="mi">9</span><span class="p">))</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Power Dissipation Index 1951 - 2013&quot;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">18</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;PDI&quot;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">16</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Year&quot;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">16</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s1">&#39;major&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s1">&#39;minor&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">PDI</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">PDI</span><span class="o">.</span><span class="n">PDI</span><span class="p">,</span> <span class="n">lw</span> <span class="o">=</span> <span class="mi">4</span><span class="p">);</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Logarithm of Power Dissipation Index 1951 - 2013&quot;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">18</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;log(PDI)&quot;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">16</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Year&quot;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">16</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s1">&#39;major&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s1">&#39;minor&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">PDI</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">PDI</span><span class="o">.</span><span class="n">PDI</span><span class="p">),</span><span class="n">lw</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">distplot</span><span class="p">(</span><span class="n">PDI</span><span class="o">.</span><span class="n">PDI</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">distplot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">PDI</span><span class="o">.</span><span class="n">PDI</span><span class="p">),</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">&lt;matplotlib.axes._subplots.AxesSubplot at 0x7f0a8ef52a30&gt;</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../PowerDissipationIndex_files/PowerDissipationIndex_7_1.png" /></p>
+<h2 id="atlantic-mdr-climate-data">Atlantic MDR Climate Data</h2>
+<p>Let's do the same smoothing operation in our "atlantic_mdr" dataset. We're gonna apply a 1–3–4–3–1 weighted average <a href="ftp://texmex.mit.edu/pub/emanuel/PAPERS/Factors.pdf">Emanuel, 2007</a> on the data, to get out of interannual variability.</p>
+<div class="codehilite"><pre><span></span><code><span class="n">atlantic_mdr</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;./Datasets/atlantic_mdr.csv&#39;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">smooth</span><span class="p">(</span><span class="n">col</span><span class="p">):</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
+    <span class="n">new_col</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">n</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">]])</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="n">n</span><span class="o">-</span><span class="mi">2</span><span class="p">):</span>
+        <span class="n">new_col</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">col</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">2</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="mi">12</span>
+    <span class="k">return</span> <span class="n">new_col</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># atlantic_mdr = atlantic_mdr[(atlantic_mdr.Month&gt;=8) &amp; (atlantic_mdr.Month&lt;=10)]</span>
+<span class="n">mdr_annual</span> <span class="o">=</span> <span class="n">atlantic_mdr</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;Year&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">({</span><span class="s1">&#39;sst&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span>
+                                               <span class="s1">&#39;rhum&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span>
+                                               <span class="s1">&#39;wspd&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span>
+                                               <span class="s1">&#39;slp&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span>
+                                               <span class="s1">&#39;vwnd&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span>
+                                               <span class="s1">&#39;cldc&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">})</span>
+
+
+<span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">mdr_annual</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+    <span class="n">mdr_annual</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">smooth</span><span class="p">(</span><span class="n">mdr_annual</span><span class="p">[</span><span class="n">col</span><span class="p">])</span>
+<span class="n">mdr_annual</span> <span class="o">=</span> <span class="n">mdr_annual</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">1951</span><span class="p">:</span><span class="mi">2013</span><span class="p">,:]</span>
+<span class="c1"># mdr_annual</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">mdr_annual</span><span class="p">[</span><span class="s1">&#39;PDI&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">PDI</span><span class="o">.</span><span class="n">PDI</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="c1"># mdr_annual</span>
+</code></pre></div>
+
+
+<h2 id="analysing-correlation">Analysing Correlation</h2>
+<div class="codehilite"><pre><span></span><code><span class="c1"># corr = mdr_annual.corr()</span>
+<span class="c1"># corr.style.background_gradient(cmap=&#39;coolwarm&#39;)</span>
+
+<span class="c1"># corr = df.corr()</span>
+<span class="c1"># corr.style.background_gradient(cmap=&#39;coolwarm&#39;)</span>
+<span class="n">f</span><span class="p">,</span><span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s2">&quot;notebook&quot;</span><span class="p">,</span> <span class="n">font_scale</span><span class="o">=</span><span class="mf">1.25</span><span class="p">,</span> <span class="n">rc</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;lines.linewidth&quot;</span><span class="p">:</span> <span class="mf">2.5</span><span class="p">})</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">mdr_annual</span><span class="o">.</span><span class="n">corr</span><span class="p">()</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;coolwarm&#39;</span><span class="p">,</span><span class="n">annot</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span><span class="n">annot_kws</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="mi">13</span><span class="p">},</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">mdr_annual</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;PDI&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;PDI&#39;</span><span class="p">])</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;PDI&quot;</span><span class="p">:</span><span class="s2">&quot;logPDI&quot;</span><span class="p">})</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set_context</span><span class="p">(</span><span class="s2">&quot;notebook&quot;</span><span class="p">,</span> <span class="n">font_scale</span><span class="o">=</span><span class="mf">1.25</span><span class="p">,</span> <span class="n">rc</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;lines.linewidth&quot;</span><span class="p">:</span> <span class="mf">2.5</span><span class="p">})</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">corr</span><span class="p">()</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+    <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;coolwarm&#39;</span><span class="p">,</span><span class="n">annot</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span><span class="n">annot_kws</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="mi">13</span><span class="p">},</span> <span class="n">ax</span><span class="o">=</span><span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../PowerDissipationIndex_files/PowerDissipationIndex_13_0.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="n">fig</span><span class="p">,</span><span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;North Atlantic MDR SST vs PDI&quot;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">18</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Year&quot;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">14</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s1">&#39;major&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s1">&#39;minor&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+
+<span class="n">ax2</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">twinx</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">mdr_annual</span><span class="o">.</span><span class="n">sst</span><span class="p">,</span><span class="n">lw</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span><span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;SST&quot;</span><span class="p">);</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Sea Surface Temperature&quot;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+
+<span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">mdr_annual</span><span class="o">.</span><span class="n">PDI</span><span class="p">,</span><span class="n">lw</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;PDI&quot;</span><span class="p">,</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;orange&#39;</span><span class="p">);</span>
+<span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Power Dissipation Index&quot;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s2">&quot;upper left&quot;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span><span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">bbox_transform</span><span class="o">=</span><span class="n">ax</span><span class="o">.</span><span class="n">transAxes</span><span class="p">);</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../PowerDissipationIndex_files/PowerDissipationIndex_14_0.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># sns.scatterplot(x=np.log(mdr_annual[&#39;sst&#39;]), y=np.log(mdr_annual[&#39;PDI&#39;]))</span>
+<span class="c1"># sns.scatterplot(x=X.sst, y=mdr_annual[&#39;PDI&#39;])</span>
+</code></pre></div>
+
+
+<h2 id="simple-linear-model">Simple Linear Model</h2>
+<p>Quanto à trajetória do PDI, é observável uma leve tendência positiva.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Aparentemente o PDI cresceu:</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">mdr_annual</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s2">&quot;PDI&quot;</span><span class="p">)</span> 
+<span class="n">X</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mdr_annual</span><span class="p">[</span><span class="s1">&#39;PDI&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">X</span><span class="p">[</span><span class="s1">&#39;Year&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">OLS</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="s1">&#39;Year&#39;</span><span class="p">]))</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">PDI</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">fittedvalues</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Evolução do PDI com o tempo e a tendência de crescimento com uma reta&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">Text(0.5, 1.0, &#39;Evolução do PDI com o tempo e a tendência de crescimento com uma reta&#39;)</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../PowerDissipationIndex_files/PowerDissipationIndex_18_1.png" /></p>
+<p>Usando as covariáveis do dataset, podemos fazer um modelo onde achamos relação com a pressão ao nivel do mar (slp), a humidade (rhum) e a "cloudin.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># X[&#39;sst&#39;] = np.log(X[&#39;sst&#39;])</span>
+<span class="p">(</span><span class="n">xtrain</span><span class="p">,</span> <span class="n">xtest</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">,</span> <span class="n">ytest</span><span class="p">)</span>  <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;sst&quot;</span><span class="p">,</span> <span class="s2">&quot;wspd&quot;</span><span class="p">,</span> <span class="s2">&quot;vwnd&quot;</span><span class="p">,</span> <span class="s2">&quot;Year&quot;</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">Y</span><span class="p">))</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">OLS</span><span class="p">(</span><span class="n">ytrain</span><span class="p">,</span> <span class="n">xtrain</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<span class="n">ypred</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">xtest</span><span class="p">)</span> 
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;R2 nos dados separados para teste:&quot;</span><span class="p">,</span><span class="n">r2_score</span><span class="p">(</span><span class="n">ytest</span><span class="p">,</span><span class="n">ypred</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">R2</span> <span class="n">nos</span> <span class="n">dados</span> <span class="n">separados</span> <span class="n">para</span> <span class="n">teste</span><span class="p">:</span> <span class="mi">0</span><span class="p">.</span><span class="mi">2268374488496503</span>
+                            <span class="n">OLS</span> <span class="n">Regression</span> <span class="n">Results</span>                            
+<span class="o">==============================================================================</span>
+<span class="n">Dep</span><span class="p">.</span> <span class="k">Variable</span><span class="p">:</span>                      <span class="n">y</span>   <span class="n">R</span><span class="o">-</span><span class="n">squared</span><span class="p">:</span>                       <span class="mi">0</span><span class="p">.</span><span class="mi">781</span>
+<span class="n">Model</span><span class="p">:</span>                            <span class="n">OLS</span>   <span class="n">Adj</span><span class="p">.</span> <span class="n">R</span><span class="o">-</span><span class="n">squared</span><span class="p">:</span>                  <span class="mi">0</span><span class="p">.</span><span class="mi">766</span>
+<span class="k">Method</span><span class="p">:</span>                 <span class="n">Least</span> <span class="n">Squares</span>   <span class="n">F</span><span class="o">-</span><span class="n">statistic</span><span class="p">:</span>                     <span class="mi">51</span><span class="p">.</span><span class="mi">26</span>
+<span class="nb">Date</span><span class="p">:</span>                <span class="n">Mon</span><span class="p">,</span> <span class="mi">31</span> <span class="n">Aug</span> <span class="mi">2020</span>   <span class="n">Prob</span> <span class="p">(</span><span class="n">F</span><span class="o">-</span><span class="n">statistic</span><span class="p">):</span>           <span class="mi">2</span><span class="p">.</span><span class="mi">98</span><span class="n">e</span><span class="o">-</span><span class="mi">14</span>
+<span class="k">Time</span><span class="p">:</span>                        <span class="mi">10</span><span class="p">:</span><span class="mi">22</span><span class="p">:</span><span class="mi">52</span>   <span class="n">Log</span><span class="o">-</span><span class="n">Likelihood</span><span class="p">:</span>                 <span class="mi">14</span><span class="p">.</span><span class="mi">019</span>
+<span class="k">No</span><span class="p">.</span> <span class="n">Observations</span><span class="p">:</span>                  <span class="mi">47</span>   <span class="n">AIC</span><span class="p">:</span>                            <span class="o">-</span><span class="mi">20</span><span class="p">.</span><span class="mi">04</span>
+<span class="n">Df</span> <span class="n">Residuals</span><span class="p">:</span>                      <span class="mi">43</span>   <span class="n">BIC</span><span class="p">:</span>                            <span class="o">-</span><span class="mi">12</span><span class="p">.</span><span class="mi">64</span>
+<span class="n">Df</span> <span class="n">Model</span><span class="p">:</span>                           <span class="mi">3</span>                                         
+<span class="n">Covariance</span> <span class="k">Type</span><span class="p">:</span>            <span class="n">nonrobust</span>                                         
+<span class="o">==============================================================================</span>
+                 <span class="n">coef</span>    <span class="n">std</span> <span class="n">err</span>          <span class="n">t</span>      <span class="n">P</span><span class="o">&gt;|</span><span class="n">t</span><span class="o">|</span>      <span class="p">[</span><span class="mi">0</span><span class="p">.</span><span class="mi">025</span>      <span class="mi">0</span><span class="p">.</span><span class="mi">975</span><span class="p">]</span>
+<span class="c1">------------------------------------------------------------------------------</span>
+<span class="n">const</span>       <span class="o">-</span><span class="mi">484</span><span class="p">.</span><span class="mi">2535</span>    <span class="mi">146</span><span class="p">.</span><span class="mi">318</span>     <span class="o">-</span><span class="mi">3</span><span class="p">.</span><span class="mi">310</span>      <span class="mi">0</span><span class="p">.</span><span class="mi">002</span>    <span class="o">-</span><span class="mi">779</span><span class="p">.</span><span class="mi">332</span>    <span class="o">-</span><span class="mi">189</span><span class="p">.</span><span class="mi">175</span>
+<span class="n">rhum</span>           <span class="mi">0</span><span class="p">.</span><span class="mi">7547</span>      <span class="mi">0</span><span class="p">.</span><span class="mi">079</span>      <span class="mi">9</span><span class="p">.</span><span class="mi">497</span>      <span class="mi">0</span><span class="p">.</span><span class="mi">000</span>       <span class="mi">0</span><span class="p">.</span><span class="mi">594</span>       <span class="mi">0</span><span class="p">.</span><span class="mi">915</span>
+<span class="n">slp</span>            <span class="mi">0</span><span class="p">.</span><span class="mi">4106</span>      <span class="mi">0</span><span class="p">.</span><span class="mi">143</span>      <span class="mi">2</span><span class="p">.</span><span class="mi">871</span>      <span class="mi">0</span><span class="p">.</span><span class="mi">006</span>       <span class="mi">0</span><span class="p">.</span><span class="mi">122</span>       <span class="mi">0</span><span class="p">.</span><span class="mi">699</span>
+<span class="n">cldc</span>           <span class="mi">1</span><span class="p">.</span><span class="mi">9827</span>      <span class="mi">0</span><span class="p">.</span><span class="mi">229</span>      <span class="mi">8</span><span class="p">.</span><span class="mi">641</span>      <span class="mi">0</span><span class="p">.</span><span class="mi">000</span>       <span class="mi">1</span><span class="p">.</span><span class="mi">520</span>       <span class="mi">2</span><span class="p">.</span><span class="mi">445</span>
+<span class="o">==============================================================================</span>
+<span class="n">Omnibus</span><span class="p">:</span>                        <span class="mi">4</span><span class="p">.</span><span class="mi">476</span>   <span class="n">Durbin</span><span class="o">-</span><span class="n">Watson</span><span class="p">:</span>                   <span class="mi">2</span><span class="p">.</span><span class="mi">046</span>
+<span class="n">Prob</span><span class="p">(</span><span class="n">Omnibus</span><span class="p">):</span>                  <span class="mi">0</span><span class="p">.</span><span class="mi">107</span>   <span class="n">Jarque</span><span class="o">-</span><span class="n">Bera</span> <span class="p">(</span><span class="n">JB</span><span class="p">):</span>                <span class="mi">3</span><span class="p">.</span><span class="mi">413</span>
+<span class="n">Skew</span><span class="p">:</span>                          <span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">468</span>   <span class="n">Prob</span><span class="p">(</span><span class="n">JB</span><span class="p">):</span>                        <span class="mi">0</span><span class="p">.</span><span class="mi">182</span>
+<span class="n">Kurtosis</span><span class="p">:</span>                       <span class="mi">3</span><span class="p">.</span><span class="mi">932</span>   <span class="n">Cond</span><span class="p">.</span> <span class="k">No</span><span class="p">.</span>                     <span class="mi">5</span><span class="p">.</span><span class="mi">42</span><span class="n">e</span><span class="o">+</span><span class="mi">06</span>
+<span class="o">==============================================================================</span>
+
+<span class="n">Warnings</span><span class="p">:</span>
+<span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="n">Standard</span> <span class="n">Errors</span> <span class="n">assume</span> <span class="n">that</span> <span class="n">the</span> <span class="n">covariance</span> <span class="n">matrix</span> <span class="k">of</span> <span class="n">the</span> <span class="n">errors</span> <span class="k">is</span> <span class="n">correctly</span> <span class="n">specified</span><span class="p">.</span>
+<span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="n">The</span> <span class="n">condition</span> <span class="nb">number</span> <span class="k">is</span> <span class="k">large</span><span class="p">,</span> <span class="mi">5</span><span class="p">.</span><span class="mi">42</span><span class="n">e</span><span class="o">+</span><span class="mi">06</span><span class="p">.</span> <span class="n">This</span> <span class="n">might</span> <span class="n">indicate</span> <span class="n">that</span> <span class="n">there</span> <span class="k">are</span>
+<span class="n">strong</span> <span class="n">multicollinearity</span> <span class="k">or</span> <span class="n">other</span> <span class="n">numerical</span> <span class="n">problems</span><span class="p">.</span>
+</code></pre></div>
+
+
+<hr />
+<p>Pode parecer um pouco contraintuitivo a princípio não achar relação significativa da temperatura do mar e da intensidade (na verdade, a destrutibilidade, o PDI) dos furacões. Uma explicação plausivel para isso é que os dados de temperatura conseguem ser explicados pelas outras variáveis:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">model</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">OLS</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="s1">&#39;sst&#39;</span><span class="p">],</span> <span class="n">X</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;vwnd&#39;</span><span class="p">,</span><span class="s1">&#39;wspd&#39;</span><span class="p">,</span> <span class="s1">&#39;Year&#39;</span><span class="p">,</span> <span class="s1">&#39;sst&#39;</span><span class="p">]))</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code>                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                    sst   R-squared:                       0.749
+Model:                            OLS   Adj. R-squared:                  0.736
+Method:                 Least Squares   F-statistic:                     58.61
+Date:                Mon, 31 Aug 2020   Prob (F-statistic):           1.08e-17
+Time:                        10:22:52   Log-Likelihood:                 53.106
+No. Observations:                  63   AIC:                            -98.21
+Df Residuals:                      59   BIC:                            -89.64
+Df Model:                           3                                         
+<span class="gh">Covariance Type:            nonrobust                                         </span>
+<span class="gh">==============================================================================</span>
+                 coef    std err          t      P&gt;|t|      [0.025      0.975]
+------------------------------------------------------------------------------
+const       -177.9485     73.852     -2.410      0.019    -325.726     -30.171
+rhum           0.2643      0.040      6.528      0.000       0.183       0.345
+slp            0.1764      0.072      2.446      0.017       0.032       0.321
+<span class="gh">cldc           1.3740      0.113     12.204      0.000       1.149       1.599</span>
+<span class="gh">==============================================================================</span>
+Omnibus:                        0.296   Durbin-Watson:                   0.473
+Prob(Omnibus):                  0.862   Jarque-Bera (JB):                0.479
+Skew:                          -0.023   Prob(JB):                        0.787
+<span class="gh">Kurtosis:                       2.575   Cond. No.                     5.52e+06</span>
+<span class="gh">==============================================================================</span>
+
+Warnings:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+[2] The condition number is large, 5.52e+06. This might indicate that there are
+strong multicollinearity or other numerical problems.
+</code></pre></div>
+
+
+<hr />
+<h2 id="time-series-analysis">Time series Analysis</h2>
+<div class="codehilite"><pre><span></span><code><span class="n">tsPDI</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">index</span> <span class="o">=</span> <span class="p">[</span><span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">mdr_annual</span><span class="o">.</span><span class="n">index</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;PDI&quot;</span><span class="p">])</span>
+<span class="n">tsPDI</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</code></pre></div>
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PDI</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1951-01-01</th>
+      <td>2.7846</td>
+    </tr>
+    <tr>
+      <th>1952-01-01</th>
+      <td>2.3445</td>
+    </tr>
+    <tr>
+      <th>1953-01-01</th>
+      <td>2.2639</td>
+    </tr>
+    <tr>
+      <th>1954-01-01</th>
+      <td>2.4730</td>
+    </tr>
+    <tr>
+      <th>1955-01-01</th>
+      <td>2.4041</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p>Vamos tratar agora a trajetória do PDI como uma série temporal. Inicialmente, vamos ajustar um modelo autorregressivo de ordem 2:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">mod</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">tsa</span><span class="o">.</span><span class="n">ARIMA</span><span class="p">(</span><span class="n">tsPDI</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+<span class="n">modfit</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<span class="c1"># modfit.summary()</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">/home/gambitura/anaconda3/lib/python3.8/site-packages/statsmodels/tsa/base/tsa_model.py:159: ValueWarning: No frequency information was provided, so inferred frequency AS-JAN will be used.</span>
+<span class="err">  warnings.warn(&#39;No frequency information was&#39;</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># fig, axs = plt.subplots(2,2, figsize = (10,4))</span>
+<span class="c1"># plot_acf(modfit.resid, ax = axs[0, 0])</span>
+<span class="c1"># plot_pacf(modfit.resid, ax = axs[0, 1])</span>
+<span class="c1"># sm.qqplot(modfit.resid, dist=stats.norm, line=&quot;s&quot;, ax = axs[1, 0])</span>
+<span class="c1"># sns.distplot(modfit.resid, ax = axs[1, 1])</span>
+<span class="c1"># plt.show()# modfit.plot_diagnostics()</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+
+<span class="c1"># With CI:</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tsPDI</span><span class="p">[</span><span class="s1">&#39;PDI&#39;</span><span class="p">])</span>
+<span class="c1"># plt.plot(tsPDI[&#39;PDI&#39;], axs = axs[0])</span>
+<span class="n">step</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">forecast</span> <span class="o">=</span> <span class="n">modfit</span><span class="o">.</span><span class="n">forecast</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2013</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">freq</span><span class="o">=</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="n">step</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">forecast</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">forecast</span><span class="p">[</span><span class="mi">2</span><span class="p">][:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">forecast</span><span class="p">[</span><span class="mi">2</span><span class="p">][:,</span><span class="mi">1</span><span class="p">],</span> 
+                    <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=.</span><span class="mi">2</span><span class="p">)</span>
+<span class="c1">#simulating some cenarios:</span>
+<span class="n">sims</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">500</span><span class="p">,</span> <span class="n">step</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">500</span><span class="p">):</span>
+    <span class="n">sims</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">forecast</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">forecast</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tsPDI</span><span class="p">[</span><span class="s1">&#39;PDI&#39;</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">40</span><span class="p">):</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sims</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">color</span> <span class="o">=</span> <span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=.</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Média das previsões com intervalo de confiança (a = 0.05)&#39;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Simulações do PDI&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../PowerDissipationIndex_files/PowerDissipationIndex_28_0.png" /></p>
+<p>Modelando o log da série:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">tsLogPDI</span> <span class="o">=</span> <span class="n">tsPDI</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">)</span>
+<span class="c1">#sm.tsa.stattools.adfuller(tsLogPDI[&#39;PDI&#39;]) ainda não é estacionaria a 5% de significancia</span>
+<span class="n">mod2</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">tsa</span><span class="o">.</span><span class="n">ARIMA</span><span class="p">(</span><span class="n">tsLogPDI</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+<span class="n">modfit2</span> <span class="o">=</span> <span class="n">mod2</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<span class="c1"># modfit2.summary()</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">/home/gambitura/anaconda3/lib/python3.8/site-packages/statsmodels/tsa/base/tsa_model.py:159: ValueWarning: No frequency information was provided, so inferred frequency AS-JAN will be used.</span>
+<span class="err">  warnings.warn(&#39;No frequency information was&#39;</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># fig, axs = plt.subplots(2,2, figsize = (10,4))</span>
+<span class="c1"># plot_acf(modfit2.resid, ax = axs[0, 0])</span>
+<span class="c1"># plot_pacf(modfit2.resid, ax = axs[0, 1])</span>
+<span class="c1"># sm.qqplot(modfit2.resid, dist=stats.norm, line=&quot;s&quot;, ax = axs[1, 0])</span>
+<span class="c1"># sns.distplot(modfit2.resid, ax = axs[1, 1])</span>
+<span class="c1"># plt.show()</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+
+<span class="c1"># With CI:</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tsLogPDI</span><span class="p">[</span><span class="s1">&#39;PDI&#39;</span><span class="p">])</span>
+<span class="c1"># plt.plot(tsPDI[&#39;PDI&#39;], axs = axs[0])</span>
+<span class="n">step</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">forecast</span> <span class="o">=</span> <span class="n">modfit2</span><span class="o">.</span><span class="n">forecast</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2013</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">freq</span><span class="o">=</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="n">step</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">forecast</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">forecast</span><span class="p">[</span><span class="mi">2</span><span class="p">][:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">forecast</span><span class="p">[</span><span class="mi">2</span><span class="p">][:,</span><span class="mi">1</span><span class="p">],</span> 
+                    <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=.</span><span class="mi">2</span><span class="p">)</span>
+<span class="c1">#simulating some cenarios:</span>
+<span class="n">sims</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">500</span><span class="p">,</span> <span class="n">step</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">500</span><span class="p">):</span>
+    <span class="n">sims</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">forecast</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">forecast</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tsLogPDI</span><span class="p">[</span><span class="s1">&#39;PDI&#39;</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">40</span><span class="p">):</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sims</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">color</span> <span class="o">=</span> <span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=.</span><span class="mi">1</span><span class="p">)</span> <span class="c1">#teste de sanidade</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Média do log(PDI) predito com intervalo de confiança (a = 0.05)&#39;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Simulações do PDI&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../PowerDissipationIndex_files/PowerDissipationIndex_32_0.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+
+<span class="c1"># With CI:</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tsPDI</span><span class="p">[</span><span class="s1">&#39;PDI&#39;</span><span class="p">])</span>
+<span class="c1"># plt.plot(tsPDI[&#39;PDI&#39;], axs = axs[0])</span>
+<span class="n">step</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">forecast</span> <span class="o">=</span> <span class="n">modfit2</span><span class="o">.</span><span class="n">forecast</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2013</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">freq</span><span class="o">=</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="n">step</span><span class="p">)</span>
+
+<span class="c1">#simulating some cenarios:</span>
+<span class="n">sims</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1000</span><span class="p">,</span> <span class="n">step</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+    <span class="n">sims</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">forecast</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">forecast</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+<span class="c1"># computing some CIs:</span>
+<span class="n">CIs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">step</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">step</span><span class="p">):</span>
+    <span class="n">CIs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">sims</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.025</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.975</span><span class="p">])</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">CIs</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">CIs</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">CIs</span><span class="p">[:,</span><span class="mi">2</span><span class="p">],</span> 
+                    <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=.</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tsPDI</span><span class="p">[</span><span class="s1">&#39;PDI&#39;</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">30</span><span class="p">):</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sims</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">color</span> <span class="o">=</span> <span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=.</span><span class="mi">15</span><span class="p">)</span> <span class="c1">#teste de sanidade</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Média do PDI predito com intervalo de confiança (a = 0.05)&#39;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Simulações do PDI&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../PowerDissipationIndex_files/PowerDissipationIndex_33_0.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># plt.plot(np.log(np.diff(np.log(mdr_annual[&#39;PDI&#39;])) + 1))</span>
+<span class="c1"># sm.tsa.stattools.adfuller(np.log(np.diff(np.log(mdr_annual[&#39;PDI&#39;])) + 1))</span>
+<span class="n">tsTr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">tsPDI</span><span class="p">[</span><span class="s1">&#39;PDI&#39;</span><span class="p">]))</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># terceiro modelo: log(delta(log(PDI))+1) como ARMA(2,1)</span>
+<span class="n">mod3</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">tsa</span><span class="o">.</span><span class="n">ARIMA</span><span class="p">(</span><span class="n">tsTr</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">modfit3</span> <span class="o">=</span> <span class="n">mod3</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<span class="c1"># modfit3.summary()</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># fig, axs = plt.subplots(2,2, figsize = (10,4))</span>
+<span class="c1"># plot_acf(modfit3.resid, ax = axs[0, 0])</span>
+<span class="c1"># plot_pacf(modfit3.resid, ax = axs[0, 1])</span>
+<span class="c1"># sm.qqplot(modfit3.resid, dist=stats.norm, line=&quot;s&quot;, ax = axs[1, 0])</span>
+<span class="c1"># sns.distplot(modfit3.resid, ax = axs[1, 1])</span>
+<span class="c1"># plt.show()</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+
+<span class="c1"># With CI:</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tsTr</span><span class="p">)</span>
+<span class="c1"># plt.plot(tsPDI[&#39;PDI&#39;], axs = axs[0])</span>
+<span class="n">step</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">forecast</span> <span class="o">=</span> <span class="n">modfit3</span><span class="o">.</span><span class="n">forecast</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tsTr</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">tsTr</span><span class="p">)</span> <span class="o">+</span> <span class="n">step</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">forecast</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">forecast</span><span class="p">[</span><span class="mi">2</span><span class="p">][:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">forecast</span><span class="p">[</span><span class="mi">2</span><span class="p">][:,</span><span class="mi">1</span><span class="p">],</span> 
+                    <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=.</span><span class="mi">2</span><span class="p">)</span>
+<span class="c1">#simulating some cenarios:</span>
+<span class="n">sims</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">500</span><span class="p">,</span> <span class="n">step</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">500</span><span class="p">):</span>
+    <span class="n">sims</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">forecast</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">forecast</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tsTr</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">40</span><span class="p">):</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sims</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">color</span> <span class="o">=</span> <span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=.</span><span class="mi">1</span><span class="p">)</span> <span class="c1">#teste de sanidade</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Média da transformação predita com intervalo de confiança (a = 0.05)&#39;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Simulações da transformação&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../PowerDissipationIndex_files/PowerDissipationIndex_37_0.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+
+<span class="c1"># With CI:</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tsLogPDI</span><span class="p">[</span><span class="s1">&#39;PDI&#39;</span><span class="p">])</span>
+<span class="c1"># plt.plot(tsPDI[&#39;PDI&#39;], axs = axs[0])</span>
+<span class="n">step</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">forecast</span> <span class="o">=</span> <span class="n">modfit3</span><span class="o">.</span><span class="n">forecast</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2013</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">freq</span><span class="o">=</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="n">step</span><span class="p">)</span>
+
+<span class="c1">#simulating some cenarios:</span>
+<span class="n">dsims</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1000</span><span class="p">,</span> <span class="n">step</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+    <span class="n">dsims</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">forecast</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">forecast</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">last</span> <span class="o">=</span> <span class="n">tsLogPDI</span><span class="p">[</span><span class="s2">&quot;PDI&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dsims</span><span class="p">)):</span>
+    <span class="n">dsims</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">last</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">dsims</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+<span class="c1"># computing some CIs:</span>
+<span class="n">CIs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">step</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">step</span><span class="p">):</span>
+    <span class="n">CIs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">dsims</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.025</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.975</span><span class="p">])</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">CIs</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">CIs</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">CIs</span><span class="p">[:,</span><span class="mi">2</span><span class="p">],</span> 
+                    <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=.</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tsLogPDI</span><span class="p">[</span><span class="s1">&#39;PDI&#39;</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">):</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dsims</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">color</span> <span class="o">=</span> <span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=.</span><span class="mi">1</span><span class="p">)</span> <span class="c1">#teste de sanidade</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Média do log(PDI) predito com intervalo de confiança (a = 0.05)&#39;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Simulações do log(PDI)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../PowerDissipationIndex_files/PowerDissipationIndex_38_0.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+
+<span class="c1"># With CI:</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tsPDI</span><span class="p">[</span><span class="s1">&#39;PDI&#39;</span><span class="p">])</span>
+<span class="c1"># plt.plot(tsPDI[&#39;PDI&#39;], axs = axs[0])</span>
+<span class="n">step</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">forecast</span> <span class="o">=</span> <span class="n">modfit3</span><span class="o">.</span><span class="n">forecast</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2013</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">freq</span><span class="o">=</span><span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="n">step</span><span class="p">)</span>
+
+<span class="c1">#simulating some cenarios:</span>
+<span class="n">dsims</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1000</span><span class="p">,</span> <span class="n">step</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+    <span class="n">dsims</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">forecast</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">forecast</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span> <span class="o">-</span> <span class="mi">1</span>
+<span class="n">last</span> <span class="o">=</span> <span class="n">tsLogPDI</span><span class="p">[</span><span class="s2">&quot;PDI&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dsims</span><span class="p">)):</span>
+    <span class="n">dsims</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">last</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">dsims</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+<span class="c1"># computing some CIs:</span>
+<span class="n">CIs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">step</span><span class="p">,</span><span class="mi">3</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">step</span><span class="p">):</span>
+    <span class="n">CIs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">dsims</span><span class="p">[:,</span><span class="n">i</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.025</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.975</span><span class="p">])</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">CIs</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">CIs</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">CIs</span><span class="p">[:,</span><span class="mi">2</span><span class="p">],</span> 
+                    <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=.</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">tsPDI</span><span class="p">[</span><span class="s1">&#39;PDI&#39;</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">40</span><span class="p">):</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dsims</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">color</span> <span class="o">=</span> <span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=.</span><span class="mi">1</span><span class="p">)</span> <span class="c1">#teste de sanidade</span>
+
+<span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Média do PDI predito com intervalo de confiança (a = 0.05)&#39;</span><span class="p">)</span>
+<span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Simulações do PDI&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../PowerDissipationIndex_files/PowerDissipationIndex_39_0.png" /></p>
+<hr />
+<hr />
+<h2 id="count">Count</h2>
+<p>Medir destrutibilidade do furacão não é coisa trivial; não basta olhar o PDI visto que os nossos dados de PDI podem estar <a href="https://arxiv.org/abs/physics/0601050">errados</a> por medições inconsistentes de velocidade até os anos 90, onde começamos a ter um comportamento anômalo do ENSO; além da dinâmica sazonal de correntes termosalínicas gerarem sazonalidade nas temperaturas entre decádas (Atlantic Multidecadal Oscilation, AMO). Outras alternativas comumente consideradas são a de contagem de furacões no ano e de tamanho de cada furacão; cada uma delas com seus problemas particulares. Abaixo, fazemos um modelo simples de GLM para contagem usando como preditores as covari</p>
+<div class="codehilite"><pre><span></span><code><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;Datasets/data_atl_merged2.csv&#39;</span><span class="p">,</span><span class="n">parse_dates</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Date&#39;</span><span class="p">])</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Name&#39;</span><span class="p">,</span> <span class="s1">&#39;Date&#39;</span><span class="p">,</span><span class="s1">&#39;Year&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="s1">&#39;Event&#39;</span><span class="p">,</span> <span class="s1">&#39;Status&#39;</span><span class="p">,</span> <span class="s1">&#39;Latitude&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;Longitude&#39;</span><span class="p">,</span> <span class="s1">&#39;Maximum Wind&#39;</span><span class="p">,</span> <span class="s1">&#39;sst&#39;</span><span class="p">,</span> <span class="s1">&#39;rhum&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;wspd&#39;</span><span class="p">,</span> <span class="s1">&#39;slp&#39;</span><span class="p">,</span> <span class="s1">&#39;cldc&#39;</span><span class="p">]]</span>
+<span class="k">def</span> <span class="nf">category</span><span class="p">(</span><span class="n">mw</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">mw</span><span class="o">&gt;=</span><span class="mi">137</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;Category 5&quot;</span>
+    <span class="k">elif</span> <span class="n">mw</span><span class="o">&gt;=</span><span class="mi">113</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;Category 4&quot;</span>
+    <span class="k">elif</span> <span class="n">mw</span><span class="o">&gt;=</span><span class="mi">96</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;Category 3&quot;</span>
+    <span class="k">elif</span> <span class="n">mw</span><span class="o">&gt;=</span><span class="mi">83</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;Category 2&quot;</span>
+    <span class="k">elif</span> <span class="n">mw</span><span class="o">&gt;=</span><span class="mi">64</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;Category 1&quot;</span>
+    <span class="k">elif</span> <span class="n">mw</span><span class="o">&gt;=</span><span class="mi">34</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;Tropical Storm&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;Tropical Depression&quot;</span>
+<span class="n">cat_id</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;ID&#39;</span><span class="p">)[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">category</span><span class="p">)</span>
+<span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">&#39;Category&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">ID</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="n">cat_id</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
+<span class="c1"># data.groupby(&#39;Category&#39;)[&#39;ID&#39;].count().plot.bar();</span>
+<span class="n">major_df</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">Category</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;m&#39;</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span><span class="o">&gt;=</span><span class="mi">3</span><span class="p">]</span>
+<span class="n">major_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;Year&#39;</span><span class="p">)[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">()</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+<span class="c1">#sm.tsa.stattools.adfuller(count)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">&lt;matplotlib.axes._subplots.AxesSubplot at 0x7f0a8ec16a60&gt;</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../PowerDissipationIndex_files/PowerDissipationIndex_41_1.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="n">count</span> <span class="o">=</span> <span class="n">major_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;Year&quot;</span><span class="p">)[</span><span class="s2">&quot;ID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">pivot_table</span><span class="p">(</span><span class="n">major_df</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="s2">&quot;Year&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;sst&quot;</span><span class="p">,</span> <span class="s2">&quot;rhum&quot;</span><span class="p">,</span> <span class="s2">&quot;wspd&quot;</span><span class="p">,</span> <span class="s2">&quot;slp&quot;</span><span class="p">,</span> <span class="s2">&quot;cldc&quot;</span><span class="p">])</span>
+<span class="n">X</span><span class="p">[</span><span class="s1">&#39;Y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
+<span class="n">countModel</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">GLM</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">X</span><span class="p">),</span> <span class="n">family</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">families</span><span class="o">.</span><span class="n">NegativeBinomial</span><span class="p">())</span>
+<span class="n">countFit</span> <span class="o">=</span> <span class="n">countModel</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">countFit</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span> <span class="c1">#descomente para ver o sumario do ajuste</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">count</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">countFit</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">X</span><span class="p">)))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code>                 Generalized Linear Model Regression Results                  
+==============================================================================
+Dep. Variable:                     ID   No. Observations:                   60
+Model:                            GLM   Df Residuals:                       54
+Model Family:        NegativeBinomial   Df Model:                            5
+Link Function:                    log   Scale:                          1.0000
+Method:                          IRLS   Log-Likelihood:                -347.61
+Date:                Mon, 31 Aug 2020   Deviance:                       26.626
+Time:                        10:22:58   Pearson chi2:                     26.3
+No. Iterations:                    12                                         
+<span class="gh">Covariance Type:            nonrobust                                         </span>
+<span class="gh">==============================================================================</span>
+                 coef    std err          z      P&gt;|z|      [0.025      0.975]
+------------------------------------------------------------------------------
+const       -146.2316    147.049     -0.994      0.320    -434.443     141.980
+cldc           0.1977      0.589      0.336      0.737      -0.956       1.351
+rhum           0.0182      0.067      0.271      0.786      -0.113       0.150
+slp            0.1338      0.142      0.940      0.347      -0.145       0.413
+sst            0.0952      0.132      0.723      0.470      -0.163       0.353
+wspd           0.0182      0.067      0.271      0.786      -0.113       0.150
+<span class="gh">Y              0.0048      0.008      0.602      0.547      -0.011       0.020</span>
+<span class="gh">==============================================================================</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../PowerDissipationIndex_files/PowerDissipationIndex_42_1.png" /></p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../Exploratory_Data_Analysis/" class="btn btn-neutral float-right" title="EDA2">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../NN-TrackPrediction/" class="btn btn-neutral" title="NNtrack"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../NN-TrackPrediction/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../Exploratory_Data_Analysis/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>

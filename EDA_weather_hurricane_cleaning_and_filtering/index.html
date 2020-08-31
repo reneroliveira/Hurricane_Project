@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>EDA - Hurricanes in Atlantic</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "EDA";
+    var mkdocs_page_input_path = "EDA_weather_hurricane_cleaning_and_filtering.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Hurricanes in Atlantic</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../Exploratory_Data_Analysis/">EDA</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../NN-TrackPrediction/">NNtrack</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../PowerDissipationIndex/">Destructivity</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../Exploratory_Data_Analysis/">EDA2</a>
+                    </li>
+                </ul>
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">EDA</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#instalacao-e-importacao-de-pacotes">Instalação e Importação de pacotes</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#extracao-transformacao-carregamento-e-limpeza-dos-dados">Extração, Transformação, Carregamento e Limpeza dos Dados</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#outras-visualizacoes">Outras Visualizações</a>
+    </li>
+    </ul>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Hurricanes in Atlantic</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>EDA</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="eda">EDA</h1>
+<h2 id="instalacao-e-importacao-de-pacotes">Instalação e Importação de pacotes</h2>
+<div class="codehilite"><pre><span></span><code><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">!apt-get install libgeos-3.5.0</span>
+<span class="sd">!apt-get install libgeos-dev</span>
+<span class="sd">!pip install https://github.com/matplotlib/basemap/archive/master.zip</span>
+<span class="sd">!pip install pyproj==1.9.6</span>
+<span class="sd">&#39;&#39;&#39;</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">&#39;\n!apt-get install libgeos-3.5.0\n!apt-get install libgeos-dev\n!pip install https://github.com/matplotlib/basemap/archive/master.zip\n!pip install pyproj==1.9.6\n&#39;</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">!pip install netcdf4</span>
+<span class="sd">&#39;&#39;&#39;</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">&#39;\n!pip install netcdf4\n&#39;</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Dependencies for Tropycal Package: https://pypi.org/project/tropycal/</span>
+<span class="sd">matplotlib &gt;= 2.2.2</span>
+<span class="sd">numpy &gt;= 1.14.3</span>
+<span class="sd">scipy &gt;= 1.1.0</span>
+<span class="sd">pandas &gt;= 0.23.0</span>
+<span class="sd">geopy &gt;= 1.18.1</span>
+<span class="sd">xarray &gt;= 0.10.7</span>
+<span class="sd">networkx &gt;= 2.0.0</span>
+<span class="sd">requests &gt;= 2.22.0</span>
+<span class="sd">To fully leverage tropycal&#39;s plotting capabilities, it is strongly recommended to have cartopy &gt;= 0.17.0 installed.</span>
+
+
+<span class="sd">!pip install numpy</span>
+<span class="sd">!pip install pandas</span>
+<span class="sd">!pip install matplotlib</span>
+<span class="sd">!pip install scipy</span>
+<span class="sd">#!pip uninstall geopy</span>
+<span class="sd">!pip install geopy</span>
+<span class="sd">!pip install xarray</span>
+<span class="sd">!pip install networkx</span>
+<span class="sd">!pip install requests</span>
+<span class="sd">!pip install proj</span>
+<span class="sd">!pip install proj-data</span>
+<span class="sd">!pip install geos</span>
+<span class="sd">#!pip uninstall cartopy</span>
+<span class="sd">!apt-get -qq install python-cartopy python3-cartopy</span>
+<span class="sd">!pip install cartopy</span>
+<span class="sd">!pip install tropycal</span>
+<span class="sd">#!pip freeze</span>
+<span class="sd">&#39;&#39;&#39;</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">&quot;\nDependencies for Tropycal Package: https://pypi.org/project/tropycal/\nmatplotlib &gt;= 2.2.2\nnumpy &gt;= 1.14.3\nscipy &gt;= 1.1.0\npandas &gt;= 0.23.0\ngeopy &gt;= 1.18.1\nxarray &gt;= 0.10.7\nnetworkx &gt;= 2.0.0\nrequests &gt;= 2.22.0\nTo fully leverage tropycal&#39;s plotting capabilities, it is strongly recommended to have cartopy &gt;= 0.17.0 installed.\n\n\n!pip install numpy\n!pip install pandas\n!pip install matplotlib\n!pip install scipy\n#!pip uninstall geopy\n!pip install geopy\n!pip install xarray\n!pip install networkx\n!pip install requests\n!pip install proj\n!pip install proj-data\n!pip install geos\n#!pip uninstall cartopy\n!apt-get -qq install python-cartopy python3-cartopy\n!pip install cartopy\n!pip install tropycal\n#!pip freeze\n&quot;</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">matplotlib.colors</span> <span class="k">as</span> <span class="nn">c</span>
+<span class="c1">#from mpl_toolkits.basemap import Basemap,shiftgrid</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">netCDF4</span> <span class="k">as</span> <span class="nn">nc</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
+<span class="kn">from</span> <span class="nn">netCDF4</span> <span class="kn">import</span> <span class="n">Dataset</span>
+<span class="kn">from</span> <span class="nn">netCDF4</span> <span class="kn">import</span> <span class="n">date2index</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">import</span> <span class="nn">scipy</span>
+<span class="kn">import</span> <span class="nn">geopy</span>
+<span class="kn">import</span> <span class="nn">xarray</span>
+<span class="kn">import</span> <span class="nn">networkx</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">cartopy</span>
+<span class="kn">import</span> <span class="nn">tropycal</span>
+
+<span class="kn">import</span> <span class="nn">tropycal.tracks</span> <span class="k">as</span> <span class="nn">tracks</span>
+<span class="kn">import</span> <span class="nn">tropycal.tornado</span> <span class="k">as</span> <span class="nn">tornado</span>
+<span class="kn">import</span> <span class="nn">datetime</span> <span class="k">as</span> <span class="nn">dt</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">statsmodels.api</span> <span class="k">as</span> <span class="nn">sm</span>
+<span class="kn">from</span> <span class="nn">statsmodels.api</span> <span class="kn">import</span> <span class="n">OLS</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">from sklearn.decomposition import PCA</span>
+<span class="sd">from sklearn.linear_model import LogisticRegression</span>
+<span class="sd">from sklearn.linear_model import LogisticRegressionCV</span>
+<span class="sd">from sklearn.discriminant_analysis import LinearDiscriminantAnalysis</span>
+<span class="sd">from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis</span>
+<span class="sd">from sklearn.preprocessing import PolynomialFeatures</span>
+<span class="sd">from sklearn.neighbors import KNeighborsClassifier</span>
+<span class="sd">from sklearn.model_selection import cross_val_score</span>
+<span class="sd">from sklearn.metrics import accuracy_score</span>
+<span class="sd">from sklearn.model_selection import KFold</span>
+
+<span class="sd">import math</span>
+<span class="sd">from scipy.special import gamma</span>
+
+<span class="sd">import seaborn as sns</span>
+<span class="sd">sns.set()</span>
+
+<span class="sd">alpha = 0.5</span>
+
+<span class="sd">from sklearn import preprocessing</span>
+<span class="sd">&#39;&#39;&#39;</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">from sklearn.decomposition import PCA</span><span class="se">\n</span><span class="s1">from sklearn.linear_model import LogisticRegression</span><span class="se">\n</span><span class="s1">from sklearn.linear_model import LogisticRegressionCV</span><span class="se">\n</span><span class="s1">from sklearn.discriminant_analysis import LinearDiscriminantAnalysis</span><span class="se">\n</span><span class="s1">from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis</span><span class="se">\n</span><span class="s1">from sklearn.preprocessing import PolynomialFeatures</span><span class="se">\n</span><span class="s1">from sklearn.neighbors import KNeighborsClassifier</span><span class="se">\n</span><span class="s1">from sklearn.model_selection import cross_val_score</span><span class="se">\n</span><span class="s1">from sklearn.metrics import accuracy_score</span><span class="se">\n</span><span class="s1">from sklearn.model_selection import KFold</span><span class="se">\n\n</span><span class="s1">import math</span><span class="se">\n</span><span class="s1">from scipy.special import gamma</span><span class="se">\n\n</span><span class="s1">import seaborn as sns</span><span class="se">\n</span><span class="s1">sns.set()</span><span class="se">\n\n</span><span class="s1">alpha = 0.5</span><span class="se">\n\n</span><span class="s1">from sklearn import preprocessing</span><span class="se">\n</span><span class="s1">&#39;</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">#import csv</span>
+<span class="sd">from pandas.plotting import scatter_matrix</span>
+
+<span class="sd">from sklearn.ensemble import RandomForestRegressor</span>
+
+<span class="sd">from sklearn.neural_network import MLPRegressor</span>
+<span class="sd">from sklearn.model_selection import train_test_split</span>
+<span class="sd">&#39;&#39;&#39;</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">#import csv</span><span class="se">\n</span><span class="s1">from pandas.plotting import scatter_matrix</span><span class="se">\n\n</span><span class="s1">from sklearn.ensemble import RandomForestRegressor</span><span class="se">\n\n</span><span class="s1">from sklearn.neural_network import MLPRegressor</span><span class="se">\n</span><span class="s1">from sklearn.model_selection import train_test_split</span><span class="se">\n</span><span class="s1">&#39;</span>
+</code></pre></div>
+
+
+<h2 id="extracao-transformacao-carregamento-e-limpeza-dos-dados">Extração, Transformação, Carregamento e Limpeza dos Dados</h2>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Referência para os dados: https://www.kaggle.com/noaa/hurricane-database</span>
+<span class="c1"># O foco principal do trabalho se dará nos dados do atlântico</span>
+<span class="n">data_atl</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;data/atlantic.csv&#39;</span><span class="p">)</span>
+<span class="n">data_pac</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;data/pacific.csv&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># formatando dados de data</span>
+<span class="n">data_atl</span><span class="p">[</span><span class="s1">&#39;Date_c&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">data_atl</span><span class="p">[</span><span class="s1">&#39;Date&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">),</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;%Y%m</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">data_atl</span><span class="p">[</span><span class="s1">&#39;Year&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">(</span><span class="n">data_atl</span><span class="p">[</span><span class="s1">&#39;Date_c&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">year</span>
+<span class="n">data_atl</span><span class="p">[</span><span class="s1">&#39;Month&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">(</span><span class="n">data_atl</span><span class="p">[</span><span class="s1">&#39;Date_c&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">month</span>
+<span class="n">data_atl</span><span class="p">[</span><span class="s1">&#39;Day&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">(</span><span class="n">data_atl</span><span class="p">[</span><span class="s1">&#39;Date_c&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">day</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">data_atl</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+<span class="n">data_atl</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">Index([&#39;ID&#39;, &#39;Name&#39;, &#39;Date&#39;, &#39;Time&#39;, &#39;Event&#39;, &#39;Status&#39;, &#39;Latitude&#39;,</span>
+<span class="err">       &#39;Longitude&#39;, &#39;Maximum Wind&#39;, &#39;Minimum Pressure&#39;, &#39;Low Wind NE&#39;,</span>
+<span class="err">       &#39;Low Wind SE&#39;, &#39;Low Wind SW&#39;, &#39;Low Wind NW&#39;, &#39;Moderate Wind NE&#39;,</span>
+<span class="err">       &#39;Moderate Wind SE&#39;, &#39;Moderate Wind SW&#39;, &#39;Moderate Wind NW&#39;,</span>
+<span class="err">       &#39;High Wind NE&#39;, &#39;High Wind SE&#39;, &#39;High Wind SW&#39;, &#39;High Wind NW&#39;,</span>
+<span class="err">       &#39;Date_c&#39;, &#39;Year&#39;, &#39;Month&#39;, &#39;Day&#39;],</span>
+<span class="err">      dtype=&#39;object&#39;)</span>
+</code></pre></div>
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Date</th>
+      <th>Time</th>
+      <th>Event</th>
+      <th>Status</th>
+      <th>Latitude</th>
+      <th>Longitude</th>
+      <th>Maximum Wind</th>
+      <th>Minimum Pressure</th>
+      <th>...</th>
+      <th>Moderate Wind SW</th>
+      <th>Moderate Wind NW</th>
+      <th>High Wind NE</th>
+      <th>High Wind SE</th>
+      <th>High Wind SW</th>
+      <th>High Wind NW</th>
+      <th>Date_c</th>
+      <th>Year</th>
+      <th>Month</th>
+      <th>Day</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>AL011851</td>
+      <td>UNNAMED</td>
+      <td>18510625</td>
+      <td>0</td>
+      <td></td>
+      <td>HU</td>
+      <td>28.0N</td>
+      <td>94.8W</td>
+      <td>80</td>
+      <td>-999</td>
+      <td>...</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>1851-06-25</td>
+      <td>1851</td>
+      <td>6</td>
+      <td>25</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>AL011851</td>
+      <td>UNNAMED</td>
+      <td>18510625</td>
+      <td>600</td>
+      <td></td>
+      <td>HU</td>
+      <td>28.0N</td>
+      <td>95.4W</td>
+      <td>80</td>
+      <td>-999</td>
+      <td>...</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>1851-06-25</td>
+      <td>1851</td>
+      <td>6</td>
+      <td>25</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>AL011851</td>
+      <td>UNNAMED</td>
+      <td>18510625</td>
+      <td>1200</td>
+      <td></td>
+      <td>HU</td>
+      <td>28.0N</td>
+      <td>96.0W</td>
+      <td>80</td>
+      <td>-999</td>
+      <td>...</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>1851-06-25</td>
+      <td>1851</td>
+      <td>6</td>
+      <td>25</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>AL011851</td>
+      <td>UNNAMED</td>
+      <td>18510625</td>
+      <td>1800</td>
+      <td></td>
+      <td>HU</td>
+      <td>28.1N</td>
+      <td>96.5W</td>
+      <td>80</td>
+      <td>-999</td>
+      <td>...</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>1851-06-25</td>
+      <td>1851</td>
+      <td>6</td>
+      <td>25</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>AL011851</td>
+      <td>UNNAMED</td>
+      <td>18510625</td>
+      <td>2100</td>
+      <td>L</td>
+      <td>HU</td>
+      <td>28.2N</td>
+      <td>96.8W</td>
+      <td>80</td>
+      <td>-999</td>
+      <td>...</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>1851-06-25</td>
+      <td>1851</td>
+      <td>6</td>
+      <td>25</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 26 columns</p>
+</div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># Registro de Furacões é maior em determinada época do ano</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">data_atl</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Month&#39;</span><span class="p">])[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">())</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">Month</span>
+<span class="err">1       132</span>
+<span class="err">2        13</span>
+<span class="err">3        14</span>
+<span class="err">4        81</span>
+<span class="err">5       655</span>
+<span class="err">6      2349</span>
+<span class="err">7      3262</span>
+<span class="err">8     10857</span>
+<span class="err">9     18926</span>
+<span class="err">10     9802</span>
+<span class="err">11     2548</span>
+<span class="err">12      466</span>
+<span class="c">Name: ID, dtype: int64</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># Período de furacões se concentra entre os meses de julho e novembro.</span>
+<span class="c1"># Isso deve estar relacionado com o período anterior (verão do hemisfério norte, onde acontece o maior número de casos)</span>
+<span class="c1"># O aquecimento das águas está intimamente ligado com a formação das massas de ar que ocasionam os furacões</span>
+<span class="c1"># Isso nos dá uma pista da forma de correlação temporal que devemos buscar para predizer os eventos</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span><span class="c1">#, figsize=(16,10))</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Número de furações registrados por mês do ano&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">28</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.06</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data_atl</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Month&#39;</span><span class="p">])[</span><span class="s1">&#39;Month&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">data_atl</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Month&#39;</span><span class="p">])[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;$Furacões$ $=$ $0$&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">labelsize</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Número de registros (1851-2015)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$Mês$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$Quantidade$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">);</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">set_figheight</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">set_figwidth</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">(</span><span class="n">pad</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_12_0.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="n">data_atl_ext</span> <span class="o">=</span> <span class="n">data_atl</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">data_atl_mwmp</span> <span class="o">=</span> <span class="n">data_atl</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">data_atl_mw</span> <span class="o">=</span> <span class="n">data_atl</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+<span class="n">ind_nan_ext</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">ind_nan_mwmp</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">ind_nan_mw</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_atl</span><span class="p">)):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">data_atl_mw</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">][</span><span class="n">l</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">ind_nan_mw</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+        <span class="n">ind_nan_mwmp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+        <span class="n">ind_nan_ext</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">data_atl_mwmp</span><span class="p">[</span><span class="s1">&#39;Minimum Pressure&#39;</span><span class="p">][</span><span class="n">l</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">ind_nan_mwmp</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+        <span class="n">ind_nan_ext</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">data_atl_ext</span><span class="p">[</span><span class="s1">&#39;Low Wind NE&#39;</span><span class="p">][</span><span class="n">l</span><span class="p">],</span> <span class="n">data_atl_ext</span><span class="p">[</span><span class="s1">&#39;Low Wind SE&#39;</span><span class="p">][</span><span class="n">l</span><span class="p">],</span> <span class="n">data_atl_ext</span><span class="p">[</span><span class="s1">&#39;Low Wind SW&#39;</span><span class="p">][</span><span class="n">l</span><span class="p">],</span> <span class="n">data_atl_ext</span><span class="p">[</span><span class="s1">&#39;Low Wind NW&#39;</span><span class="p">][</span><span class="n">l</span><span class="p">],</span> <span class="n">data_atl_ext</span><span class="p">[</span><span class="s1">&#39;Moderate Wind NE&#39;</span><span class="p">][</span><span class="n">l</span><span class="p">],</span> <span class="n">data_atl_ext</span><span class="p">[</span><span class="s1">&#39;Moderate Wind SE&#39;</span><span class="p">][</span><span class="n">l</span><span class="p">],</span> <span class="n">data_atl_ext</span><span class="p">[</span><span class="s1">&#39;Moderate Wind SW&#39;</span><span class="p">][</span><span class="n">l</span><span class="p">],</span> <span class="n">data_atl_ext</span><span class="p">[</span><span class="s1">&#39;Moderate Wind NW&#39;</span><span class="p">][</span><span class="n">l</span><span class="p">],</span> <span class="n">data_atl_ext</span><span class="p">[</span><span class="s1">&#39;High Wind NE&#39;</span><span class="p">][</span><span class="n">l</span><span class="p">],</span> <span class="n">data_atl_ext</span><span class="p">[</span><span class="s1">&#39;High Wind SE&#39;</span><span class="p">][</span><span class="n">l</span><span class="p">],</span> <span class="n">data_atl_ext</span><span class="p">[</span><span class="s1">&#39;High Wind SW&#39;</span><span class="p">][</span><span class="n">l</span><span class="p">],</span> <span class="n">data_atl_ext</span><span class="p">[</span><span class="s1">&#39;High Wind NW&#39;</span><span class="p">][</span><span class="n">l</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">ind_nan_ext</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+<span class="n">data_atl_ext</span> <span class="o">=</span> <span class="n">data_atl_ext</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">ind_nan_ext</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">data_atl_mwmp</span> <span class="o">=</span> <span class="n">data_atl_mwmp</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">ind_nan_mwmp</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">data_atl_mw</span> <span class="o">=</span> <span class="n">data_atl_mw</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">ind_nan_mw</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_atl_ext</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_atl_mwmp</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_atl_mw</span><span class="p">))</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">5921</span>
+<span class="err">18436</span>
+<span class="err">48767</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span><span class="c1">#, figsize=(16,10))</span>
+<span class="c1">#fig.suptitle(&#39;Velocidade Máxima vs Pressão Mínima (1851-2015)&#39;, fontsize=28, y=1.06)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">data_atl_mwmp</span><span class="p">[</span><span class="s1">&#39;Minimum Pressure&#39;</span><span class="p">],</span> <span class="n">data_atl_mwmp</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">],</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> <span class="c1">#, label=r&#39;$Furacões$ $=$ $0$&#39;)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">labelsize</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Velocidade Máxima vs Pressão Mínima (1851-2015)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$Pressão Mínima$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$Velocidade Máxima$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">);</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">set_figheight</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">set_figwidth</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">(</span><span class="n">pad</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">No handles with labels found to put in legend.</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_14_1.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">format_lat</span><span class="p">(</span><span class="n">latitude</span><span class="p">):</span>
+    <span class="n">new_lat</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">lat</span> <span class="ow">in</span> <span class="n">latitude</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">lat</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;N&quot;</span><span class="p">:</span>
+            <span class="n">new_lat</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">lat</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_lat</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="n">lat</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">new_lat</span>
+
+<span class="k">def</span> <span class="nf">format_lon</span><span class="p">(</span><span class="n">longitude</span><span class="p">):</span>
+    <span class="n">new_lon</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">lon</span> <span class="ow">in</span> <span class="n">longitude</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">lon</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="s2">&quot;E&quot;</span><span class="p">:</span>
+            <span class="n">new_lon</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">lon</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_lon</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="n">lon</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">new_lon</span>
+
+<span class="c1">#format_lat(data_atl[&#39;Latitude&#39;])</span>
+<span class="n">data_atl</span><span class="p">[</span><span class="s1">&#39;Latitude_c&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">format_lat</span><span class="p">(</span><span class="n">data_atl</span><span class="p">[</span><span class="s1">&#39;Latitude&#39;</span><span class="p">])</span>
+<span class="n">data_atl</span><span class="p">[</span><span class="s1">&#39;Longitude_c&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">format_lat</span><span class="p">(</span><span class="n">data_atl</span><span class="p">[</span><span class="s1">&#39;Longitude&#39;</span><span class="p">])</span>
+
+<span class="c1"># Todas as Latitudes são menores que 0, e as Longitudes maiores que 0</span>
+<span class="c1">#print(data_atl[data_atl[&#39;Latitude_c&#39;] &lt; 0])</span>
+<span class="c1">#print(data_atl[data_atl[&#39;Longitude_c&#39;] &gt; 0])</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1">#Número de registro de furações tem crescido, mas isso se deve à maior capacidade de detecção com o passar dos anos</span>
+<span class="n">X_train</span> <span class="o">=</span> <span class="n">data_atl</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Year&#39;</span><span class="p">])[</span><span class="s1">&#39;Year&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="n">y_train</span> <span class="o">=</span> <span class="n">data_atl</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Year&#39;</span><span class="p">])[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+<span class="n">X_train2</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span> <span class="c1">#np.array(X_train).reshape(X_train.shape[0],1)</span>
+<span class="n">OLS_obj</span> <span class="o">=</span> <span class="n">OLS</span><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">X_train2</span><span class="p">)</span>
+<span class="n">OLSModel</span> <span class="o">=</span> <span class="n">OLS_obj</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+
+<span class="n">r2_train</span> <span class="o">=</span> <span class="n">OLSModel</span><span class="o">.</span><span class="n">rsquared</span>
+<span class="c1">#r2_test = 1 - ((OLSModel.predict(X_test2)-y_test)*(OLSModel.predict(X_test2)-y_test)).sum() / ((y_test.mean()-y_test)*(y_test.mean()-y_test)).sum()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;R^2_train = </span><span class="si">{</span><span class="n">r2_train</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="c1">#print(f&#39;R^2_test  = {r2_test}&#39;)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_const  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_Year  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="n">w0</span> <span class="o">=</span> <span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1850</span><span class="o">*</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">w1</span> <span class="o">=</span> <span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2015</span><span class="o">*</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span><span class="c1">#, figsize=(16,10))</span>
+<span class="c1">#fig.suptitle(&#39;Velocidade Máxima vs Pressão Mínima (1851-2015)&#39;, fontsize=28, y=1.06)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data_atl</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Year&#39;</span><span class="p">])[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> <span class="c1">#, label=r&#39;$Furacões$ $=$ $0$&#39;)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">1850</span><span class="p">,</span> <span class="mi">2015</span><span class="p">],</span> <span class="p">[</span><span class="n">w0</span><span class="p">,</span> <span class="n">w1</span><span class="p">],</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;-.&#39;</span><span class="p">)</span> <span class="c1">#, label=r&#39;$Furacões$ $=$ $0$&#39;)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">labelsize</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Número de Furacões Anuais (1851-2015)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$Ano$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$Quantidade$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">);</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">set_figheight</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">set_figwidth</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">(</span><span class="n">pad</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+
+<span class="c1">#plt.plot(data_atl.groupby([&#39;Year&#39;])[&#39;ID&#39;].count())</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="k">No</span> <span class="n">handles</span> <span class="k">with</span> <span class="n">labels</span> <span class="k">found</span> <span class="k">to</span> <span class="n">put</span> <span class="k">in</span> <span class="n">legend</span><span class="p">.</span>
+
+
+<span class="n">R</span><span class="o">^</span><span class="mi">2</span><span class="n">_train</span> <span class="o">=</span> <span class="mi">0</span><span class="p">.</span><span class="mi">40918060978408977</span>
+<span class="n">Parâmetro_const</span>  <span class="o">=</span> <span class="o">-</span><span class="mi">3940</span><span class="p">.</span><span class="mi">3491393512004</span>
+<span class="n">Parâmetro_Year</span>  <span class="o">=</span> <span class="mi">2</span><span class="p">.</span><span class="mi">192423797184305</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_16_2.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="c1">#Velocidade máxima de vento sustentada pelos furacões reduziu, mas isso também se deve à maior capacidade de registro </span>
+<span class="c1">#de eventos de pequeno porte</span>
+<span class="n">X_train</span> <span class="o">=</span> <span class="n">data_atl_mw</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Year&#39;</span><span class="p">])[</span><span class="s1">&#39;Year&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="n">y_train</span> <span class="o">=</span> <span class="n">data_atl_mw</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Year&#39;</span><span class="p">])[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="n">X_train2</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span> <span class="c1">#np.array(X_train).reshape(X_train.shape[0],1)</span>
+<span class="n">OLS_obj</span> <span class="o">=</span> <span class="n">OLS</span><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">X_train2</span><span class="p">)</span>
+<span class="n">OLSModel</span> <span class="o">=</span> <span class="n">OLS_obj</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+
+<span class="n">r2_train</span> <span class="o">=</span> <span class="n">OLSModel</span><span class="o">.</span><span class="n">rsquared</span>
+<span class="c1">#r2_test = 1 - ((OLSModel.predict(X_test2)-y_test)*(OLSModel.predict(X_test2)-y_test)).sum() / ((y_test.mean()-y_test)*(y_test.mean()-y_test)).sum()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;R^2_train = </span><span class="si">{</span><span class="n">r2_train</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="c1">#print(f&#39;R^2_test  = {r2_test}&#39;)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_const  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_Year  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="n">w0</span> <span class="o">=</span> <span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1850</span><span class="o">*</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">w1</span> <span class="o">=</span> <span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2015</span><span class="o">*</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span><span class="c1">#, figsize=(16,10))</span>
+<span class="c1">#fig.suptitle(&#39;Velocidade Máxima vs Pressão Mínima (1851-2015)&#39;, fontsize=28, y=1.06)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data_atl_mw</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Year&#39;</span><span class="p">])[</span><span class="s1">&#39;Year&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">data_atl_mw</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Year&#39;</span><span class="p">])[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> <span class="c1">#, label=r&#39;$Furacões$ $=$ $0$&#39;)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">1850</span><span class="p">,</span> <span class="mi">2015</span><span class="p">],</span> <span class="p">[</span><span class="n">w0</span><span class="p">,</span> <span class="n">w1</span><span class="p">],</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;-.&#39;</span><span class="p">)</span> <span class="c1">#, label=r&#39;$Furacões$ $=$ $0$&#39;)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">labelsize</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Velocidade Máxima vs Ano (1851-2015)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$Ano$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$Velocidade Máxima$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">);</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">set_figheight</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">set_figwidth</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">(</span><span class="n">pad</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+
+<span class="c1">#plt.plot(data_atl_mw.groupby([&#39;Year&#39;])[&#39;Year&#39;].mean(), data_atl_mw.groupby([&#39;Year&#39;])[&#39;Maximum Wind&#39;].mean())</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="k">No</span> <span class="n">handles</span> <span class="k">with</span> <span class="n">labels</span> <span class="k">found</span> <span class="k">to</span> <span class="n">put</span> <span class="k">in</span> <span class="n">legend</span><span class="p">.</span>
+
+
+<span class="n">R</span><span class="o">^</span><span class="mi">2</span><span class="n">_train</span> <span class="o">=</span> <span class="mi">0</span><span class="p">.</span><span class="mi">49772308255924613</span>
+<span class="n">Parâmetro_const</span>  <span class="o">=</span> <span class="mi">345</span><span class="p">.</span><span class="mi">35295844916755</span>
+<span class="n">Parâmetro_Year</span>  <span class="o">=</span> <span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">15025433346159117</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_17_2.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="c1">#Para não enviesar nossos dados, filtraremos os registros de pequeno porte</span>
+<span class="n">data_atl_fdur</span> <span class="o">=</span> <span class="n">data_atl_mw</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">duration</span> <span class="o">=</span> <span class="n">data_atl_mw</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">])[</span><span class="s1">&#39;Date_c&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">-</span><span class="n">data_atl_mw</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">])[</span><span class="s1">&#39;Date_c&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+<span class="n">duration</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Duration&#39;</span>
+<span class="c1">#print(duration)</span>
+<span class="n">data_atl_fdur</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">data_atl_fdur</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">,</span> <span class="n">left_on</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="n">right_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">data_atl_fdur</span><span class="p">[</span><span class="s1">&#39;Duration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">data_atl_fdur</span><span class="p">[</span><span class="s1">&#39;Duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">days</span><span class="p">,</span> <span class="n">downcast</span><span class="o">=</span><span class="s1">&#39;integer&#39;</span><span class="p">)</span>
+<span class="n">data_atl_fdur</span> <span class="o">=</span> <span class="n">data_atl_fdur</span><span class="p">[</span><span class="n">data_atl_fdur</span><span class="p">[</span><span class="s1">&#39;Duration&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_atl_fdur</span><span class="p">))</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">46350</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1">#Para não enviesar nossos dados, filtraremos os registros de pequeno porte (somente a partir de Tropical Storm)</span>
+<span class="n">data_atl_fwind</span> <span class="o">=</span> <span class="n">data_atl_fdur</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">data_atl_fwind</span> <span class="o">=</span> <span class="n">data_atl_fwind</span><span class="p">[</span><span class="n">data_atl_fwind</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">34</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_atl_fwind</span><span class="p">))</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">35696</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># Com o novo filtro, o viés do aumento no número de furacões ao longo dos anos reduziu, mas ainda há um aumento</span>
+<span class="c1"># Isso mostra que essa tendência pode ser algo não viesada, e que gera preocupação pelo futuro</span>
+<span class="n">X_train</span> <span class="o">=</span> <span class="n">data_atl_fwind</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Year&#39;</span><span class="p">])[</span><span class="s1">&#39;Year&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="n">y_train</span> <span class="o">=</span> <span class="n">data_atl_fwind</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Year&#39;</span><span class="p">])[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+<span class="n">X_train2</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span> <span class="c1">#np.array(X_train).reshape(X_train.shape[0],1)</span>
+<span class="n">OLS_obj</span> <span class="o">=</span> <span class="n">OLS</span><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">X_train2</span><span class="p">)</span>
+<span class="n">OLSModel</span> <span class="o">=</span> <span class="n">OLS_obj</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+
+<span class="n">r2_train</span> <span class="o">=</span> <span class="n">OLSModel</span><span class="o">.</span><span class="n">rsquared</span>
+<span class="c1">#r2_test = 1 - ((OLSModel.predict(X_test2)-y_test)*(OLSModel.predict(X_test2)-y_test)).sum() / ((y_test.mean()-y_test)*(y_test.mean()-y_test)).sum()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;R^2_train = </span><span class="si">{</span><span class="n">r2_train</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="c1">#print(f&#39;R^2_test  = {r2_test}&#39;)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_const  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_Year  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="n">w0</span> <span class="o">=</span> <span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1850</span><span class="o">*</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">w1</span> <span class="o">=</span> <span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2015</span><span class="o">*</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span><span class="c1">#, figsize=(16,10))</span>
+<span class="c1">#fig.suptitle(&#39;Velocidade Máxima vs Pressão Mínima (1851-2015)&#39;, fontsize=28, y=1.06)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data_atl_fwind</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Year&#39;</span><span class="p">])[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> <span class="c1">#, label=r&#39;$Furacões$ $=$ $0$&#39;)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">1850</span><span class="p">,</span> <span class="mi">2015</span><span class="p">],</span> <span class="p">[</span><span class="n">w0</span><span class="p">,</span> <span class="n">w1</span><span class="p">],</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;-.&#39;</span><span class="p">)</span> <span class="c1">#, label=r&#39;$Furacões$ $=$ $0$&#39;)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">labelsize</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Número de Furacões Anuais (1851-2015)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$Ano$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$Quantidade$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">);</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">set_figheight</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">set_figwidth</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">(</span><span class="n">pad</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="k">No</span> <span class="n">handles</span> <span class="k">with</span> <span class="n">labels</span> <span class="k">found</span> <span class="k">to</span> <span class="n">put</span> <span class="k">in</span> <span class="n">legend</span><span class="p">.</span>
+
+
+<span class="n">R</span><span class="o">^</span><span class="mi">2</span><span class="n">_train</span> <span class="o">=</span> <span class="mi">0</span><span class="p">.</span><span class="mi">15573477903937416</span>
+<span class="n">Parâmetro_const</span>  <span class="o">=</span> <span class="o">-</span><span class="mi">1661</span><span class="p">.</span><span class="mi">4327723310093</span>
+<span class="n">Parâmetro_Year</span>  <span class="o">=</span> <span class="mi">0</span><span class="p">.</span><span class="mi">9714289530628062</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_20_2.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Com o novo filtro, o viés da redução da velocidade máxima sustentada de vento reduziu, quase para o nível constante</span>
+<span class="c1"># Isso pode significar que os filtros estão relativamente bem adequados para retirada do viés inicial dos dados</span>
+<span class="n">X_train</span> <span class="o">=</span> <span class="n">data_atl_fwind</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Year&#39;</span><span class="p">])[</span><span class="s1">&#39;Year&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="n">y_train</span> <span class="o">=</span> <span class="n">data_atl_fwind</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Year&#39;</span><span class="p">])[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="n">X_train2</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span> <span class="c1">#np.array(X_train).reshape(X_train.shape[0],1)</span>
+<span class="n">OLS_obj</span> <span class="o">=</span> <span class="n">OLS</span><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">X_train2</span><span class="p">)</span>
+<span class="n">OLSModel</span> <span class="o">=</span> <span class="n">OLS_obj</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+
+<span class="n">r2_train</span> <span class="o">=</span> <span class="n">OLSModel</span><span class="o">.</span><span class="n">rsquared</span>
+<span class="c1">#r2_test = 1 - ((OLSModel.predict(X_test2)-y_test)*(OLSModel.predict(X_test2)-y_test)).sum() / ((y_test.mean()-y_test)*(y_test.mean()-y_test)).sum()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;R^2_train = </span><span class="si">{</span><span class="n">r2_train</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="c1">#print(f&#39;R^2_test  = {r2_test}&#39;)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_const  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_Year  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="n">w0</span> <span class="o">=</span> <span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1850</span><span class="o">*</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">w1</span> <span class="o">=</span> <span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">2015</span><span class="o">*</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span><span class="c1">#, figsize=(16,10))</span>
+<span class="c1">#fig.suptitle(&#39;Velocidade Máxima vs Pressão Mínima (1851-2015)&#39;, fontsize=28, y=1.06)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">data_atl_fwind</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Year&#39;</span><span class="p">])[</span><span class="s1">&#39;Year&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">data_atl_fwind</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;Year&#39;</span><span class="p">])[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> <span class="c1">#, label=r&#39;$Furacões$ $=$ $0$&#39;)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">1850</span><span class="p">,</span> <span class="mi">2015</span><span class="p">],</span> <span class="p">[</span><span class="n">w0</span><span class="p">,</span> <span class="n">w1</span><span class="p">],</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;-.&#39;</span><span class="p">)</span> <span class="c1">#, label=r&#39;$Furacões$ $=$ $0$&#39;)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">labelsize</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Velocidade Máxima vs Ano (1851-2015)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">24</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$Ano$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$Velocidade Máxima$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">);</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">set_figheight</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">set_figwidth</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">(</span><span class="n">pad</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+
+<span class="c1">#plt.plot(data_atl_mw.groupby([&#39;Year&#39;])[&#39;Year&#39;].mean(), data_atl_mw.groupby([&#39;Year&#39;])[&#39;Maximum Wind&#39;].mean())</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="k">No</span> <span class="n">handles</span> <span class="k">with</span> <span class="n">labels</span> <span class="k">found</span> <span class="k">to</span> <span class="n">put</span> <span class="k">in</span> <span class="n">legend</span><span class="p">.</span>
+
+
+<span class="n">R</span><span class="o">^</span><span class="mi">2</span><span class="n">_train</span> <span class="o">=</span> <span class="mi">0</span><span class="p">.</span><span class="mi">11158706746149893</span>
+<span class="n">Parâmetro_const</span>  <span class="o">=</span> <span class="mi">167</span><span class="p">.</span><span class="mi">44362825887168</span>
+<span class="n">Parâmetro_Year</span>  <span class="o">=</span> <span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">054709821748082546</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_21_2.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="n">data_atl_mw2</span> <span class="o">=</span> <span class="n">data_atl_mw</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">data_atl_mw2</span><span class="p">[</span><span class="s1">&#39;Latitude_c&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">format_lat</span><span class="p">(</span><span class="n">data_atl_mw</span><span class="p">[</span><span class="s1">&#39;Latitude&#39;</span><span class="p">])</span>
+<span class="n">data_atl_mw2</span><span class="p">[</span><span class="s1">&#39;Longitude_c&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">format_lat</span><span class="p">(</span><span class="n">data_atl_mw</span><span class="p">[</span><span class="s1">&#39;Longitude&#39;</span><span class="p">])</span>
+<span class="n">data_atl_mw2</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</code></pre></div>
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Date</th>
+      <th>Time</th>
+      <th>Event</th>
+      <th>Status</th>
+      <th>Latitude</th>
+      <th>Longitude</th>
+      <th>Maximum Wind</th>
+      <th>Minimum Pressure</th>
+      <th>...</th>
+      <th>High Wind NE</th>
+      <th>High Wind SE</th>
+      <th>High Wind SW</th>
+      <th>High Wind NW</th>
+      <th>Date_c</th>
+      <th>Year</th>
+      <th>Month</th>
+      <th>Day</th>
+      <th>Latitude_c</th>
+      <th>Longitude_c</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>AL011851</td>
+      <td>UNNAMED</td>
+      <td>18510625</td>
+      <td>0</td>
+      <td></td>
+      <td>HU</td>
+      <td>28.0N</td>
+      <td>94.8W</td>
+      <td>80</td>
+      <td>-999</td>
+      <td>...</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>1851-06-25</td>
+      <td>1851</td>
+      <td>6</td>
+      <td>25</td>
+      <td>28.0</td>
+      <td>-94.8</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>AL011851</td>
+      <td>UNNAMED</td>
+      <td>18510625</td>
+      <td>600</td>
+      <td></td>
+      <td>HU</td>
+      <td>28.0N</td>
+      <td>95.4W</td>
+      <td>80</td>
+      <td>-999</td>
+      <td>...</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>1851-06-25</td>
+      <td>1851</td>
+      <td>6</td>
+      <td>25</td>
+      <td>28.0</td>
+      <td>-95.4</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>AL011851</td>
+      <td>UNNAMED</td>
+      <td>18510625</td>
+      <td>1200</td>
+      <td></td>
+      <td>HU</td>
+      <td>28.0N</td>
+      <td>96.0W</td>
+      <td>80</td>
+      <td>-999</td>
+      <td>...</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>1851-06-25</td>
+      <td>1851</td>
+      <td>6</td>
+      <td>25</td>
+      <td>28.0</td>
+      <td>-96.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>AL011851</td>
+      <td>UNNAMED</td>
+      <td>18510625</td>
+      <td>1800</td>
+      <td></td>
+      <td>HU</td>
+      <td>28.1N</td>
+      <td>96.5W</td>
+      <td>80</td>
+      <td>-999</td>
+      <td>...</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>1851-06-25</td>
+      <td>1851</td>
+      <td>6</td>
+      <td>25</td>
+      <td>28.1</td>
+      <td>-96.5</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>AL011851</td>
+      <td>UNNAMED</td>
+      <td>18510625</td>
+      <td>2100</td>
+      <td>L</td>
+      <td>HU</td>
+      <td>28.2N</td>
+      <td>96.8W</td>
+      <td>80</td>
+      <td>-999</td>
+      <td>...</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>1851-06-25</td>
+      <td>1851</td>
+      <td>6</td>
+      <td>25</td>
+      <td>28.2</td>
+      <td>-96.8</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 28 columns</p>
+</div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1">#print(data_atl_mw2.groupby([&#39;ID&#39;], as_index=False)[&#39;ID&#39;, &#39;Latitude_c&#39;].first())</span>
+<span class="n">data_atl_mw2_filtrado3</span> <span class="o">=</span> <span class="n">data_atl_mw2</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">Lat_min</span> <span class="o">=</span> <span class="n">data_atl_mw2_filtrado3</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">])[</span><span class="s1">&#39;Latitude_c&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+<span class="n">Lat_min</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Lat_min&#39;</span>
+<span class="c1">#print(Lat_min)</span>
+<span class="n">data_atl_mw2_filtrado3</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">data_atl_mw2_filtrado3</span><span class="p">,</span> <span class="n">Lat_min</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">,</span> <span class="n">left_on</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="n">right_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1">#print(data_atl_mw2_filtrado3)</span>
+<span class="n">data_atl_mw2_filtrado3</span> <span class="o">=</span> <span class="n">data_atl_mw2_filtrado3</span><span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">data_atl_mw2_filtrado3</span><span class="p">[</span><span class="s1">&#39;Lat_min&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mf">12.5</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+<span class="c1">#data_atl_mw2_filtrado3.head()</span>
+
+<span class="n">Lon_min</span> <span class="o">=</span> <span class="n">data_atl_mw2_filtrado3</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">])[</span><span class="s1">&#39;Longitude_c&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+<span class="n">Lon_min</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Lon_min&#39;</span>
+<span class="c1">#print(Lon_min)</span>
+<span class="n">data_atl_mw2_filtrado3</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">data_atl_mw2_filtrado3</span><span class="p">,</span> <span class="n">Lon_min</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">,</span> <span class="n">left_on</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="n">right_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1">#print(data_atl_mw2_filtrado3)</span>
+<span class="n">data_atl_mw2_filtrado3</span> <span class="o">=</span> <span class="n">data_atl_mw2_filtrado3</span><span class="p">[</span><span class="n">data_atl_mw2_filtrado3</span><span class="p">[</span><span class="s1">&#39;Lon_min&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">180</span><span class="p">]</span>
+
+<span class="n">Wind_max</span> <span class="o">=</span> <span class="n">data_atl_mw2_filtrado3</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">])[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="n">Wind_max</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Wind_max&#39;</span>
+<span class="c1">#print(Wind_max)</span>
+<span class="n">data_atl_mw2_filtrado3</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">data_atl_mw2_filtrado3</span><span class="p">,</span> <span class="n">Wind_max</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">)</span><span class="c1">#left_on=&#39;ID&#39;, right_index=True)</span>
+<span class="c1">#print(data_atl_mw2_filtrado3)</span>
+<span class="n">data_atl_mw2_filtrado3</span> <span class="o">=</span> <span class="n">data_atl_mw2_filtrado3</span><span class="p">[</span><span class="n">data_atl_mw2_filtrado3</span><span class="p">[</span><span class="s1">&#39;Wind_max&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">34</span><span class="p">]</span>
+
+<span class="n">data_atl_mw2_filtrado3</span> <span class="o">=</span> <span class="n">data_atl_mw2_filtrado3</span><span class="p">[</span><span class="n">data_atl_mw2_filtrado3</span><span class="p">[</span><span class="s1">&#39;Year&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1950</span><span class="p">]</span>
+
+<span class="n">duration</span> <span class="o">=</span> <span class="n">data_atl_mw2_filtrado3</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">])[</span><span class="s1">&#39;Date_c&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">-</span><span class="n">data_atl_mw2_filtrado3</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">])[</span><span class="s1">&#39;Date_c&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+<span class="n">duration</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Duration&#39;</span>
+<span class="c1">#print(duration)</span>
+<span class="n">data_atl_mw2_filtrado3</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">data_atl_mw2_filtrado3</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">,</span> <span class="n">left_on</span><span class="o">=</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="n">right_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">data_atl_mw2_filtrado3</span><span class="p">[</span><span class="s1">&#39;Duration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">data_atl_mw2_filtrado3</span><span class="p">[</span><span class="s1">&#39;Duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">days</span><span class="p">,</span> <span class="n">downcast</span><span class="o">=</span><span class="s1">&#39;integer&#39;</span><span class="p">)</span>
+<span class="n">data_atl_mw2_filtrado3</span> <span class="o">=</span> <span class="n">data_atl_mw2_filtrado3</span><span class="p">[</span><span class="n">data_atl_mw2_filtrado3</span><span class="p">[</span><span class="s1">&#39;Duration&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">]</span>
+
+<span class="n">data_atl_mw2_filtrado3</span> <span class="o">=</span> <span class="n">data_atl_mw2_filtrado3</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;Lat_min&#39;</span><span class="p">,</span> <span class="s1">&#39;Lon_min&#39;</span><span class="p">,</span> <span class="s1">&#39;Wind_max&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+<span class="c1">#data_atl_mw2_filtrado3.head()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_atl_mw2_filtrado3</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_atl</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">])[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">()))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_atl_mw2_filtrado3</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">])[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">()))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_atl</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_atl_mw2</span><span class="p">))</span>
+<span class="n">data_atl_mw2_filtrado3</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">22386</span>
+<span class="err">1814</span>
+<span class="err">685</span>
+<span class="err">49105</span>
+<span class="err">48767</span>
+</code></pre></div>
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Date</th>
+      <th>Time</th>
+      <th>Event</th>
+      <th>Status</th>
+      <th>Latitude</th>
+      <th>Longitude</th>
+      <th>Maximum Wind</th>
+      <th>Minimum Pressure</th>
+      <th>...</th>
+      <th>High Wind SE</th>
+      <th>High Wind SW</th>
+      <th>High Wind NW</th>
+      <th>Date_c</th>
+      <th>Year</th>
+      <th>Month</th>
+      <th>Day</th>
+      <th>Latitude_c</th>
+      <th>Longitude_c</th>
+      <th>Duration</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>21948</th>
+      <td>AL011951</td>
+      <td>UNNAMED</td>
+      <td>19510102</td>
+      <td>1200</td>
+      <td></td>
+      <td>EX</td>
+      <td>30.5N</td>
+      <td>58.0W</td>
+      <td>50</td>
+      <td>-999</td>
+      <td>...</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>1951-01-02</td>
+      <td>1951</td>
+      <td>1</td>
+      <td>2</td>
+      <td>30.5</td>
+      <td>-58.0</td>
+      <td>10</td>
+    </tr>
+    <tr>
+      <th>21949</th>
+      <td>AL011951</td>
+      <td>UNNAMED</td>
+      <td>19510102</td>
+      <td>1800</td>
+      <td></td>
+      <td>EX</td>
+      <td>29.9N</td>
+      <td>56.8W</td>
+      <td>45</td>
+      <td>-999</td>
+      <td>...</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>1951-01-02</td>
+      <td>1951</td>
+      <td>1</td>
+      <td>2</td>
+      <td>29.9</td>
+      <td>-56.8</td>
+      <td>10</td>
+    </tr>
+    <tr>
+      <th>21950</th>
+      <td>AL011951</td>
+      <td>UNNAMED</td>
+      <td>19510103</td>
+      <td>0</td>
+      <td></td>
+      <td>EX</td>
+      <td>29.0N</td>
+      <td>55.7W</td>
+      <td>45</td>
+      <td>-999</td>
+      <td>...</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>1951-01-03</td>
+      <td>1951</td>
+      <td>1</td>
+      <td>3</td>
+      <td>29.0</td>
+      <td>-55.7</td>
+      <td>10</td>
+    </tr>
+    <tr>
+      <th>21951</th>
+      <td>AL011951</td>
+      <td>UNNAMED</td>
+      <td>19510103</td>
+      <td>600</td>
+      <td></td>
+      <td>EX</td>
+      <td>27.5N</td>
+      <td>54.8W</td>
+      <td>45</td>
+      <td>-999</td>
+      <td>...</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>1951-01-03</td>
+      <td>1951</td>
+      <td>1</td>
+      <td>3</td>
+      <td>27.5</td>
+      <td>-54.8</td>
+      <td>10</td>
+    </tr>
+    <tr>
+      <th>21952</th>
+      <td>AL011951</td>
+      <td>UNNAMED</td>
+      <td>19510103</td>
+      <td>1200</td>
+      <td></td>
+      <td>EX</td>
+      <td>26.5N</td>
+      <td>54.5W</td>
+      <td>45</td>
+      <td>-999</td>
+      <td>...</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>-999</td>
+      <td>1951-01-03</td>
+      <td>1951</td>
+      <td>1</td>
+      <td>3</td>
+      <td>26.5</td>
+      <td>-54.5</td>
+      <td>10</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 29 columns</p>
+</div>
+
+<div class="codehilite"><pre><span></span><code><span class="n">data_atl_mw2_filtrado3</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;data_atl_mw2_filtrado3.csv&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre></div>
+
+
+<h2 id="outras-visualizacoes">Outras Visualizações</h2>
+<p>Referência: https://tropycal.github.io/tropycal/examples/index.html</p>
+<div class="codehilite"><pre><span></span><code><span class="n">hurdat_atl</span> <span class="o">=</span> <span class="n">tracks</span><span class="o">.</span><span class="n">TrackDataset</span><span class="p">(</span><span class="n">basin</span><span class="o">=</span><span class="s1">&#39;north_atlantic&#39;</span><span class="p">,</span><span class="n">source</span><span class="o">=</span><span class="s1">&#39;hurdat&#39;</span><span class="p">,</span><span class="n">include_btk</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">storm</span> <span class="o">=</span> <span class="n">hurdat_atl</span><span class="o">.</span><span class="n">get_storm</span><span class="p">((</span><span class="s1">&#39;michael&#39;</span><span class="p">,</span><span class="mi">2018</span><span class="p">))</span>
+
+<span class="c1">#</span>
+<span class="n">storm</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">return_ax</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1">#</span>
+<span class="n">storm</span><span class="o">.</span><span class="n">plot_tors</span><span class="p">(</span><span class="n">plotPPH</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1">#</span>
+<span class="n">storm</span><span class="o">.</span><span class="n">plot_nhc_forecast</span><span class="p">(</span><span class="n">forecast</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span><span class="n">return_ax</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1">#</span>
+<span class="n">storm</span><span class="o">.</span><span class="n">plot_nhc_forecast</span><span class="p">(</span><span class="n">forecast</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span><span class="n">return_ax</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1">#</span>
+<span class="n">ibtracs</span> <span class="o">=</span> <span class="n">tracks</span><span class="o">.</span><span class="n">TrackDataset</span><span class="p">(</span><span class="n">basin</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">,</span><span class="n">source</span><span class="o">=</span><span class="s1">&#39;ibtracs&#39;</span><span class="p">,</span><span class="n">ibtracs_mode</span><span class="o">=</span><span class="s1">&#39;jtwc_neumann&#39;</span><span class="p">,</span><span class="n">catarina</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1">#</span>
+<span class="n">storm</span> <span class="o">=</span> <span class="n">ibtracs</span><span class="o">.</span><span class="n">get_storm</span><span class="p">((</span><span class="s1">&#39;catarina&#39;</span><span class="p">,</span><span class="mi">2004</span><span class="p">))</span>
+<span class="n">storm</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">return_ax</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1">--&gt; Starting to read in HURDAT2 data</span>
+<span class="c1">--&gt; Completed reading in HURDAT2 data (12.27 seconds)</span>
+
+
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">307</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">xlabels_top</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">top_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .xlabels_top attribute is deprecated. Please &#39;</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">343</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">ylabels_right</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">right_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .ylabels_right attribute is deprecated. Please &#39;</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">tropycal</span><span class="err">\</span><span class="n">tracks</span><span class="err">\</span><span class="n">storm</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">1239</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">Reading</span> <span class="k">in</span> <span class="n">tornado</span> <span class="k">data</span> <span class="k">for</span> <span class="n">this</span> <span class="n">storm</span><span class="p">.</span> <span class="k">If</span> <span class="n">you</span> <span class="n">seek</span> <span class="k">to</span> <span class="k">analyze</span> <span class="n">tornado</span> <span class="k">data</span> <span class="k">for</span> <span class="n">multiple</span> <span class="n">storms</span><span class="p">,</span> <span class="n">run</span> <span class="ss">&quot;TrackDataset.assign_storm_tornadoes()&quot;</span> <span class="k">to</span> <span class="n">avoid</span> <span class="n">this</span> <span class="n">warning</span> <span class="k">in</span> <span class="n">the</span> <span class="n">future</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="n">warn_message</span><span class="p">)</span>
+
+
+<span class="c1">--&gt; Starting to read in tornado track data</span>
+<span class="c1">--&gt; Completed reading in tornado data for 1950-2018 (22.54 seconds)</span>
+
+
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">307</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">xlabels_top</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">top_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .xlabels_top attribute is deprecated. Please &#39;</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">343</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">ylabels_right</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">right_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .ylabels_right attribute is deprecated. Please &#39;</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">307</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">xlabels_top</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">top_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .xlabels_top attribute is deprecated. Please &#39;</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">343</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">ylabels_right</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">right_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .ylabels_right attribute is deprecated. Please &#39;</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_27_4.png" /></p>
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_27_5.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">307</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">xlabels_top</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">top_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .xlabels_top attribute is deprecated. Please &#39;</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">343</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">ylabels_right</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">right_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .ylabels_right attribute is deprecated. Please &#39;</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">307</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">xlabels_top</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">top_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .xlabels_top attribute is deprecated. Please &#39;</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">343</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">ylabels_right</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">right_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .ylabels_right attribute is deprecated. Please &#39;</span>
+
+
+<span class="c1">--&gt; Starting to read in ibtracs data</span>
+<span class="c1">--&gt; Completed reading in ibtracs data (269.28 seconds)</span>
+
+
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">307</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">xlabels_top</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">top_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .xlabels_top attribute is deprecated. Please &#39;</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">343</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">ylabels_right</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">right_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .ylabels_right attribute is deprecated. Please &#39;</span>
+
+
+
+
+
+<span class="o">&lt;</span><span class="n">cartopy</span><span class="p">.</span><span class="n">mpl</span><span class="p">.</span><span class="n">geoaxes</span><span class="p">.</span><span class="n">GeoAxesSubplot</span> <span class="k">at</span> <span class="mi">0</span><span class="n">x19569dc8</span><span class="o">&gt;</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_27_10.png" /></p>
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_27_11.png" /></p>
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_27_12.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="n">tor_data</span> <span class="o">=</span> <span class="n">tornado</span><span class="o">.</span><span class="n">TornadoDataset</span><span class="p">()</span>
+
+<span class="n">tor_ax</span><span class="p">,</span><span class="n">domain</span><span class="p">,</span><span class="n">leg_tor</span> <span class="o">=</span> <span class="n">tor_data</span><span class="o">.</span><span class="n">plot_tors</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2011</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">27</span><span class="p">),</span><span class="n">plotPPH</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">return_ax</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">tor_ax</span>
+
+<span class="n">hurdat_atl</span> <span class="o">=</span> <span class="n">tracks</span><span class="o">.</span><span class="n">TrackDataset</span><span class="p">(</span><span class="n">basin</span><span class="o">=</span><span class="s1">&#39;north_atlantic&#39;</span><span class="p">,</span><span class="n">source</span><span class="o">=</span><span class="s1">&#39;hurdat&#39;</span><span class="p">,</span><span class="n">include_btk</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="c1">#</span>
+<span class="n">hurdat_atl</span><span class="o">.</span><span class="n">assign_storm_tornadoes</span><span class="p">(</span><span class="n">dist_thresh</span><span class="o">=</span><span class="mi">750</span><span class="p">)</span>
+<span class="c1">#</span>
+<span class="n">storm</span> <span class="o">=</span> <span class="n">hurdat_atl</span><span class="o">.</span><span class="n">get_storm</span><span class="p">((</span><span class="s1">&#39;ivan&#39;</span><span class="p">,</span><span class="mi">2004</span><span class="p">))</span>
+<span class="c1">#</span>
+<span class="n">storm</span><span class="o">.</span><span class="n">plot_tors</span><span class="p">(</span><span class="n">plotPPH</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">return_ax</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1">--&gt; Starting to read in tornado track data</span>
+<span class="c1">--&gt; Completed reading in tornado data for 1950-2018 (28.47 seconds)</span>
+
+
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">tropycal</span><span class="err">\</span><span class="n">tornado</span><span class="err">\</span><span class="n">tools</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">36</span><span class="p">:</span> <span class="n">SettingWithCopyWarning</span><span class="p">:</span> 
+<span class="n">A</span> <span class="n">value</span> <span class="k">is</span> <span class="n">trying</span> <span class="k">to</span> <span class="n">be</span> <span class="k">set</span> <span class="k">on</span> <span class="n">a</span> <span class="k">copy</span> <span class="k">of</span> <span class="n">a</span> <span class="n">slice</span> <span class="k">from</span> <span class="n">a</span> <span class="n">DataFrame</span><span class="p">.</span>
+<span class="n">Try</span> <span class="k">using</span> <span class="p">.</span><span class="n">loc</span><span class="p">[</span><span class="n">row_indexer</span><span class="p">,</span><span class="n">col_indexer</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span> <span class="k">instead</span>
+
+<span class="n">See</span> <span class="n">the</span> <span class="n">caveats</span> <span class="k">in</span> <span class="n">the</span> <span class="n">documentation</span><span class="p">:</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">pandas</span><span class="p">.</span><span class="n">pydata</span><span class="p">.</span><span class="n">org</span><span class="o">/</span><span class="n">pandas</span><span class="o">-</span><span class="n">docs</span><span class="o">/</span><span class="k">stable</span><span class="o">/</span><span class="n">user_guide</span><span class="o">/</span><span class="n">indexing</span><span class="p">.</span><span class="n">html</span><span class="o">#</span><span class="n">returning</span><span class="o">-</span><span class="n">a</span><span class="o">-</span><span class="k">view</span><span class="o">-</span><span class="n">versus</span><span class="o">-</span><span class="n">a</span><span class="o">-</span><span class="k">copy</span>
+  <span class="n">dfTors</span><span class="p">[</span><span class="s1">&#39;SPC_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dfTors</span><span class="p">[</span><span class="s1">&#39;UTC_time&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">307</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">xlabels_top</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">top_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .xlabels_top attribute is deprecated. Please &#39;</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">343</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">ylabels_right</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">right_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .ylabels_right attribute is deprecated. Please &#39;</span>
+
+
+<span class="c1">--&gt; Starting to read in HURDAT2 data</span>
+<span class="c1">--&gt; Completed reading in HURDAT2 data (8.9 seconds)</span>
+<span class="c1">--&gt; Starting to read in tornado track data</span>
+<span class="c1">--&gt; Completed reading in tornado data for 1950-2018 (17.77 seconds)</span>
+<span class="c1">--&gt; Starting to assign tornadoes to storms</span>
+<span class="c1">--&gt; Completed assigning tornadoes to storm (516.59 seconds)</span>
+
+
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">307</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">xlabels_top</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">top_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .xlabels_top attribute is deprecated. Please &#39;</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">343</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">ylabels_right</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">right_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .ylabels_right attribute is deprecated. Please &#39;</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">307</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">xlabels_top</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">top_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .xlabels_top attribute is deprecated. Please &#39;</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">343</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">ylabels_right</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">right_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .ylabels_right attribute is deprecated. Please &#39;</span>
+
+
+
+
+
+<span class="o">&lt;</span><span class="n">cartopy</span><span class="p">.</span><span class="n">mpl</span><span class="p">.</span><span class="n">geoaxes</span><span class="p">.</span><span class="n">GeoAxesSubplot</span> <span class="k">at</span> <span class="mi">0</span><span class="n">x1815d948</span><span class="o">&gt;</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_28_5.png" /></p>
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_28_6.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="n">hurdat_atl</span> <span class="o">=</span> <span class="n">tracks</span><span class="o">.</span><span class="n">TrackDataset</span><span class="p">(</span><span class="n">basin</span><span class="o">=</span><span class="s1">&#39;north_atlantic&#39;</span><span class="p">,</span><span class="n">source</span><span class="o">=</span><span class="s1">&#39;hurdat&#39;</span><span class="p">,</span><span class="n">include_btk</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1">#Retrieve Hurricane Michael from 2018</span>
+<span class="n">storm</span> <span class="o">=</span> <span class="n">hurdat_atl</span><span class="o">.</span><span class="n">get_storm</span><span class="p">((</span><span class="s1">&#39;michael&#39;</span><span class="p">,</span><span class="mi">2018</span><span class="p">))</span>
+
+<span class="c1">#Retrieve the 2017 Atlantic hurricane season</span>
+<span class="n">season</span> <span class="o">=</span> <span class="n">hurdat_atl</span><span class="o">.</span><span class="n">get_season</span><span class="p">(</span><span class="mi">2017</span><span class="p">)</span>
+
+<span class="c1">#Printing the Storm object lists relevant data:</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">storm</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">hurdat_atl</span><span class="o">.</span><span class="n">search_name</span><span class="p">(</span><span class="s1">&#39;Michael&#39;</span><span class="p">))</span>
+<span class="c1">#</span>
+<span class="n">hurdat_atl</span><span class="o">.</span><span class="n">plot_storm</span><span class="p">((</span><span class="s1">&#39;michael&#39;</span><span class="p">,</span><span class="mi">2018</span><span class="p">),</span><span class="n">return_ax</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1">#</span>
+<span class="n">hurdat_atl</span><span class="o">.</span><span class="n">ace_climo</span><span class="p">(</span><span class="n">plot_year</span><span class="o">=</span><span class="mi">2018</span><span class="p">,</span><span class="n">compare_years</span><span class="o">=</span><span class="mi">2017</span><span class="p">)</span>
+<span class="c1">#</span>
+<span class="n">hurdat_atl</span><span class="o">.</span><span class="n">ace_climo</span><span class="p">(</span><span class="n">rolling_sum</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span><span class="n">plot_year</span><span class="o">=</span><span class="mi">2018</span><span class="p">,</span><span class="n">compare_years</span><span class="o">=</span><span class="mi">2017</span><span class="p">)</span>
+<span class="c1">#</span>
+<span class="n">hurdat_atl</span><span class="o">.</span><span class="n">wind_pres_relationship</span><span class="p">(</span><span class="n">storm</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;sandy&#39;</span><span class="p">,</span><span class="mi">2012</span><span class="p">))</span>
+<span class="c1">#</span>
+<span class="n">ibtracs</span> <span class="o">=</span> <span class="n">tracks</span><span class="o">.</span><span class="n">TrackDataset</span><span class="p">(</span><span class="n">basin</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">,</span><span class="n">source</span><span class="o">=</span><span class="s1">&#39;ibtracs&#39;</span><span class="p">,</span><span class="n">ibtracs_mode</span><span class="o">=</span><span class="s1">&#39;jtwc_neumann&#39;</span><span class="p">,</span><span class="n">catarina</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1">#</span>
+<span class="n">ibtracs</span><span class="o">.</span><span class="n">gridded_stats</span><span class="p">(</span><span class="n">request</span><span class="o">=</span><span class="s2">&quot;maximum wind&quot;</span><span class="p">,</span><span class="n">return_ax</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="c1">#</span>
+<span class="n">ibtracs</span><span class="o">.</span><span class="n">gridded_stats</span><span class="p">(</span><span class="n">request</span><span class="o">=</span><span class="s2">&quot;number of storms&quot;</span><span class="p">,</span><span class="n">thresh</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;dv_min&#39;</span><span class="p">:</span><span class="mi">30</span><span class="p">},</span><span class="n">prop</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;cmap&#39;</span><span class="p">:</span><span class="s1">&#39;plasma_r&#39;</span><span class="p">})</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1">--&gt; Starting to read in HURDAT2 data</span>
+<span class="c1">--&gt; Completed reading in HURDAT2 data (10.66 seconds)</span>
+<span class="o">&lt;</span><span class="n">tropycal</span><span class="p">.</span><span class="n">tracks</span><span class="p">.</span><span class="n">Storm</span><span class="o">&gt;</span>
+<span class="n">Storm</span> <span class="n">Summary</span><span class="p">:</span>
+    <span class="n">Maximum</span> <span class="n">Wind</span><span class="p">:</span>      <span class="mi">140</span> <span class="n">knots</span>
+    <span class="n">Minimum</span> <span class="n">Pressure</span><span class="p">:</span>  <span class="mi">919</span> <span class="n">hPa</span>
+    <span class="k">Start</span> <span class="nb">Date</span><span class="p">:</span>        <span class="mi">0600</span> <span class="n">UTC</span> <span class="mi">07</span> <span class="n">October</span> <span class="mi">2018</span>
+    <span class="k">End</span> <span class="nb">Date</span><span class="p">:</span>          <span class="mi">1800</span> <span class="n">UTC</span> <span class="mi">11</span> <span class="n">October</span> <span class="mi">2018</span>
+
+<span class="n">Variables</span><span class="p">:</span>
+    <span class="nb">date</span>        <span class="p">(</span><span class="n">datetime</span><span class="p">)</span> <span class="p">[</span><span class="mi">2018</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">06</span> <span class="mi">18</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span> <span class="p">....</span> <span class="mi">2018</span><span class="o">-</span><span class="mi">10</span><span class="o">-</span><span class="mi">15</span> <span class="mi">18</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">]</span>
+    <span class="n">extra_obs</span>   <span class="p">(</span><span class="n">int32</span><span class="p">)</span> <span class="p">[</span><span class="mi">0</span> <span class="p">....</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">special</span>     <span class="p">(</span><span class="n">str</span><span class="p">)</span> <span class="p">[</span> <span class="p">....</span> <span class="p">]</span>
+    <span class="k">type</span>        <span class="p">(</span><span class="n">str</span><span class="p">)</span> <span class="p">[</span><span class="n">LO</span> <span class="p">....</span> <span class="n">EX</span><span class="p">]</span>
+    <span class="n">lat</span>         <span class="p">(</span><span class="n">float64</span><span class="p">)</span> <span class="p">[</span><span class="mi">17</span><span class="p">.</span><span class="mi">8</span> <span class="p">....</span> <span class="mi">41</span><span class="p">.</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">lon</span>         <span class="p">(</span><span class="n">float64</span><span class="p">)</span> <span class="p">[</span><span class="o">-</span><span class="mi">86</span><span class="p">.</span><span class="mi">6</span> <span class="p">....</span> <span class="o">-</span><span class="mi">10</span><span class="p">.</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">vmax</span>        <span class="p">(</span><span class="n">int32</span><span class="p">)</span> <span class="p">[</span><span class="mi">25</span> <span class="p">....</span> <span class="mi">35</span><span class="p">]</span>
+    <span class="n">mslp</span>        <span class="p">(</span><span class="n">int32</span><span class="p">)</span> <span class="p">[</span><span class="mi">1006</span> <span class="p">....</span> <span class="mi">1001</span><span class="p">]</span>
+    <span class="n">wmo_basin</span>   <span class="p">(</span><span class="n">str</span><span class="p">)</span> <span class="p">[</span><span class="n">north_atlantic</span> <span class="p">....</span> <span class="n">north_atlantic</span><span class="p">]</span>
+
+<span class="k">More</span> <span class="n">Information</span><span class="p">:</span>
+    <span class="n">id</span><span class="p">:</span>              <span class="n">AL142018</span>
+    <span class="n">operational_id</span><span class="p">:</span>  <span class="n">AL142018</span>
+    <span class="n">name</span><span class="p">:</span>            <span class="n">MICHAEL</span>
+    <span class="k">year</span><span class="p">:</span>            <span class="mi">2018</span>
+    <span class="n">season</span><span class="p">:</span>          <span class="mi">2018</span>
+    <span class="n">basin</span><span class="p">:</span>           <span class="n">north_atlantic</span>
+    <span class="n">source_info</span><span class="p">:</span>     <span class="n">NHC</span> <span class="n">Hurricane</span> <span class="k">Database</span>
+    <span class="k">source</span><span class="p">:</span>          <span class="n">hurdat</span>
+    <span class="n">ace</span><span class="p">:</span>             <span class="mi">12</span><span class="p">.</span><span class="mi">5</span>
+    <span class="n">realtime</span><span class="p">:</span>        <span class="k">False</span>
+<span class="p">[</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">2012</span><span class="p">,</span> <span class="mi">2018</span><span class="p">]</span>
+
+
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">307</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">xlabels_top</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">top_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .xlabels_top attribute is deprecated. Please &#39;</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">343</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">ylabels_right</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">right_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .ylabels_right attribute is deprecated. Please &#39;</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_29_2.png" /></p>
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_29_3.png" /></p>
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_29_4.png" /></p>
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_29_5.png" /></p>
+<div class="codehilite"><pre><span></span><code><span class="c1">--&gt; Starting to read in ibtracs data</span>
+<span class="c1">--&gt; Completed reading in ibtracs data (518.89 seconds)</span>
+<span class="c1">--&gt; Getting filtered storm tracks</span>
+<span class="c1">--&gt; Grouping by lat/lon/storm</span>
+
+
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">tropycal</span><span class="err">\</span><span class="n">tracks</span><span class="err">\</span><span class="n">tools</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">101</span><span class="p">:</span> <span class="n">RuntimeWarning</span><span class="p">:</span> <span class="k">All</span><span class="o">-</span><span class="n">NaN</span> <span class="n">slice</span> <span class="n">encountered</span>
+  <span class="k">return</span> <span class="n">thresh</span><span class="p">,</span> <span class="n">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">tropycal</span><span class="err">\</span><span class="n">tracks</span><span class="err">\</span><span class="n">tools</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">101</span><span class="p">:</span> <span class="n">RuntimeWarning</span><span class="p">:</span> <span class="k">All</span><span class="o">-</span><span class="n">NaN</span> <span class="n">axis</span> <span class="n">encountered</span>
+  <span class="k">return</span> <span class="n">thresh</span><span class="p">,</span> <span class="n">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="p">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">307</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">xlabels_top</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">top_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .xlabels_top attribute is deprecated. Please &#39;</span>
+<span class="k">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="k">User</span><span class="err">\</span><span class="n">anaconda3</span><span class="err">\</span><span class="n">lib</span><span class="err">\</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="err">\</span><span class="n">cartopy</span><span class="err">\</span><span class="n">mpl</span><span class="err">\</span><span class="n">gridliner</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">343</span><span class="p">:</span> <span class="n">UserWarning</span><span class="p">:</span> <span class="n">The</span> <span class="p">.</span><span class="n">ylabels_right</span> <span class="n">attribute</span> <span class="k">is</span> <span class="n">deprecated</span><span class="p">.</span> <span class="n">Please</span> <span class="n">use</span> <span class="p">.</span><span class="n">right_labels</span> <span class="k">to</span> <span class="n">toggle</span> <span class="n">visibility</span> <span class="k">instead</span><span class="p">.</span>
+  <span class="n">warnings</span><span class="p">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;The .ylabels_right attribute is deprecated. Please &#39;</span>
+
+
+<span class="c1">--&gt; Generating plot</span>
+<span class="c1">--&gt; Getting filtered storm tracks</span>
+<span class="c1">--&gt; Grouping by lat/lon/storm</span>
+<span class="c1">--&gt; Generating plot</span>
+</code></pre></div>
+
+
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_29_9.png" /></p>
+<p><img alt="png" src="../EDA_weather_hurricane_cleaning_and_filtering_files/EDA_weather_hurricane_cleaning_and_filtering_29_10.png" /></p>
+<div class="codehilite"><pre><span></span><code>
+</code></pre></div>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="../Exploratory_Data_Analysis/" class="btn btn-neutral" title="EDA2"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../Exploratory_Data_Analysis/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
