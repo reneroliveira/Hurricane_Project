@@ -1,0 +1,5 @@
+site_name: Hurricanes in Atlantic
+theme: readthedocs
+
+nav:
+- NNtrack: NN-TrackPrediction.md
