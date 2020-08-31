@@ -95,130 +95,153 @@
               
                 <h1 id="redes-neurais-para-previsao-de-trajetoria">Redes Neurais para Previsão de Trajetória</h1>
 <p>Neste notebook, usaremos redes neurais para previsão de trajetória futura de uma tempestade. A ideia geral é dado as informações de um furacão de algumas horas atrás e do presente, projetaremos a sua posição futura. </p>
-<pre><code class="python">import numpy as np
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import datetime as dt
-# from sklearn.model_selection import train_test_split
-import seaborn as sns
-sns.set()
-from sklearn.metrics import r2_score
-%matplotlib inline
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">datetime</span> <span class="k">as</span> <span class="nn">dt</span>
+<span class="c1"># from sklearn.model_selection import train_test_split</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">r2_score</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+</code></pre></div>
 
-<pre><code class="python">import tensorflow as tf
 
-tf.keras.backend.clear_session()  
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
 
-print(tf.__version__)
-</code></pre>
+<span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">clear_session</span><span class="p">()</span>  
 
-<pre><code>2.0.0
-</code></pre>
+<span class="nb">print</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">2.0.0</span>
+</code></pre></div>
+
+
 <h2 id="preparacao-dos-dados">Preparação dos dados</h2>
 <p>Iremos abaixo criar funções para preparar nossos dados para o modelo, e aplicá-las ao dataframe original</p>
-<pre><code class="python">#Leitura dos dados
-data = pd.read_csv('Datasets/data_atl_merged2.csv',parse_dates=['Date'])
-data.columns
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="c1">#Leitura dos dados</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;Datasets/data_atl_merged2.csv&#39;</span><span class="p">,</span><span class="n">parse_dates</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Date&#39;</span><span class="p">])</span>
+<span class="n">data</span><span class="o">.</span><span class="n">columns</span>
+</code></pre></div>
 
-<pre><code>Index(['ID', 'Name', 'Date', 'Time', 'Event', 'Status', 'Latitude',
-       'Longitude', 'Maximum Wind', 'Minimum Pressure', 'Date_c', 'Year',
-       'Month', 'Day', 'Latitude_c', 'Longitude_c', 'Duration', 'sst', 'rhum',
-       'wspd', 'slp', 'cldc'],
-      dtype='object')
-</code></pre>
-<pre><code class="python">## Funções de Padronização:
 
-def standard_scale(data,cols):
-    df = data.copy()
-    for col in cols:
-        mean = df[col].mean()
-        std = df[col].std()
-        df.loc[:,col] = (df[col]-mean)/std
-    return df[cols]
-def standard_scale_back(scaled,original,cols):
-    df = scaled.copy()
-    for col in cols:
-        mean = original[col].mean()
-        std = original[col].std()
-        df.loc[:,col] = df[col]*std+mean
-    return df[cols]
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="err">Index([&#39;ID&#39;, &#39;Name&#39;, &#39;Date&#39;, &#39;Time&#39;, &#39;Event&#39;, &#39;Status&#39;, &#39;Latitude&#39;,</span>
+<span class="err">       &#39;Longitude&#39;, &#39;Maximum Wind&#39;, &#39;Minimum Pressure&#39;, &#39;Date_c&#39;, &#39;Year&#39;,</span>
+<span class="err">       &#39;Month&#39;, &#39;Day&#39;, &#39;Latitude_c&#39;, &#39;Longitude_c&#39;, &#39;Duration&#39;, &#39;sst&#39;, &#39;rhum&#39;,</span>
+<span class="err">       &#39;wspd&#39;, &#39;slp&#39;, &#39;cldc&#39;],</span>
+<span class="err">      dtype=&#39;object&#39;)</span>
+</code></pre></div>
 
-<pre><code class="python"># Função que divide os dados por ID da tempestade
-def split(df):
-    st = []
-    ids = df.ID.unique()
-    for ID in ids:
-        st.append(df[df.ID==ID])
-    return st
-splitted = split(data)
-print(len(splitted))
-</code></pre>
 
-<pre><code>685
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="c1">## Funções de Padronização:</span>
+
+<span class="k">def</span> <span class="nf">standard_scale</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">cols</span><span class="p">):</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">:</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">std</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">-</span><span class="n">mean</span><span class="p">)</span><span class="o">/</span><span class="n">std</span>
+    <span class="k">return</span> <span class="n">df</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span>
+<span class="k">def</span> <span class="nf">standard_scale_back</span><span class="p">(</span><span class="n">scaled</span><span class="p">,</span><span class="n">original</span><span class="p">,</span><span class="n">cols</span><span class="p">):</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">scaled</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">:</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">original</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">std</span> <span class="o">=</span> <span class="n">original</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">*</span><span class="n">std</span><span class="o">+</span><span class="n">mean</span>
+    <span class="k">return</span> <span class="n">df</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># Função que divide os dados por ID da tempestade</span>
+<span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">ID</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">ID</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">ID</span><span class="o">==</span><span class="n">ID</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">st</span>
+<span class="n">splitted</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">splitted</span><span class="p">))</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">685</span>
+</code></pre></div>
+
+
 <p>A função "clean_data" formata o preditor Tempo, o convertendo para horas (por padrão, horas após Jan/1951), e padroniza os dados de input.</p>
-<p>A função "shift_data", faz um shift dos dados e dá como saída as matriz tridimensional X e o vetor Y, onde X é composto por matrizes $s\times n$:</p>
-<p>$$\left[\begin{matrix}
-x_1^{(t-s+1)} &amp; x_2^{(t-s+1)} &amp; ...&amp; x_n^{(t-s+1)}\
-x_1^{(t-s+2)} &amp; x_2^{(t-s+2)} &amp; ...&amp; x_n^{(t-s+2)}\
-\vdots &amp;\vdots &amp;\vdots &amp;\vdots\
-x_1^{(t)} &amp; x_2^{(t)} &amp; ...&amp; x_n^{(t)}\end{matrix}\right]$$</p>
+<p>A função "shift_data", faz um shift dos dados e dá como saída as matriz tridimensional X e o vetor Y, onde X é composto por matrizes <script type="math/tex">s\times n</script>:</p>
+<p>
+<script type="math/tex; mode=display">\left[\begin{matrix}
+x_1^{(t-s+1)} & x_2^{(t-s+1)} & ...& x_n^{(t-s+1)}\\
+x_1^{(t-s+2)} & x_2^{(t-s+2)} & ...& x_n^{(t-s+2)}\\
+\vdots &\vdots &\vdots &\vdots\\
+x_1^{(t)} & x_2^{(t)} & ...& x_n^{(t)}\end{matrix}\right]</script>
+</p>
 <p>na qual:</p>
 <ul>
 <li>
-<p>$x_1,~x_2, ~..., ~x_n$ representam os $n$ preditores usados (Usaremos 4 inicialmente: tempo latitude, longitude e velocidade de vento)</p>
+<p>
+<script type="math/tex">x_1,~x_2, ~..., ~x_n</script> representam os <script type="math/tex">n</script> preditores usados (Usaremos 4 inicialmente: tempo latitude, longitude e velocidade de vento)</p>
 </li>
 <li>
-<p>$x_i^{(k)}$ representa o preditor $i$ no registro de tempo $k$. </p>
+<p>
+<script type="math/tex">x_i^{(k)}</script> representa o preditor <script type="math/tex">i</script> no registro de tempo <script type="math/tex">k</script>. </p>
 </li>
 <li>
-<p>$s$ é o parâmetros "shift", que representa em quantos períodos passados basearemos a previsão futura. Por padrão, inicialmente, deixamos $s=3$. Como cada registro é espaçado por 6 horas, neste formado estamos usando daados do presente e de 12 horas atrás, pra projetar o dado futuro.</p>
+<p>
+<script type="math/tex">s</script> é o parâmetros "shift", que representa em quantos períodos passados basearemos a previsão futura. Por padrão, inicialmente, deixamos <script type="math/tex">s=3</script>. Como cada registro é espaçado por 6 horas, neste formado estamos usando daados do presente e de 12 horas atrás, pra projetar o dado futuro.</p>
 </li>
 </ul>
-<p>O vetor $Y$ é composto por:</p>
-<p>$$\left[\begin{matrix}lat^{(t+1)}&amp;lon^{(t+1)}\
-lat^{(t+2)}&amp;lon^{(t+2)}\
-\vdots &amp; \vdots\
-lat^{(t+p)}&amp;lon^{(t+p)}\end{matrix}\right]$$</p>
+<p>O vetor <script type="math/tex">Y</script> é composto por:</p>
+<p>
+<script type="math/tex; mode=display">\left[\begin{matrix}lat^{(t+1)}&lon^{(t+1)}\\
+lat^{(t+2)}&lon^{(t+2)}\\
+\vdots & \vdots\\
+lat^{(t+p)}&lon^{(t+p)}\end{matrix}\right]</script>
+</p>
 <p>na qual:</p>
 <ul>
-<li>$lat^{(k)}$ e $lon^{(k)}$ representam latitude e longitude no registro de tempo $k$</li>
-<li>$p$ é o parâmetro "pred", que diz quantos períodos à frente iremos prever. Por padrão, deixamos $p=1$, assim a matriz se resume em um vetor $[lat^{(t+1)},~ lon^{(t+1)}]$. Usamos previsões de 3 registros passados para prever o próximo registro após o último ponto de treino. Um trabalho futuro seria usar intervalos de previsões maiores, mas vamos nos ater aqui a apenas 1 registro à frete, o que equivale a 6 horas na grande maiorias dos pontos.</li>
+<li>
+<script type="math/tex">lat^{(k)}</script> e <script type="math/tex">lon^{(k)}</script> representam latitude e longitude no registro de tempo <script type="math/tex">k</script>
+</li>
+<li>
+<script type="math/tex">p</script> é o parâmetro "pred", que diz quantos períodos à frente iremos prever. Por padrão, deixamos <script type="math/tex">p=1</script>, assim a matriz se resume em um vetor <script type="math/tex">[lat^{(t+1)},~ lon^{(t+1)}]</script>. Usamos previsões de 3 registros passados para prever o próximo registro após o último ponto de treino. Um trabalho futuro seria usar intervalos de previsões maiores, mas vamos nos ater aqui a apenas 1 registro à frete, o que equivale a 6 horas na grande maiorias dos pontos.</li>
 </ul>
-<pre><code class="python">cols1 = ['Hours','Latitude','Longitude','Maximum Wind']
-data.loc[:,'Time_new']=data.Date+data.Time.map(lambda x: pd.Timedelta(hours=x/100))
+<div class="codehilite"><pre><span></span><code><span class="n">cols1</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Hours&#39;</span><span class="p">,</span><span class="s1">&#39;Latitude&#39;</span><span class="p">,</span><span class="s1">&#39;Longitude&#39;</span><span class="p">,</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">]</span>
+<span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">&#39;Time_new&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">Date</span><span class="o">+</span><span class="n">data</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="n">x</span><span class="o">/</span><span class="mi">100</span><span class="p">))</span>
 
-def clean_data(df,input_cols = cols1, year0 = 1951):
-    df2 = df.copy()
-    df2.loc[:,'Hours'] = (df2.loc[:,'Time_new']-pd.Timestamp(year0,1,1))/pd.Timedelta('1 hour')
-    df2.loc[:,input_cols] = standard_scale(df2,input_cols)
-    return df2[['ID']+input_cols]
+<span class="k">def</span> <span class="nf">clean_data</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">input_cols</span> <span class="o">=</span> <span class="n">cols1</span><span class="p">,</span> <span class="n">year0</span> <span class="o">=</span> <span class="mi">1951</span><span class="p">):</span>
+    <span class="n">df2</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">df2</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">&#39;Hours&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">df2</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">&#39;Time_new&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">year0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s1">&#39;1 hour&#39;</span><span class="p">)</span>
+    <span class="n">df2</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">input_cols</span><span class="p">]</span> <span class="o">=</span> <span class="n">standard_scale</span><span class="p">(</span><span class="n">df2</span><span class="p">,</span><span class="n">input_cols</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df2</span><span class="p">[[</span><span class="s1">&#39;ID&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">input_cols</span><span class="p">]</span>
 
-def shift_data(df,shift = 3,pred = 1):
+<span class="k">def</span> <span class="nf">shift_data</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">shift</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span><span class="n">pred</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
 
-    x = []
-    y = []
-    df = df.set_index(np.arange(0,len(df)))
-    for i in range(0,len(df)-shift):
-        x_arr = []
-        for j in range(i,i+shift):
-            x_arr.append(df.loc[j,:])
-        if pred == 1:
-            y.append(np.array(df.loc[i+shift:i+shift+pred-1,['Latitude','Longitude']]).ravel())
-        else:
-            y.append(np.array(df.loc[i+shift:i+shift+pred-1,['Latitude','Longitude']]))
-        x.append(np.array(x_arr))
+    <span class="n">x</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">-</span><span class="n">shift</span><span class="p">):</span>
+        <span class="n">x_arr</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="o">+</span><span class="n">shift</span><span class="p">):</span>
+            <span class="n">x_arr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">j</span><span class="p">,:])</span>
+        <span class="k">if</span> <span class="n">pred</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">shift</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">shift</span><span class="o">+</span><span class="n">pred</span><span class="o">-</span><span class="mi">1</span><span class="p">,[</span><span class="s1">&#39;Latitude&#39;</span><span class="p">,</span><span class="s1">&#39;Longitude&#39;</span><span class="p">]])</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="n">shift</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">shift</span><span class="o">+</span><span class="n">pred</span><span class="o">-</span><span class="mi">1</span><span class="p">,[</span><span class="s1">&#39;Latitude&#39;</span><span class="p">,</span><span class="s1">&#39;Longitude&#39;</span><span class="p">]]))</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x_arr</span><span class="p">))</span>
 
-    return np.array(x),np.array(y)
-</code></pre>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">),</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+</code></pre></div>
 
-<pre><code class="python">data_cleaned = clean_data(data)
-data_cleaned.describe()
-</code></pre>
+
+<div class="codehilite"><pre><span></span><code><span class="n">data_cleaned</span> <span class="o">=</span> <span class="n">clean_data</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="n">data_cleaned</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
+</code></pre></div>
+
 
 <div>
 <style scoped>
@@ -310,71 +333,81 @@ data_cleaned.describe()
 <p>Após isso atribuimos 70% da lista para treino, 20% para validação e 10% para teste. Cada dataframe é devidamente formatado para as matrizes acima usando a função "shift_data", e após isso, unimos as matrizes de saída para gerar a numpy array final, do modelo.</p>
 <p>Se fizéssemos o split diretamente, esse tipo de erro poderia acontecer. Suponha que uma tempestade tem seu último registro em 20 de Agosto em um determinado local, e uma outra tempestade se inicial dia 21 de Agosto em um local totalmente diferente. Um split direto poderia usar o registro de 20 de Agosto para prever o do dia 21, sendo que não há relação entre eles.</p>
 <p>Essa separação por tempestade é importante para garantir a integridade dos nossos dados de modelagem, de forma que o treinamento seja feito tempestade por tempestade.</p>
-<pre><code class="python">def train_val_test_split(df,t=0.7,v=0.2,input_cols=cols1,shift=3,pred=1):
-    # t = fração de treino
-    # v = fração de validação
-    # fração de teste = 1-t-v
-    # df = dataset já limpo por clean_data
-    splitted_data = split(df)
-    # Separamos os dados tempestade por tempestade para 
-    # evitar cruzamento de dados entre eventos diferentes
-    n = len(splitted)
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">train_val_test_split</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">t</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span><span class="n">v</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span><span class="n">input_cols</span><span class="o">=</span><span class="n">cols1</span><span class="p">,</span><span class="n">shift</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">pred</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="c1"># t = fração de treino</span>
+    <span class="c1"># v = fração de validação</span>
+    <span class="c1"># fração de teste = 1-t-v</span>
+    <span class="c1"># df = dataset já limpo por clean_data</span>
+    <span class="n">splitted_data</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="c1"># Separamos os dados tempestade por tempestade para </span>
+    <span class="c1"># evitar cruzamento de dados entre eventos diferentes</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">splitted</span><span class="p">)</span>
 
-    train_storms = splitted_data[0:int(n*t)]
-    val_storms = splitted_data[int(n*t):int(n*(t+v))]
-    test_storms = splitted_data[int(n*(1-t-v)):]
+    <span class="n">train_storms</span> <span class="o">=</span> <span class="n">splitted_data</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="n">t</span><span class="p">)]</span>
+    <span class="n">val_storms</span> <span class="o">=</span> <span class="n">splitted_data</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="n">t</span><span class="p">):</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="p">(</span><span class="n">t</span><span class="o">+</span><span class="n">v</span><span class="p">))]</span>
+    <span class="n">test_storms</span> <span class="o">=</span> <span class="n">splitted_data</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">t</span><span class="o">-</span><span class="n">v</span><span class="p">)):]</span>
 
-    #Geramos uma lista de matrizes, onde cada lista se refere 
-    #aos dados descocados de uma tempestade diferente
-    xy_train = [shift_data(train[input_cols],shift,pred) for train in train_storms]
-    xy_val = [shift_data(val[input_cols],shift,pred) for val in val_storms]
-    xy_test = [shift_data(test[input_cols],shift,pred) for test in test_storms]
+    <span class="c1">#Geramos uma lista de matrizes, onde cada lista se refere </span>
+    <span class="c1">#aos dados descocados de uma tempestade diferente</span>
+    <span class="n">xy_train</span> <span class="o">=</span> <span class="p">[</span><span class="n">shift_data</span><span class="p">(</span><span class="n">train</span><span class="p">[</span><span class="n">input_cols</span><span class="p">],</span><span class="n">shift</span><span class="p">,</span><span class="n">pred</span><span class="p">)</span> <span class="k">for</span> <span class="n">train</span> <span class="ow">in</span> <span class="n">train_storms</span><span class="p">]</span>
+    <span class="n">xy_val</span> <span class="o">=</span> <span class="p">[</span><span class="n">shift_data</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="n">input_cols</span><span class="p">],</span><span class="n">shift</span><span class="p">,</span><span class="n">pred</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">val_storms</span><span class="p">]</span>
+    <span class="n">xy_test</span> <span class="o">=</span> <span class="p">[</span><span class="n">shift_data</span><span class="p">(</span><span class="n">test</span><span class="p">[</span><span class="n">input_cols</span><span class="p">],</span><span class="n">shift</span><span class="p">,</span><span class="n">pred</span><span class="p">)</span> <span class="k">for</span> <span class="n">test</span> <span class="ow">in</span> <span class="n">test_storms</span><span class="p">]</span>
 
-    # Concatenação das matrizes para gerar os dados finais
-    xtrain = np.concatenate([x[0] for x in xy_train],axis=0)
-    ytrain = np.concatenate([y[1] for y in xy_train],axis=0)
+    <span class="c1"># Concatenação das matrizes para gerar os dados finais</span>
+    <span class="n">xtrain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xy_train</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">ytrain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">xy_train</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-    xval = np.concatenate([x[0] for x in xy_val],axis=0)
-    yval = np.concatenate([y[1] for y in xy_val],axis=0)
+    <span class="n">xval</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xy_val</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">yval</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">xy_val</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-    xtest = np.concatenate([x[0] for x in xy_test],axis=0)
-    ytest = np.concatenate([y[1] for y in xy_test],axis=0)
+    <span class="n">xtest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xy_test</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">ytest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">xy_test</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-    return xtrain, ytrain, xval, yval, xtest, ytest
-</code></pre>
-
-<pre><code class="python">%%time
-#O processo de split pode ser lento à depender de seu computador
-xtrain, ytrain, xval, yval, xtest, ytest = train_val_test_split(data_cleaned)
-
-xtrain.shape,ytrain.shape,xval.shape,yval.shape,xtest.shape,ytest.shape
-</code></pre>
-
-<pre><code>CPU times: user 1min 1s, sys: 363 ms, total: 1min 2s
-Wall time: 1min 1s
+    <span class="k">return</span> <span class="n">xtrain</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">,</span> <span class="n">xval</span><span class="p">,</span> <span class="n">yval</span><span class="p">,</span> <span class="n">xtest</span><span class="p">,</span> <span class="n">ytest</span>
+</code></pre></div>
 
 
+<div class="codehilite"><pre><span></span><code><span class="o">%%</span><span class="n">time</span>
+<span class="c1">#O processo de split pode ser lento à depender de seu computador</span>
+<span class="n">xtrain</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">,</span> <span class="n">xval</span><span class="p">,</span> <span class="n">yval</span><span class="p">,</span> <span class="n">xtest</span><span class="p">,</span> <span class="n">ytest</span> <span class="o">=</span> <span class="n">train_val_test_split</span><span class="p">(</span><span class="n">data_cleaned</span><span class="p">)</span>
+
+<span class="n">xtrain</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span><span class="n">ytrain</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span><span class="n">xval</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span><span class="n">yval</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span><span class="n">xtest</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span><span class="n">ytest</span><span class="o">.</span><span class="n">shape</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">CPU</span> <span class="n">times</span><span class="p">:</span> <span class="k">user</span> <span class="mi">1</span><span class="k">min</span> <span class="mi">1</span><span class="n">s</span><span class="p">,</span> <span class="n">sys</span><span class="p">:</span> <span class="mi">363</span> <span class="n">ms</span><span class="p">,</span> <span class="n">total</span><span class="p">:</span> <span class="mi">1</span><span class="k">min</span> <span class="mi">2</span><span class="n">s</span>
+<span class="n">Wall</span> <span class="k">time</span><span class="p">:</span> <span class="mi">1</span><span class="k">min</span> <span class="mi">1</span><span class="n">s</span>
 
 
 
-((14010, 3, 4), (14010, 2), (4401, 3, 4), (4401, 2), (18482, 3, 4), (18482, 2))
-</code></pre>
-<pre><code class="python">%%time
-## Modelo que usa sst, rhum e slp (Temperatura do mar, Umidade e Pressão)
-cols2 = input_cols +['sst','rhum','slp','cldc']
-cleaned2 = clean_data(data,cols2)
 
-xtrain2, ytrain2, xval2, yval2, xtest2, ytest2 = train_val_test_split(cleaned2,input_cols=cols2)
-</code></pre>
 
-<pre><code>CPU times: user 1min 32s, sys: 470 ms, total: 1min 32s
-Wall time: 1min 31s
-</code></pre>
-<pre><code class="python">xtrain2.shape
-</code></pre>
+<span class="p">((</span><span class="mi">14010</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="mi">14010</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">4401</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="mi">4401</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">18482</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="mi">18482</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+</code></pre></div>
 
-<pre><code>(14010, 3, 7)
-</code></pre>
+
+<div class="codehilite"><pre><span></span><code><span class="o">%%</span><span class="n">time</span>
+<span class="c1">## Modelo que usa sst, rhum e slp (Temperatura do mar, Umidade e Pressão)</span>
+<span class="n">cols2</span> <span class="o">=</span> <span class="n">input_cols</span> <span class="o">+</span><span class="p">[</span><span class="s1">&#39;sst&#39;</span><span class="p">,</span><span class="s1">&#39;rhum&#39;</span><span class="p">,</span><span class="s1">&#39;slp&#39;</span><span class="p">,</span><span class="s1">&#39;cldc&#39;</span><span class="p">]</span>
+<span class="n">cleaned2</span> <span class="o">=</span> <span class="n">clean_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="n">cols2</span><span class="p">)</span>
+
+<span class="n">xtrain2</span><span class="p">,</span> <span class="n">ytrain2</span><span class="p">,</span> <span class="n">xval2</span><span class="p">,</span> <span class="n">yval2</span><span class="p">,</span> <span class="n">xtest2</span><span class="p">,</span> <span class="n">ytest2</span> <span class="o">=</span> <span class="n">train_val_test_split</span><span class="p">(</span><span class="n">cleaned2</span><span class="p">,</span><span class="n">input_cols</span><span class="o">=</span><span class="n">cols2</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">CPU times: user 1min 32s, sys: 470 ms, total: 1min 32s</span>
+<span class="err">Wall time: 1min 31s</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">xtrain2</span><span class="o">.</span><span class="n">shape</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="err">(14010, 3, 7)</span>
+</code></pre></div>
+
+
 <h2 id="modelos-redes-neurais">Modelos - Redes Neurais</h2>
 <p>Vamos criar alguns modelos determinísticos e depois comparar a médias dos erros ao quadrado (MSE) nos dados de validação e teste. (Uma espécie de cross-validation).</p>
 <p>Segundo os artigos na qual usamos como referência (Veja Bibliografia), apenas uma camada interna é suficiente. Resta saber quantos neurônios usar, para isso avaliaremos os modelos com 3, 6, e 9 neurônios internos.</p>
@@ -383,499 +416,523 @@ Wall time: 1min 31s
 <p><strong>Índice de Modelos</strong></p>
 <ul>
 <li>
-<p><em>Model_ihj</em>  --&gt; Modelo com entrada de $i$ variáveis, $h$ neurônios na camada interna e $j$ pontos de saída (no nosso caso $j=2$ sempre)</p>
+<p><em>Model_ihj</em>  --&gt; Modelo com entrada de <script type="math/tex">i</script> variáveis, <script type="math/tex">h</script> neurônios na camada interna e <script type="math/tex">j</script> pontos de saída (no nosso caso <script type="math/tex">j=2</script> sempre)</p>
 </li>
 <li>
-<p><em>Model_4h2</em> --&gt; Modelo que usa as variáveis Tempo, Latitude, Longitude e Velocidame Máxima de Vento (4 variáveis) de três registros passados para prever a Latitude e Longitude do próximo registro (2 saídas) usando $h$ neurônios na camada interna. Aqui geraremos 3 modelos para os valores de h sendo 3, 6 e 9.</p>
+<p><em>Model_4h2</em> --&gt; Modelo que usa as variáveis Tempo, Latitude, Longitude e Velocidame Máxima de Vento (4 variáveis) de três registros passados para prever a Latitude e Longitude do próximo registro (2 saídas) usando <script type="math/tex">h</script> neurônios na camada interna. Aqui geraremos 3 modelos para os valores de h sendo 3, 6 e 9.</p>
 </li>
 <li>
 <p><em>Model_8h2</em> --&gt; Modelo similar ao anterior, porém utiliza quatro variáveis a mais como entrada: sst, rhum, slp, cldc; Representando Temperatura a nível do mar, Umidade, Pressão a nível do mar e Cobertura de Nuvens.</p>
 </li>
 </ul>
-<pre><code class="python"># Modelos tipo 4h2
-model_432 = tf.keras.models.Sequential([
-  tf.keras.layers.Flatten(input_shape=(3,4)),
-  tf.keras.layers.Dense(3, activation='sigmoid'),
-  tf.keras.layers.Dropout(0.15),
-  tf.keras.layers.Dense(2, activation='linear')
-])
+<div class="codehilite"><pre><span></span><code><span class="c1"># Modelos tipo 4h2</span>
+<span class="n">model_432</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Sequential</span><span class="p">([</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.15</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+<span class="p">])</span>
 
-model_462 = tf.keras.models.Sequential([
-  tf.keras.layers.Flatten(input_shape=(3,4)),
-  tf.keras.layers.Dense(6, activation='sigmoid'),
-  tf.keras.layers.Dropout(0.15),
-  tf.keras.layers.Dense(2, activation='linear')
-])
+<span class="n">model_462</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Sequential</span><span class="p">([</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.15</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+<span class="p">])</span>
 
-model_492 = tf.keras.models.Sequential([
-  tf.keras.layers.Flatten(input_shape=(3,4)),
-  tf.keras.layers.Dense(9, activation='sigmoid'),
-  tf.keras.layers.Dropout(0.15),
-  tf.keras.layers.Dense(2, activation='linear')
-])
+<span class="n">model_492</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Sequential</span><span class="p">([</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">)),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.15</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+<span class="p">])</span>
+</code></pre></div>
 
-</code></pre>
 
-<pre><code class="python"># Modelos tipo 8h2
-model_832 = tf.keras.models.Sequential([
-  tf.keras.layers.Flatten(input_shape=(3,8)),
-  tf.keras.layers.Dense(3, activation='sigmoid'),
-  tf.keras.layers.Dropout(0.15),
-  tf.keras.layers.Dense(2, activation='linear')
-])
+<div class="codehilite"><pre><span></span><code><span class="c1"># Modelos tipo 8h2</span>
+<span class="n">model_832</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Sequential</span><span class="p">([</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">8</span><span class="p">)),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.15</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+<span class="p">])</span>
 
-model_862 = tf.keras.models.Sequential([
-  tf.keras.layers.Flatten(input_shape=(3,8)),
-  tf.keras.layers.Dense(6, activation='sigmoid'),
-  tf.keras.layers.Dropout(0.15),
-  tf.keras.layers.Dense(2, activation='linear')
-])
+<span class="n">model_862</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Sequential</span><span class="p">([</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">8</span><span class="p">)),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.15</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+<span class="p">])</span>
 
-model_892 = tf.keras.models.Sequential([
-  tf.keras.layers.Flatten(input_shape=(3,8)),
-  tf.keras.layers.Dense(9, activation='sigmoid'),
-  tf.keras.layers.Dropout(0.15),
-  tf.keras.layers.Dense(2, activation='linear')
-])
+<span class="n">model_892</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Sequential</span><span class="p">([</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">8</span><span class="p">)),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="mf">0.15</span><span class="p">),</span>
+  <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+<span class="p">])</span>
+</code></pre></div>
 
-</code></pre>
 
-<pre><code class="python">loss_fn = tf.keras.losses.MeanSquaredError()
-optimizer = tf.keras.optimizers.Adam()
+<div class="codehilite"><pre><span></span><code><span class="n">loss_fn</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">MeanSquaredError</span><span class="p">()</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">Adam</span><span class="p">()</span>
 
-model_432.compile(optimizer=optimizer,
-              loss=loss_fn)
-model_462.compile(optimizer=optimizer,
-              loss=loss_fn)
-model_492.compile(optimizer=optimizer,
-              loss=loss_fn)
-model_832.compile(optimizer=optimizer,
-              loss=loss_fn)
-model_862.compile(optimizer=optimizer,
-              loss=loss_fn)
-model_892.compile(optimizer=optimizer,
-              loss=loss_fn)
-model_432.summary()
-</code></pre>
+<span class="n">model_432</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+              <span class="n">loss</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">)</span>
+<span class="n">model_462</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+              <span class="n">loss</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">)</span>
+<span class="n">model_492</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+              <span class="n">loss</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">)</span>
+<span class="n">model_832</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+              <span class="n">loss</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">)</span>
+<span class="n">model_862</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+              <span class="n">loss</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">)</span>
+<span class="n">model_892</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+              <span class="n">loss</span><span class="o">=</span><span class="n">loss_fn</span><span class="p">)</span>
+<span class="n">model_432</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+</code></pre></div>
 
-<pre><code>Model: "sequential_6"
-_________________________________________________________________
-Layer (type)                 Output Shape              Param #   
-=================================================================
-flatten_6 (Flatten)          (None, 12)                0         
-_________________________________________________________________
-dense_12 (Dense)             (None, 3)                 39        
-_________________________________________________________________
-dropout_6 (Dropout)          (None, 3)                 0         
-_________________________________________________________________
-dense_13 (Dense)             (None, 2)                 8         
-=================================================================
-Total params: 47
-Trainable params: 47
-Non-trainable params: 0
-_________________________________________________________________
-</code></pre>
-<pre><code class="python">%%time
 
-history_432 = model_432.fit(xtrain, ytrain, validation_data=(xval,yval), epochs=45, 
-                    verbose=0)
-history_462 = model_462.fit(xtrain, ytrain, validation_data=(xval,yval), epochs=45, 
-                    verbose=0)
-history_492 = model_492.fit(xtrain, ytrain, validation_data=(xval,yval), epochs=45, 
-                    verbose=1)
+<div class="codehilite"><pre><span></span><code><span class="c">Model: &quot;sequential_6&quot;</span>
+<span class="err">_________________________________________________________________</span>
+<span class="err">Layer (type)                 Output Shape              Param #   </span>
+<span class="err">=================================================================</span>
+<span class="err">flatten_6 (Flatten)          (None, 12)                0         </span>
+<span class="err">_________________________________________________________________</span>
+<span class="err">dense_12 (Dense)             (None, 3)                 39        </span>
+<span class="err">_________________________________________________________________</span>
+<span class="err">dropout_6 (Dropout)          (None, 3)                 0         </span>
+<span class="err">_________________________________________________________________</span>
+<span class="err">dense_13 (Dense)             (None, 2)                 8         </span>
+<span class="err">=================================================================</span>
+<span class="err">Total params: 47</span>
+<span class="err">Trainable params: 47</span>
+<span class="err">Non-trainable params: 0</span>
+<span class="err">_________________________________________________________________</span>
+</code></pre></div>
 
-</code></pre>
 
-<pre><code>Train on 14010 samples, validate on 4401 samples
-Epoch 1/45
-14010/14010 [==============================] - 1s 80us/sample - loss: 0.0757 - val_loss: 0.0101
-Epoch 2/45
-14010/14010 [==============================] - 1s 77us/sample - loss: 0.0779 - val_loss: 0.0099
-Epoch 3/45
-14010/14010 [==============================] - 1s 92us/sample - loss: 0.0779 - val_loss: 0.0109
-Epoch 4/45
-14010/14010 [==============================] - 2s 121us/sample - loss: 0.0760 - val_loss: 0.0100
-Epoch 5/45
-14010/14010 [==============================] - 2s 111us/sample - loss: 0.0767 - val_loss: 0.0096
-Epoch 6/45
-14010/14010 [==============================] - 2s 152us/sample - loss: 0.0742 - val_loss: 0.0121
-Epoch 7/45
-14010/14010 [==============================] - 1s 90us/sample - loss: 0.0766 - val_loss: 0.0119
-Epoch 8/45
-14010/14010 [==============================] - 1s 73us/sample - loss: 0.0758 - val_loss: 0.0108
-Epoch 9/45
-14010/14010 [==============================] - 1s 71us/sample - loss: 0.0779 - val_loss: 0.0107
-Epoch 10/45
-14010/14010 [==============================] - 1s 78us/sample - loss: 0.0747 - val_loss: 0.0097
-Epoch 11/45
-14010/14010 [==============================] - 1s 74us/sample - loss: 0.0771 - val_loss: 0.0106
-Epoch 12/45
-14010/14010 [==============================] - 1s 74us/sample - loss: 0.0776 - val_loss: 0.0102
-Epoch 13/45
-14010/14010 [==============================] - 1s 75us/sample - loss: 0.0786 - val_loss: 0.0102
-Epoch 14/45
-14010/14010 [==============================] - 1s 75us/sample - loss: 0.0782 - val_loss: 0.0099
-Epoch 15/45
-14010/14010 [==============================] - 1s 77us/sample - loss: 0.0783 - val_loss: 0.0106
-Epoch 16/45
-14010/14010 [==============================] - 1s 75us/sample - loss: 0.0774 - val_loss: 0.0098
-Epoch 17/45
-14010/14010 [==============================] - 1s 77us/sample - loss: 0.0758 - val_loss: 0.0102
-Epoch 18/45
-14010/14010 [==============================] - 1s 78us/sample - loss: 0.0783 - val_loss: 0.0099
-Epoch 19/45
-14010/14010 [==============================] - 2s 115us/sample - loss: 0.0749 - val_loss: 0.0103
-Epoch 20/45
-14010/14010 [==============================] - 2s 134us/sample - loss: 0.0789 - val_loss: 0.0093
-Epoch 21/45
-14010/14010 [==============================] - 2s 135us/sample - loss: 0.0778 - val_loss: 0.0104
-Epoch 22/45
-14010/14010 [==============================] - 1s 83us/sample - loss: 0.0761 - val_loss: 0.0093
-Epoch 23/45
-14010/14010 [==============================] - 1s 91us/sample - loss: 0.0763 - val_loss: 0.0105
-Epoch 24/45
-14010/14010 [==============================] - 2s 115us/sample - loss: 0.0769 - val_loss: 0.0095
-Epoch 25/45
-14010/14010 [==============================] - 1s 99us/sample - loss: 0.0812 - val_loss: 0.0086
-Epoch 26/45
-14010/14010 [==============================] - 2s 114us/sample - loss: 0.0768 - val_loss: 0.0106
-Epoch 27/45
-14010/14010 [==============================] - 1s 100us/sample - loss: 0.0782 - val_loss: 0.0101
-Epoch 28/45
-14010/14010 [==============================] - 1s 78us/sample - loss: 0.0767 - val_loss: 0.0083
-Epoch 29/45
-14010/14010 [==============================] - 1s 77us/sample - loss: 0.0795 - val_loss: 0.0094
-Epoch 30/45
-14010/14010 [==============================] - 1s 75us/sample - loss: 0.0779 - val_loss: 0.0104
-Epoch 31/45
-14010/14010 [==============================] - 1s 75us/sample - loss: 0.0768 - val_loss: 0.0101
-Epoch 32/45
-14010/14010 [==============================] - 1s 77us/sample - loss: 0.0764 - val_loss: 0.0094
-Epoch 33/45
-14010/14010 [==============================] - 1s 74us/sample - loss: 0.0765 - val_loss: 0.0091
-Epoch 34/45
-14010/14010 [==============================] - 1s 76us/sample - loss: 0.0767 - val_loss: 0.0106
-Epoch 35/45
-14010/14010 [==============================] - 1s 70us/sample - loss: 0.0780 - val_loss: 0.0099
-Epoch 36/45
-14010/14010 [==============================] - 1s 74us/sample - loss: 0.0755 - val_loss: 0.0094
-Epoch 37/45
-14010/14010 [==============================] - 1s 72us/sample - loss: 0.0764 - val_loss: 0.0095
-Epoch 38/45
-14010/14010 [==============================] - 1s 72us/sample - loss: 0.0782 - val_loss: 0.0098
-Epoch 39/45
-14010/14010 [==============================] - 1s 73us/sample - loss: 0.0783 - val_loss: 0.0087
-Epoch 40/45
-14010/14010 [==============================] - 1s 72us/sample - loss: 0.0737 - val_loss: 0.0091
-Epoch 41/45
-14010/14010 [==============================] - 1s 72us/sample - loss: 0.0775 - val_loss: 0.0094
-Epoch 42/45
-14010/14010 [==============================] - 1s 75us/sample - loss: 0.0792 - val_loss: 0.0101
-Epoch 43/45
-14010/14010 [==============================] - 1s 78us/sample - loss: 0.0762 - val_loss: 0.0087
-Epoch 44/45
-14010/14010 [==============================] - 1s 73us/sample - loss: 0.0754 - val_loss: 0.0100
-Epoch 45/45
-14010/14010 [==============================] - 1s 73us/sample - loss: 0.0767 - val_loss: 0.0093
-CPU times: user 3min 50s, sys: 15.8 s, total: 4min 6s
-Wall time: 2min 50s
-</code></pre>
-<pre><code class="python">%%time
+<div class="codehilite"><pre><span></span><code><span class="o">%%</span><span class="n">time</span>
 
-history_832 = model_832.fit(xtrain2, ytrain2, validation_data=(xval2,yval2), epochs=45, 
-                    verbose=0)
-history_862 = model_862.fit(xtrain2, ytrain2, validation_data=(xval2,yval2), epochs=45, 
-                    verbose=0)
-history_892 = model_892.fit(xtrain2, ytrain2, validation_data=(xval2,yval2), epochs=45, 
-                    verbose=1)
-</code></pre>
+<span class="n">history_432</span> <span class="o">=</span> <span class="n">model_432</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">xtrain</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">xval</span><span class="p">,</span><span class="n">yval</span><span class="p">),</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> 
+                    <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">history_462</span> <span class="o">=</span> <span class="n">model_462</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">xtrain</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">xval</span><span class="p">,</span><span class="n">yval</span><span class="p">),</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> 
+                    <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">history_492</span> <span class="o">=</span> <span class="n">model_492</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">xtrain</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">xval</span><span class="p">,</span><span class="n">yval</span><span class="p">),</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> 
+                    <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
 
-<pre><code>Train on 14010 samples, validate on 4401 samples
-Epoch 1/45
-14010/14010 [==============================] - 2s 111us/sample - loss: 0.3210 - val_loss: 0.0874
-Epoch 2/45
-14010/14010 [==============================] - 1s 58us/sample - loss: 0.1670 - val_loss: 0.0666
-Epoch 3/45
-14010/14010 [==============================] - 1s 61us/sample - loss: 0.1460 - val_loss: 0.0563
-Epoch 4/45
-14010/14010 [==============================] - 1s 61us/sample - loss: 0.1326 - val_loss: 0.0473
-Epoch 5/45
-14010/14010 [==============================] - 1s 66us/sample - loss: 0.1232 - val_loss: 0.0398
-Epoch 6/45
-14010/14010 [==============================] - 1s 61us/sample - loss: 0.1170 - val_loss: 0.0334
-Epoch 7/45
-14010/14010 [==============================] - 1s 59us/sample - loss: 0.1055 - val_loss: 0.0274
-Epoch 8/45
-14010/14010 [==============================] - 1s 62us/sample - loss: 0.1025 - val_loss: 0.0236
-Epoch 9/45
-14010/14010 [==============================] - 1s 60us/sample - loss: 0.0974 - val_loss: 0.0209
-Epoch 10/45
-14010/14010 [==============================] - 1s 63us/sample - loss: 0.0945 - val_loss: 0.0191
-Epoch 11/45
-14010/14010 [==============================] - 1s 59us/sample - loss: 0.0924 - val_loss: 0.0179
-Epoch 12/45
-14010/14010 [==============================] - 1s 60us/sample - loss: 0.0893 - val_loss: 0.0174
-Epoch 13/45
-14010/14010 [==============================] - 1s 61us/sample - loss: 0.0884 - val_loss: 0.0182
-Epoch 14/45
-14010/14010 [==============================] - 1s 61us/sample - loss: 0.0874 - val_loss: 0.0178
-Epoch 15/45
-14010/14010 [==============================] - 1s 61us/sample - loss: 0.0844 - val_loss: 0.0163
-Epoch 16/45
-14010/14010 [==============================] - 1s 61us/sample - loss: 0.0847 - val_loss: 0.0155
-Epoch 17/45
-14010/14010 [==============================] - 1s 58us/sample - loss: 0.0852 - val_loss: 0.0161
-Epoch 18/45
-14010/14010 [==============================] - 1s 59us/sample - loss: 0.0871 - val_loss: 0.0157
-Epoch 19/45
-14010/14010 [==============================] - 1s 59us/sample - loss: 0.0825 - val_loss: 0.0161
-Epoch 20/45
-14010/14010 [==============================] - 1s 61us/sample - loss: 0.0817 - val_loss: 0.0148
-Epoch 21/45
-14010/14010 [==============================] - 1s 62us/sample - loss: 0.0853 - val_loss: 0.0149
-Epoch 22/45
-14010/14010 [==============================] - 1s 61us/sample - loss: 0.0833 - val_loss: 0.0158
-Epoch 23/45
-14010/14010 [==============================] - 1s 60us/sample - loss: 0.0804 - val_loss: 0.0156
-Epoch 24/45
-14010/14010 [==============================] - 1s 59us/sample - loss: 0.0819 - val_loss: 0.0144
-Epoch 25/45
-14010/14010 [==============================] - 1s 59us/sample - loss: 0.0836 - val_loss: 0.0142
-Epoch 26/45
-14010/14010 [==============================] - 1s 61us/sample - loss: 0.0830 - val_loss: 0.0146
-Epoch 27/45
-14010/14010 [==============================] - 1s 61us/sample - loss: 0.0834 - val_loss: 0.0146
-Epoch 28/45
-14010/14010 [==============================] - 1s 59us/sample - loss: 0.0831 - val_loss: 0.0153
-Epoch 29/45
-14010/14010 [==============================] - 1s 62us/sample - loss: 0.0812 - val_loss: 0.0141
-Epoch 30/45
-14010/14010 [==============================] - 1s 60us/sample - loss: 0.0820 - val_loss: 0.0141
-Epoch 31/45
-14010/14010 [==============================] - 1s 61us/sample - loss: 0.0822 - val_loss: 0.0132
-Epoch 32/45
-14010/14010 [==============================] - 1s 58us/sample - loss: 0.0810 - val_loss: 0.0129
-Epoch 33/45
-14010/14010 [==============================] - 1s 60us/sample - loss: 0.0824 - val_loss: 0.0147
-Epoch 34/45
-14010/14010 [==============================] - 1s 61us/sample - loss: 0.0812 - val_loss: 0.0138
-Epoch 35/45
-14010/14010 [==============================] - 1s 61us/sample - loss: 0.0816 - val_loss: 0.0138
-Epoch 36/45
-14010/14010 [==============================] - 1s 60us/sample - loss: 0.0803 - val_loss: 0.0121
-Epoch 37/45
-14010/14010 [==============================] - 1s 60us/sample - loss: 0.0767 - val_loss: 0.0133
-Epoch 38/45
-14010/14010 [==============================] - 1s 60us/sample - loss: 0.0780 - val_loss: 0.0125
-Epoch 39/45
-14010/14010 [==============================] - 1s 60us/sample - loss: 0.0783 - val_loss: 0.0133
-Epoch 40/45
-14010/14010 [==============================] - 1s 57us/sample - loss: 0.0795 - val_loss: 0.0121
-Epoch 41/45
-14010/14010 [==============================] - 1s 61us/sample - loss: 0.0784 - val_loss: 0.0121
-Epoch 42/45
-14010/14010 [==============================] - 1s 59us/sample - loss: 0.0807 - val_loss: 0.0121
-Epoch 43/45
-14010/14010 [==============================] - 1s 59us/sample - loss: 0.0780 - val_loss: 0.0125
-Epoch 44/45
-14010/14010 [==============================] - 1s 61us/sample - loss: 0.0811 - val_loss: 0.0144
-Epoch 45/45
-14010/14010 [==============================] - 1s 59us/sample - loss: 0.0791 - val_loss: 0.0134
-CPU times: user 3min 13s, sys: 12.5 s, total: 3min 25s
-Wall time: 2min 20s
-</code></pre>
-<pre><code class="python"># Salvando os modelos para uso futuro
-model_432.save('Saved_NN_Models/model_432.h5')
-model_462.save('Saved_NN_Models/model_462.h5')
-model_492.save('Saved_NN_Models/model_492.h5')
-model_832.save('Saved_NN_Models/model_832.h5')
-model_862.save('Saved_NN_Models/model_862.h5')
-model_892.save('Saved_NN_Models/model_892.h5')
 
-# Recreando os modelos dos arquivos salvos
-# model_432 = tf.keras.models.load_model('Saved_NN_Models/model_432.h5')
-# model_462 = tf.keras.models.load_model('Saved_NN_Models/model_462.h5')
-# model_492 = tf.keras.models.load_model('Saved_NN_Models/model_492.h5')
-# model_832 = tf.keras.models.load_model('Saved_NN_Models/model_832.h5')
-# model_862 = tf.keras.models.load_model('Saved_NN_Models/model_862.h5')
-# model_892 = tf.keras.models.load_model('Saved_NN_Models/model_892.h5')
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="err">Train on 14010 samples, validate on 4401 samples</span>
+<span class="err">Epoch 1/45</span>
+<span class="err">14010/14010 [==============================] - 1s 80us/sample - loss: 0.0757 - val_loss: 0.0101</span>
+<span class="err">Epoch 2/45</span>
+<span class="err">14010/14010 [==============================] - 1s 77us/sample - loss: 0.0779 - val_loss: 0.0099</span>
+<span class="err">Epoch 3/45</span>
+<span class="err">14010/14010 [==============================] - 1s 92us/sample - loss: 0.0779 - val_loss: 0.0109</span>
+<span class="err">Epoch 4/45</span>
+<span class="err">14010/14010 [==============================] - 2s 121us/sample - loss: 0.0760 - val_loss: 0.0100</span>
+<span class="err">Epoch 5/45</span>
+<span class="err">14010/14010 [==============================] - 2s 111us/sample - loss: 0.0767 - val_loss: 0.0096</span>
+<span class="err">Epoch 6/45</span>
+<span class="err">14010/14010 [==============================] - 2s 152us/sample - loss: 0.0742 - val_loss: 0.0121</span>
+<span class="err">Epoch 7/45</span>
+<span class="err">14010/14010 [==============================] - 1s 90us/sample - loss: 0.0766 - val_loss: 0.0119</span>
+<span class="err">Epoch 8/45</span>
+<span class="err">14010/14010 [==============================] - 1s 73us/sample - loss: 0.0758 - val_loss: 0.0108</span>
+<span class="err">Epoch 9/45</span>
+<span class="err">14010/14010 [==============================] - 1s 71us/sample - loss: 0.0779 - val_loss: 0.0107</span>
+<span class="err">Epoch 10/45</span>
+<span class="err">14010/14010 [==============================] - 1s 78us/sample - loss: 0.0747 - val_loss: 0.0097</span>
+<span class="err">Epoch 11/45</span>
+<span class="err">14010/14010 [==============================] - 1s 74us/sample - loss: 0.0771 - val_loss: 0.0106</span>
+<span class="err">Epoch 12/45</span>
+<span class="err">14010/14010 [==============================] - 1s 74us/sample - loss: 0.0776 - val_loss: 0.0102</span>
+<span class="err">Epoch 13/45</span>
+<span class="err">14010/14010 [==============================] - 1s 75us/sample - loss: 0.0786 - val_loss: 0.0102</span>
+<span class="err">Epoch 14/45</span>
+<span class="err">14010/14010 [==============================] - 1s 75us/sample - loss: 0.0782 - val_loss: 0.0099</span>
+<span class="err">Epoch 15/45</span>
+<span class="err">14010/14010 [==============================] - 1s 77us/sample - loss: 0.0783 - val_loss: 0.0106</span>
+<span class="err">Epoch 16/45</span>
+<span class="err">14010/14010 [==============================] - 1s 75us/sample - loss: 0.0774 - val_loss: 0.0098</span>
+<span class="err">Epoch 17/45</span>
+<span class="err">14010/14010 [==============================] - 1s 77us/sample - loss: 0.0758 - val_loss: 0.0102</span>
+<span class="err">Epoch 18/45</span>
+<span class="err">14010/14010 [==============================] - 1s 78us/sample - loss: 0.0783 - val_loss: 0.0099</span>
+<span class="err">Epoch 19/45</span>
+<span class="err">14010/14010 [==============================] - 2s 115us/sample - loss: 0.0749 - val_loss: 0.0103</span>
+<span class="err">Epoch 20/45</span>
+<span class="err">14010/14010 [==============================] - 2s 134us/sample - loss: 0.0789 - val_loss: 0.0093</span>
+<span class="err">Epoch 21/45</span>
+<span class="err">14010/14010 [==============================] - 2s 135us/sample - loss: 0.0778 - val_loss: 0.0104</span>
+<span class="err">Epoch 22/45</span>
+<span class="err">14010/14010 [==============================] - 1s 83us/sample - loss: 0.0761 - val_loss: 0.0093</span>
+<span class="err">Epoch 23/45</span>
+<span class="err">14010/14010 [==============================] - 1s 91us/sample - loss: 0.0763 - val_loss: 0.0105</span>
+<span class="err">Epoch 24/45</span>
+<span class="err">14010/14010 [==============================] - 2s 115us/sample - loss: 0.0769 - val_loss: 0.0095</span>
+<span class="err">Epoch 25/45</span>
+<span class="err">14010/14010 [==============================] - 1s 99us/sample - loss: 0.0812 - val_loss: 0.0086</span>
+<span class="err">Epoch 26/45</span>
+<span class="err">14010/14010 [==============================] - 2s 114us/sample - loss: 0.0768 - val_loss: 0.0106</span>
+<span class="err">Epoch 27/45</span>
+<span class="err">14010/14010 [==============================] - 1s 100us/sample - loss: 0.0782 - val_loss: 0.0101</span>
+<span class="err">Epoch 28/45</span>
+<span class="err">14010/14010 [==============================] - 1s 78us/sample - loss: 0.0767 - val_loss: 0.0083</span>
+<span class="err">Epoch 29/45</span>
+<span class="err">14010/14010 [==============================] - 1s 77us/sample - loss: 0.0795 - val_loss: 0.0094</span>
+<span class="err">Epoch 30/45</span>
+<span class="err">14010/14010 [==============================] - 1s 75us/sample - loss: 0.0779 - val_loss: 0.0104</span>
+<span class="err">Epoch 31/45</span>
+<span class="err">14010/14010 [==============================] - 1s 75us/sample - loss: 0.0768 - val_loss: 0.0101</span>
+<span class="err">Epoch 32/45</span>
+<span class="err">14010/14010 [==============================] - 1s 77us/sample - loss: 0.0764 - val_loss: 0.0094</span>
+<span class="err">Epoch 33/45</span>
+<span class="err">14010/14010 [==============================] - 1s 74us/sample - loss: 0.0765 - val_loss: 0.0091</span>
+<span class="err">Epoch 34/45</span>
+<span class="err">14010/14010 [==============================] - 1s 76us/sample - loss: 0.0767 - val_loss: 0.0106</span>
+<span class="err">Epoch 35/45</span>
+<span class="err">14010/14010 [==============================] - 1s 70us/sample - loss: 0.0780 - val_loss: 0.0099</span>
+<span class="err">Epoch 36/45</span>
+<span class="err">14010/14010 [==============================] - 1s 74us/sample - loss: 0.0755 - val_loss: 0.0094</span>
+<span class="err">Epoch 37/45</span>
+<span class="err">14010/14010 [==============================] - 1s 72us/sample - loss: 0.0764 - val_loss: 0.0095</span>
+<span class="err">Epoch 38/45</span>
+<span class="err">14010/14010 [==============================] - 1s 72us/sample - loss: 0.0782 - val_loss: 0.0098</span>
+<span class="err">Epoch 39/45</span>
+<span class="err">14010/14010 [==============================] - 1s 73us/sample - loss: 0.0783 - val_loss: 0.0087</span>
+<span class="err">Epoch 40/45</span>
+<span class="err">14010/14010 [==============================] - 1s 72us/sample - loss: 0.0737 - val_loss: 0.0091</span>
+<span class="err">Epoch 41/45</span>
+<span class="err">14010/14010 [==============================] - 1s 72us/sample - loss: 0.0775 - val_loss: 0.0094</span>
+<span class="err">Epoch 42/45</span>
+<span class="err">14010/14010 [==============================] - 1s 75us/sample - loss: 0.0792 - val_loss: 0.0101</span>
+<span class="err">Epoch 43/45</span>
+<span class="err">14010/14010 [==============================] - 1s 78us/sample - loss: 0.0762 - val_loss: 0.0087</span>
+<span class="err">Epoch 44/45</span>
+<span class="err">14010/14010 [==============================] - 1s 73us/sample - loss: 0.0754 - val_loss: 0.0100</span>
+<span class="err">Epoch 45/45</span>
+<span class="err">14010/14010 [==============================] - 1s 73us/sample - loss: 0.0767 - val_loss: 0.0093</span>
+<span class="err">CPU times: user 3min 50s, sys: 15.8 s, total: 4min 6s</span>
+<span class="err">Wall time: 2min 50s</span>
+</code></pre></div>
 
-<pre><code class="python">models4 = [model_432,model_462,model_492]
-models8 = [model_832,model_862,model_892]
-history_list = [history_432,history_462,history_492,history_832,history_862,history_892]
 
-labels = [&quot;4-3-2&quot;,'4-6-2','4-9-2',&quot;8-3-2&quot;,'8-6-2','8-9-2']
-fig,ax = plt.subplots(1,1,figsize=(10,6))
+<div class="codehilite"><pre><span></span><code><span class="o">%%</span><span class="n">time</span>
 
-test_mse = []
-train_mse = []
-val_mse = []
-for model in models4:
-    test_mse.append(model.evaluate(xtest,ytest,verbose=0))
-for model in models8:
-    test_mse.append(model.evaluate(xtest2,ytest2,verbose=0))
-for history in history_list:
-    train_mse.append(np.mean(history.history['loss']))
-    val_mse.append(np.mean(history.history['val_loss']))
-wid = 0.8/3-0.0001
-ax.set_title(&quot;Perda (MSE) dos Modelos - Dados de Teste&quot;,fontsize=16)
-ax.set_ylabel(&quot;MSE&quot;,fontsize=14)
-ax.bar(np.arange(0,6)-wid,train_mse,label=&quot;Treino&quot;,width = wid)
-ax.bar(np.arange(0,6),val_mse,label='Validação',width = wid)
-ax.bar(np.arange(0,6)+wid,test_mse,label = &quot;Teste&quot;,width = wid)
-ax.set_xticklabels(['0']+labels,fontsize=12)
-ax.legend(loc='best',fontsize=14);
-plt.savefig('figs/NN_Models_MSE.jpg')
+<span class="n">history_832</span> <span class="o">=</span> <span class="n">model_832</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">xtrain2</span><span class="p">,</span> <span class="n">ytrain2</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">xval2</span><span class="p">,</span><span class="n">yval2</span><span class="p">),</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> 
+                    <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">history_862</span> <span class="o">=</span> <span class="n">model_862</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">xtrain2</span><span class="p">,</span> <span class="n">ytrain2</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">xval2</span><span class="p">,</span><span class="n">yval2</span><span class="p">),</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> 
+                    <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">history_892</span> <span class="o">=</span> <span class="n">model_892</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">xtrain2</span><span class="p">,</span> <span class="n">ytrain2</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">xval2</span><span class="p">,</span><span class="n">yval2</span><span class="p">),</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span> 
+                    <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
 
-</code></pre>
+
+<div class="codehilite"><pre><span></span><code><span class="err">Train on 14010 samples, validate on 4401 samples</span>
+<span class="err">Epoch 1/45</span>
+<span class="err">14010/14010 [==============================] - 2s 111us/sample - loss: 0.3210 - val_loss: 0.0874</span>
+<span class="err">Epoch 2/45</span>
+<span class="err">14010/14010 [==============================] - 1s 58us/sample - loss: 0.1670 - val_loss: 0.0666</span>
+<span class="err">Epoch 3/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.1460 - val_loss: 0.0563</span>
+<span class="err">Epoch 4/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.1326 - val_loss: 0.0473</span>
+<span class="err">Epoch 5/45</span>
+<span class="err">14010/14010 [==============================] - 1s 66us/sample - loss: 0.1232 - val_loss: 0.0398</span>
+<span class="err">Epoch 6/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.1170 - val_loss: 0.0334</span>
+<span class="err">Epoch 7/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.1055 - val_loss: 0.0274</span>
+<span class="err">Epoch 8/45</span>
+<span class="err">14010/14010 [==============================] - 1s 62us/sample - loss: 0.1025 - val_loss: 0.0236</span>
+<span class="err">Epoch 9/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0974 - val_loss: 0.0209</span>
+<span class="err">Epoch 10/45</span>
+<span class="err">14010/14010 [==============================] - 1s 63us/sample - loss: 0.0945 - val_loss: 0.0191</span>
+<span class="err">Epoch 11/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0924 - val_loss: 0.0179</span>
+<span class="err">Epoch 12/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0893 - val_loss: 0.0174</span>
+<span class="err">Epoch 13/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0884 - val_loss: 0.0182</span>
+<span class="err">Epoch 14/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0874 - val_loss: 0.0178</span>
+<span class="err">Epoch 15/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0844 - val_loss: 0.0163</span>
+<span class="err">Epoch 16/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0847 - val_loss: 0.0155</span>
+<span class="err">Epoch 17/45</span>
+<span class="err">14010/14010 [==============================] - 1s 58us/sample - loss: 0.0852 - val_loss: 0.0161</span>
+<span class="err">Epoch 18/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0871 - val_loss: 0.0157</span>
+<span class="err">Epoch 19/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0825 - val_loss: 0.0161</span>
+<span class="err">Epoch 20/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0817 - val_loss: 0.0148</span>
+<span class="err">Epoch 21/45</span>
+<span class="err">14010/14010 [==============================] - 1s 62us/sample - loss: 0.0853 - val_loss: 0.0149</span>
+<span class="err">Epoch 22/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0833 - val_loss: 0.0158</span>
+<span class="err">Epoch 23/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0804 - val_loss: 0.0156</span>
+<span class="err">Epoch 24/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0819 - val_loss: 0.0144</span>
+<span class="err">Epoch 25/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0836 - val_loss: 0.0142</span>
+<span class="err">Epoch 26/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0830 - val_loss: 0.0146</span>
+<span class="err">Epoch 27/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0834 - val_loss: 0.0146</span>
+<span class="err">Epoch 28/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0831 - val_loss: 0.0153</span>
+<span class="err">Epoch 29/45</span>
+<span class="err">14010/14010 [==============================] - 1s 62us/sample - loss: 0.0812 - val_loss: 0.0141</span>
+<span class="err">Epoch 30/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0820 - val_loss: 0.0141</span>
+<span class="err">Epoch 31/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0822 - val_loss: 0.0132</span>
+<span class="err">Epoch 32/45</span>
+<span class="err">14010/14010 [==============================] - 1s 58us/sample - loss: 0.0810 - val_loss: 0.0129</span>
+<span class="err">Epoch 33/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0824 - val_loss: 0.0147</span>
+<span class="err">Epoch 34/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0812 - val_loss: 0.0138</span>
+<span class="err">Epoch 35/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0816 - val_loss: 0.0138</span>
+<span class="err">Epoch 36/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0803 - val_loss: 0.0121</span>
+<span class="err">Epoch 37/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0767 - val_loss: 0.0133</span>
+<span class="err">Epoch 38/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0780 - val_loss: 0.0125</span>
+<span class="err">Epoch 39/45</span>
+<span class="err">14010/14010 [==============================] - 1s 60us/sample - loss: 0.0783 - val_loss: 0.0133</span>
+<span class="err">Epoch 40/45</span>
+<span class="err">14010/14010 [==============================] - 1s 57us/sample - loss: 0.0795 - val_loss: 0.0121</span>
+<span class="err">Epoch 41/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0784 - val_loss: 0.0121</span>
+<span class="err">Epoch 42/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0807 - val_loss: 0.0121</span>
+<span class="err">Epoch 43/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0780 - val_loss: 0.0125</span>
+<span class="err">Epoch 44/45</span>
+<span class="err">14010/14010 [==============================] - 1s 61us/sample - loss: 0.0811 - val_loss: 0.0144</span>
+<span class="err">Epoch 45/45</span>
+<span class="err">14010/14010 [==============================] - 1s 59us/sample - loss: 0.0791 - val_loss: 0.0134</span>
+<span class="err">CPU times: user 3min 13s, sys: 12.5 s, total: 3min 25s</span>
+<span class="err">Wall time: 2min 20s</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># Salvando os modelos para uso futuro</span>
+<span class="n">model_432</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;Saved_NN_Models/model_432.h5&#39;</span><span class="p">)</span>
+<span class="n">model_462</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;Saved_NN_Models/model_462.h5&#39;</span><span class="p">)</span>
+<span class="n">model_492</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;Saved_NN_Models/model_492.h5&#39;</span><span class="p">)</span>
+<span class="n">model_832</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;Saved_NN_Models/model_832.h5&#39;</span><span class="p">)</span>
+<span class="n">model_862</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;Saved_NN_Models/model_862.h5&#39;</span><span class="p">)</span>
+<span class="n">model_892</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;Saved_NN_Models/model_892.h5&#39;</span><span class="p">)</span>
+
+<span class="c1"># Recreando os modelos dos arquivos salvos</span>
+<span class="c1"># model_432 = tf.keras.models.load_model(&#39;Saved_NN_Models/model_432.h5&#39;)</span>
+<span class="c1"># model_462 = tf.keras.models.load_model(&#39;Saved_NN_Models/model_462.h5&#39;)</span>
+<span class="c1"># model_492 = tf.keras.models.load_model(&#39;Saved_NN_Models/model_492.h5&#39;)</span>
+<span class="c1"># model_832 = tf.keras.models.load_model(&#39;Saved_NN_Models/model_832.h5&#39;)</span>
+<span class="c1"># model_862 = tf.keras.models.load_model(&#39;Saved_NN_Models/model_862.h5&#39;)</span>
+<span class="c1"># model_892 = tf.keras.models.load_model(&#39;Saved_NN_Models/model_892.h5&#39;)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">models4</span> <span class="o">=</span> <span class="p">[</span><span class="n">model_432</span><span class="p">,</span><span class="n">model_462</span><span class="p">,</span><span class="n">model_492</span><span class="p">]</span>
+<span class="n">models8</span> <span class="o">=</span> <span class="p">[</span><span class="n">model_832</span><span class="p">,</span><span class="n">model_862</span><span class="p">,</span><span class="n">model_892</span><span class="p">]</span>
+<span class="n">history_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">history_432</span><span class="p">,</span><span class="n">history_462</span><span class="p">,</span><span class="n">history_492</span><span class="p">,</span><span class="n">history_832</span><span class="p">,</span><span class="n">history_862</span><span class="p">,</span><span class="n">history_892</span><span class="p">]</span>
+
+<span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;4-3-2&quot;</span><span class="p">,</span><span class="s1">&#39;4-6-2&#39;</span><span class="p">,</span><span class="s1">&#39;4-9-2&#39;</span><span class="p">,</span><span class="s2">&quot;8-3-2&quot;</span><span class="p">,</span><span class="s1">&#39;8-6-2&#39;</span><span class="p">,</span><span class="s1">&#39;8-9-2&#39;</span><span class="p">]</span>
+<span class="n">fig</span><span class="p">,</span><span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+
+<span class="n">test_mse</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">train_mse</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">val_mse</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models4</span><span class="p">:</span>
+    <span class="n">test_mse</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">xtest</span><span class="p">,</span><span class="n">ytest</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models8</span><span class="p">:</span>
+    <span class="n">test_mse</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">xtest2</span><span class="p">,</span><span class="n">ytest2</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">history</span> <span class="ow">in</span> <span class="n">history_list</span><span class="p">:</span>
+    <span class="n">train_mse</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;loss&#39;</span><span class="p">]))</span>
+    <span class="n">val_mse</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">history</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;val_loss&#39;</span><span class="p">]))</span>
+<span class="n">wid</span> <span class="o">=</span> <span class="mf">0.8</span><span class="o">/</span><span class="mi">3</span><span class="o">-</span><span class="mf">0.0001</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Perda (MSE) dos Modelos - Dados de Teste&quot;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;MSE&quot;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">6</span><span class="p">)</span><span class="o">-</span><span class="n">wid</span><span class="p">,</span><span class="n">train_mse</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;Treino&quot;</span><span class="p">,</span><span class="n">width</span> <span class="o">=</span> <span class="n">wid</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">6</span><span class="p">),</span><span class="n">val_mse</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;Validação&#39;</span><span class="p">,</span><span class="n">width</span> <span class="o">=</span> <span class="n">wid</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">6</span><span class="p">)</span><span class="o">+</span><span class="n">wid</span><span class="p">,</span><span class="n">test_mse</span><span class="p">,</span><span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;Teste&quot;</span><span class="p">,</span><span class="n">width</span> <span class="o">=</span> <span class="n">wid</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([</span><span class="s1">&#39;0&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">labels</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;figs/NN_Models_MSE.jpg&#39;</span><span class="p">)</span>
+</code></pre></div>
+
 
 <p><img alt="png" src="../NN-TrackPrediction_files/NN-TrackPrediction_22_0.png" /></p>
 <p>Vemos que os modelos 4-9-2 e 8-9-2 performaram melhor em todos os conjuntos de dados. Vemos que 9 neurônios internos performam muito bem. Vamos trabalhar com esses modelos a partir daqui. Em especial, com o 8-9-2 que apesar de ter uma maior perda do que o 4-9-2, ele utiliza uma maior quantidade de informações climáticas.</p>
-<pre><code class="python"># plot accuracy and loss for the test set
-fig, (ax,ax1) = plt.subplots(1,2, figsize=(20,6))
+<div class="codehilite"><pre><span></span><code><span class="c1"># plot accuracy and loss for the test set</span>
+<span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax</span><span class="p">,</span><span class="n">ax1</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
 
-ax.plot(history_492.history['loss'])
-ax.plot(history_492.history['val_loss'])
-ax.set_title('4-9-2 MSE',fontsize=16)
-ax.set_ylabel('MSE')
-ax.set_xlabel('epoch')
-ax.legend(['Treino', 'Validação'], fontsize=14,loc='best')
-ax1.plot(history_892.history['loss'])
-ax1.plot(history_892.history['val_loss'])
-ax1.set_title('8-9-2 MSE',fontsize = 16)
-ax1.set_ylabel('MSE')
-ax1.set_xlabel('epoch')
-ax1.legend(['Treino', 'Validação'], fontsize=14,loc='best');
-plt.savefig('figs/MSE-epoch.jpg')
-</code></pre>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history_492</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;loss&#39;</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history_492</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;val_loss&#39;</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;4-9-2 MSE&#39;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;MSE&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;epoch&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s1">&#39;Treino&#39;</span><span class="p">,</span> <span class="s1">&#39;Validação&#39;</span><span class="p">],</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history_892</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;loss&#39;</span><span class="p">])</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">history_892</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">&#39;val_loss&#39;</span><span class="p">])</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;8-9-2 MSE&#39;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">16</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;MSE&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;epoch&#39;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">([</span><span class="s1">&#39;Treino&#39;</span><span class="p">,</span> <span class="s1">&#39;Validação&#39;</span><span class="p">],</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;figs/MSE-epoch.jpg&#39;</span><span class="p">)</span>
+</code></pre></div>
+
 
 <p><img alt="png" src="../NN-TrackPrediction_files/NN-TrackPrediction_24_0.png" /></p>
-<pre><code class="python">from sklearn.metrics import r2_score
-ypred = model_892.predict(xtest2)
-# from sklearn.linear_model import LinearRegression
-# lr = LinearRegression().fit(ytest,ypred)
-# lr.score(ytest,ypred)
-lat_r2 = r2_score(ytest2[:,0],ypred[:,0])
-lon_r2 = r2_score(ytest2[:,1],ypred[:,1])
-tot_r2 = r2_score(ytest2,ypred)
-print(f&quot;R2 Latitude Teste - {lat_r2}&quot;)
-print(f&quot;R2 Longitude Teste - {lon_r2}&quot;)
-print(f&quot;R2 Total Teste - {tot_r2}&quot;)
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">r2_score</span>
+<span class="n">ypred</span> <span class="o">=</span> <span class="n">model_892</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">xtest2</span><span class="p">)</span>
+<span class="c1"># from sklearn.linear_model import LinearRegression</span>
+<span class="c1"># lr = LinearRegression().fit(ytest,ypred)</span>
+<span class="c1"># lr.score(ytest,ypred)</span>
+<span class="n">lat_r2</span> <span class="o">=</span> <span class="n">r2_score</span><span class="p">(</span><span class="n">ytest2</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span><span class="n">ypred</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">lon_r2</span> <span class="o">=</span> <span class="n">r2_score</span><span class="p">(</span><span class="n">ytest2</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span><span class="n">ypred</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">tot_r2</span> <span class="o">=</span> <span class="n">r2_score</span><span class="p">(</span><span class="n">ytest2</span><span class="p">,</span><span class="n">ypred</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;R2 Latitude Teste - </span><span class="si">{</span><span class="n">lat_r2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;R2 Longitude Teste - </span><span class="si">{</span><span class="n">lon_r2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;R2 Total Teste - </span><span class="si">{</span><span class="n">tot_r2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-fig, (ax,ax1) = plt.subplots(1,2,figsize=(18,6))
-ax.set_title(&quot;Latitude Real vs Prevista (Teste 8-9-2)&quot;,fontsize=16)
-ax.set_xlabel(&quot;Real&quot;,fontsize = 13)
-ax.set_ylabel(&quot;Prevista&quot;,fontsize = 13)
-ax.scatter(ytest2[:,0],ypred[:,0],alpha = 0.75, color = 'g',label = f&quot;R2 = {round(lat_r2,3)}&quot;)
-ax.legend(loc='best', fontsize = 13)
-ax1.set_title(&quot;Longitude Real vs Prevista (Teste 8-9-2)&quot;,fontsize=16)
-ax1.set_xlabel(&quot;Real&quot;,fontsize = 13)
-ax1.set_ylabel(&quot;Prevista&quot;,fontsize = 13)
-ax1.scatter(ytest2[:,1],ypred[:,1],alpha = 0.75, color = 'g',label = f&quot;R2 = {round(lon_r2,3)}&quot;)
-ax1.legend(loc='best', fontsize = 13);
-plt.savefig('figs/lat_lon_teste.jpg')
-</code></pre>
+<span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax</span><span class="p">,</span><span class="n">ax1</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Latitude Real vs Prevista (Teste 8-9-2)&quot;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Real&quot;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Prevista&quot;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ytest2</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span><span class="n">ypred</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span><span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;g&#39;</span><span class="p">,</span><span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;R2 = </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">lat_r2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">,</span> <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">13</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Longitude Real vs Prevista (Teste 8-9-2)&quot;</span><span class="p">,</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Real&quot;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">13</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;Prevista&quot;</span><span class="p">,</span><span class="n">fontsize</span> <span class="o">=</span> <span class="mi">13</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ytest2</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span><span class="n">ypred</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span><span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">,</span> <span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;g&#39;</span><span class="p">,</span><span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;R2 = </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">lon_r2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">,</span> <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">13</span><span class="p">);</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;figs/lat_lon_teste.jpg&#39;</span><span class="p">)</span>
+</code></pre></div>
 
-<pre><code>R2 Latitude Teste - 0.988149240276217
-R2 Longitude Teste - 0.9864725794069319
-R2 Total Teste - 0.9873109098415744
-</code></pre>
+
+<div class="codehilite"><pre><span></span><code><span class="err">R2 Latitude Teste - 0.988149240276217</span>
+<span class="err">R2 Longitude Teste - 0.9864725794069319</span>
+<span class="err">R2 Total Teste - 0.9873109098415744</span>
+</code></pre></div>
+
+
 <p><img alt="png" src="../NN-TrackPrediction_files/NN-TrackPrediction_25_1.png" /></p>
-<pre><code class="python">tf.keras.utils.plot_model(
-    model_892,
-    to_file='figs/model_892.png', 
-    show_shapes=True, 
-    show_layer_names=True,
-    rankdir='TB',
-    expand_nested=False,
-    dpi=96
-)
-# plt.savefig('figs/model892.jpg')
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">plot_model</span><span class="p">(</span>
+    <span class="n">model_892</span><span class="p">,</span>
+    <span class="n">to_file</span><span class="o">=</span><span class="s1">&#39;figs/model_892.png&#39;</span><span class="p">,</span> 
+    <span class="n">show_shapes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+    <span class="n">show_layer_names</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">rankdir</span><span class="o">=</span><span class="s1">&#39;TB&#39;</span><span class="p">,</span>
+    <span class="n">expand_nested</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">dpi</span><span class="o">=</span><span class="mi">96</span>
+<span class="p">)</span>
+<span class="c1"># plt.savefig(&#39;figs/model892.jpg&#39;)</span>
+</code></pre></div>
+
 
 <p><img alt="png" src="../NN-TrackPrediction_files/NN-TrackPrediction_26_0.png" /></p>
-<pre><code class="python">data_test = data.loc[int(n*0.9):,:]
-data_test.loc[:,'Hours'] = (data_test.loc[:,'Time_new']-pd.Timestamp(1951,1,1))/pd.Timedelta('1 hour')
-# data_test[data_test.Category==&quot;Category 3&quot;]
-irene = data_test[data_test.ID=='AL092011']
-irene.loc[:,cols2]=standard_scale(irene,cols2)
-ir = irene.loc[:,cols2]
+<div class="codehilite"><pre><span></span><code><span class="n">data_test</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="mf">0.9</span><span class="p">):,:]</span>
+<span class="n">data_test</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">&#39;Hours&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">data_test</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">&#39;Time_new&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="mi">1951</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s1">&#39;1 hour&#39;</span><span class="p">)</span>
+<span class="c1"># data_test[data_test.Category==&quot;Category 3&quot;]</span>
+<span class="n">irene</span> <span class="o">=</span> <span class="n">data_test</span><span class="p">[</span><span class="n">data_test</span><span class="o">.</span><span class="n">ID</span><span class="o">==</span><span class="s1">&#39;AL092011&#39;</span><span class="p">]</span>
+<span class="n">irene</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">cols2</span><span class="p">]</span><span class="o">=</span><span class="n">standard_scale</span><span class="p">(</span><span class="n">irene</span><span class="p">,</span><span class="n">cols2</span><span class="p">)</span>
+<span class="n">ir</span> <span class="o">=</span> <span class="n">irene</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">cols2</span><span class="p">]</span>
 
-def predict(storm,model,shift=3,pred=1):
-    storm = storm.set_index(np.arange(0,len(storm)))
-    y_pred=[]
-    for i in range(0,len(storm)-shift-1):
-        x = []
-        for j in range(i,i+shift):
-            x.append(storm.loc[j,:])
-#         if i == 0:
-#             print(np.expand_dims(np.asarray(x), axis=0).shape)
-#             print(np.expand_dims(np.asarray(x),axis=0)[0,0,0])
-        y_pred.append(model.predict(np.expand_dims(np.asarray(x),axis=0)).ravel())
-        del x
-    return np.array(y_pred)
-y_pred = predict(ir,model_892)
-y_pred.shape
-</code></pre>
-
-<pre><code>(39, 2)
-</code></pre>
-<pre><code class="python">ir_plot = ir.iloc[0:-4,:]
-fig,ax = plt.subplots(1,2,figsize=(10,4))
-fig.suptitle(&quot;Hurricane Irene - 2011&quot;, fontsize=16,y=1.08)
-ax[0].set_title(&quot;Latitude&quot;)
-ax[1].set_title(&quot;Longitude&quot;)
-print(r2_score(ir_plot.Latitude,y_pred[:,0]))
-print(r2_score(ir_plot.Longitude,y_pred[:,1]))
-ax[0].scatter(ir_plot.Hours,ir_plot.Latitude,label = 'True')
-ax[0].scatter(ir_plot.Hours,y_pred[:,0],label = 'Predicted')
-ax[1].scatter(ir_plot.Hours,ir_plot.Longitude,label = 'True')
-ax[1].scatter(ir_plot.Hours,y_pred[:,1],label = 'Predicted')
-ax[0].legend(loc='best')
-ax[1].legend(loc='best')
-</code></pre>
-
-<pre><code>0.9124620701244499
-0.8651593770302984
+<span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">storm</span><span class="p">,</span><span class="n">model</span><span class="p">,</span><span class="n">shift</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">pred</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">storm</span> <span class="o">=</span> <span class="n">storm</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">storm</span><span class="p">)))</span>
+    <span class="n">y_pred</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">storm</span><span class="p">)</span><span class="o">-</span><span class="n">shift</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">i</span><span class="o">+</span><span class="n">shift</span><span class="p">):</span>
+            <span class="n">x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">storm</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">j</span><span class="p">,:])</span>
+<span class="c1">#         if i == 0:</span>
+<span class="c1">#             print(np.expand_dims(np.asarray(x), axis=0).shape)</span>
+<span class="c1">#             print(np.expand_dims(np.asarray(x),axis=0)[0,0,0])</span>
+        <span class="n">y_pred</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">ravel</span><span class="p">())</span>
+        <span class="k">del</span> <span class="n">x</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span>
+<span class="n">y_pred</span> <span class="o">=</span> <span class="n">predict</span><span class="p">(</span><span class="n">ir</span><span class="p">,</span><span class="n">model_892</span><span class="p">)</span>
+<span class="n">y_pred</span><span class="o">.</span><span class="n">shape</span>
+</code></pre></div>
 
 
+<div class="codehilite"><pre><span></span><code><span class="err">(39, 2)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="n">ir_plot</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">4</span><span class="p">,:]</span>
+<span class="n">fig</span><span class="p">,</span><span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;Hurricane Irene - 2011&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mf">1.08</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Latitude&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Longitude&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">r2_score</span><span class="p">(</span><span class="n">ir_plot</span><span class="o">.</span><span class="n">Latitude</span><span class="p">,</span><span class="n">y_pred</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">r2_score</span><span class="p">(</span><span class="n">ir_plot</span><span class="o">.</span><span class="n">Longitude</span><span class="p">,</span><span class="n">y_pred</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ir_plot</span><span class="o">.</span><span class="n">Hours</span><span class="p">,</span><span class="n">ir_plot</span><span class="o">.</span><span class="n">Latitude</span><span class="p">,</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;True&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ir_plot</span><span class="o">.</span><span class="n">Hours</span><span class="p">,</span><span class="n">y_pred</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Predicted&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ir_plot</span><span class="o">.</span><span class="n">Hours</span><span class="p">,</span><span class="n">ir_plot</span><span class="o">.</span><span class="n">Longitude</span><span class="p">,</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;True&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ir_plot</span><span class="o">.</span><span class="n">Hours</span><span class="p">,</span><span class="n">y_pred</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Predicted&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="mi">0</span><span class="p">.</span><span class="mi">9124620701244499</span>
+<span class="mi">0</span><span class="p">.</span><span class="mi">8651593770302984</span>
 
 
 
-&lt;matplotlib.legend.Legend at 0x7fcb1e25b390&gt;
-</code></pre>
+
+
+<span class="o">&lt;</span><span class="n">matplotlib</span><span class="p">.</span><span class="n">legend</span><span class="p">.</span><span class="n">Legend</span> <span class="k">at</span> <span class="mi">0</span><span class="n">x7fcb1e25b390</span><span class="o">&gt;</span>
+</code></pre></div>
+
+
 <p><img alt="png" src="../NN-TrackPrediction_files/NN-TrackPrediction_28_2.png" /></p>
-<pre><code class="python"># input_cols = ['Hours','Latitude','Longitude','Maximum Wind']
-joaquin = data_test[data_test.ID=='AL112015']
-joaquin.loc[:,cols2]=standard_scale(joaquin,cols2)
-y_jq = predict(joaquin[cols2],model_892)
-</code></pre>
-
-<pre><code class="python">jq_plot = joaquin[input_cols].iloc[0:-4,:]
-fig,ax = plt.subplots(1,2,figsize=(10,4))
-fig.suptitle(&quot;Hurricane Joaquin - 2015&quot;, fontsize=16,y=1.08)
-ax[0].set_title(&quot;Latitude&quot;)
-ax[1].set_title(&quot;Longitude&quot;)
-print(r2_score(jq_plot.Latitude,y_jq[:,0]))
-print(r2_score(jq_plot.Longitude,y_jq[:,1]))
-ax[0].scatter(jq_plot.Hours,jq_plot.Latitude,label = 'True')
-ax[0].scatter(jq_plot.Hours,y_jq[:,0],label = 'Predicted')
-ax[1].scatter(jq_plot.Hours,jq_plot.Longitude,label = 'True')
-ax[1].scatter(jq_plot.Hours,y_jq[:,1],label = 'Predicted')
-ax[0].legend(loc='best')
-ax[1].legend(loc='best')
-</code></pre>
-
-<pre><code>0.9645696502595049
-0.9816239209481076
+<div class="codehilite"><pre><span></span><code><span class="c1"># input_cols = [&#39;Hours&#39;,&#39;Latitude&#39;,&#39;Longitude&#39;,&#39;Maximum Wind&#39;]</span>
+<span class="n">joaquin</span> <span class="o">=</span> <span class="n">data_test</span><span class="p">[</span><span class="n">data_test</span><span class="o">.</span><span class="n">ID</span><span class="o">==</span><span class="s1">&#39;AL112015&#39;</span><span class="p">]</span>
+<span class="n">joaquin</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="n">cols2</span><span class="p">]</span><span class="o">=</span><span class="n">standard_scale</span><span class="p">(</span><span class="n">joaquin</span><span class="p">,</span><span class="n">cols2</span><span class="p">)</span>
+<span class="n">y_jq</span> <span class="o">=</span> <span class="n">predict</span><span class="p">(</span><span class="n">joaquin</span><span class="p">[</span><span class="n">cols2</span><span class="p">],</span><span class="n">model_892</span><span class="p">)</span>
+</code></pre></div>
 
 
+<div class="codehilite"><pre><span></span><code><span class="n">jq_plot</span> <span class="o">=</span> <span class="n">joaquin</span><span class="p">[</span><span class="n">input_cols</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">4</span><span class="p">,:]</span>
+<span class="n">fig</span><span class="p">,</span><span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;Hurricane Joaquin - 2015&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mf">1.08</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Latitude&quot;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Longitude&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">r2_score</span><span class="p">(</span><span class="n">jq_plot</span><span class="o">.</span><span class="n">Latitude</span><span class="p">,</span><span class="n">y_jq</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">r2_score</span><span class="p">(</span><span class="n">jq_plot</span><span class="o">.</span><span class="n">Longitude</span><span class="p">,</span><span class="n">y_jq</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]))</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">jq_plot</span><span class="o">.</span><span class="n">Hours</span><span class="p">,</span><span class="n">jq_plot</span><span class="o">.</span><span class="n">Latitude</span><span class="p">,</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;True&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">jq_plot</span><span class="o">.</span><span class="n">Hours</span><span class="p">,</span><span class="n">y_jq</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Predicted&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">jq_plot</span><span class="o">.</span><span class="n">Hours</span><span class="p">,</span><span class="n">jq_plot</span><span class="o">.</span><span class="n">Longitude</span><span class="p">,</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;True&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">jq_plot</span><span class="o">.</span><span class="n">Hours</span><span class="p">,</span><span class="n">y_jq</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span><span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;Predicted&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+</code></pre></div>
+
+
+<div class="codehilite"><pre><span></span><code><span class="mi">0</span><span class="p">.</span><span class="mi">9645696502595049</span>
+<span class="mi">0</span><span class="p">.</span><span class="mi">9816239209481076</span>
 
 
 
-&lt;matplotlib.legend.Legend at 0x7fcb1c9b9b50&gt;
-</code></pre>
+
+
+<span class="o">&lt;</span><span class="n">matplotlib</span><span class="p">.</span><span class="n">legend</span><span class="p">.</span><span class="n">Legend</span> <span class="k">at</span> <span class="mi">0</span><span class="n">x7fcb1c9b9b50</span><span class="o">&gt;</span>
+</code></pre></div>
+
+
 <p><img alt="png" src="../NN-TrackPrediction_files/NN-TrackPrediction_30_2.png" /></p>
               
             </div>
@@ -909,6 +966,7 @@ ax[1].legend(loc='best')
 </div>
     <script>var base_url = '..';</script>
     <script src="../js/theme.js" defer></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML" defer></script>
       <script src="../search/main.js" defer></script>
     <script defer>
         window.onload = function () {
