@@ -22,6 +22,8 @@ Nesta etapa descrevemos as fontes de nossos dados, extração e limpeza dos mesm
 ### Modelos para Predição de Intensidade e Duração de Furacões
 > [Analises_variaveis.ipynb](https://github.com/reneroliveira/Hurricane_Project/blob/master/Notebooks/Analises_variaveis.ipynb)
 
+Neste Notebook, buscamos entender a relação entre os dados climáticos e os registros de Furacões e Tempestades Tropicais. Treinamos então modelos que ajustem estes dados, visando a predição futura da intensidade (representada pela máxima velocidade sustentada) e da duração de eventos deste tipo.
+
 ### Análise Temporal do PDI
 > [PowerDissipationIndex.ipynb](https://github.com/reneroliveira/Hurricane_Project/blob/master/Notebooks/PowerDissipationIndex.ipynb)
 
@@ -29,4 +31,5 @@ O Power Dissipation Index (PDI) é um estatística indicadora de destrutividade 
 
 ### Redes Neurais para Predição de Trajetória
 > [NN-TrackPrediction.ipynb](https://github.com/reneroliveira/Hurricane_Project/blob/master/Notebooks/NN-TrackPrediction.ipynb)
+
 Usando os dados gerados na etapa de limpeza, criamos nesta etapa alguns modelos de redes neurais que visavem prever a trajetória futura de um furacão ou tempestade, baseando-se em movimentos e situação climática do passado. O objetivo dos modelos é usar registros de 18h anteriores para prever as coordenadas do centro da tempestade 6 horas depois.
