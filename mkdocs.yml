@@ -2,9 +2,11 @@ site_name: Hurricanes in Atlantic
 theme: readthedocs
 
 nav:
-- EDA : Exploratory_Data_Analysis.md 
-- NNtrack: NN-TrackPrediction.md
-- Destructivity : PowerDissipationIndex.md
+- Data Cleaning + EDA : Data_Cleaning_and_EDA.md 
+- Destrutividade no curto prazo: Analises_variaveis.md
+- Destrutividade no longo prazo: PowerDissipationIndex.md
+- Prevendo trajetórias: NN-TrackPrediction.md
+
 
 extra_javascript: 
     - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML
