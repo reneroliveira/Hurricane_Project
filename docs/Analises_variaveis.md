@@ -8,6 +8,9 @@ Algumas pequenas transformações foram necessárias para ajuste das variáveis 
 
 ## Modelos
 
+
+### Análises Iniciais
+
 Segue abaixo o resultado da aplicação de uma regressão linear simples usando como variável alvo a velocidade de vento, dado usado em vários indicadores de destrutibilidade. Interessante notar os parâmetros com coeficientes positivos.
 
 
@@ -104,159 +107,13 @@ Uma primeira tentativa de ajuste foi feito através da centralização das vari�
 
 
 
-### Regressão Linear
-
-
-```python
-X_train2 = sm.add_constant(X_train) #np.array(X_train).reshape(X_train.shape[0],1)
-OLS_obj = OLS(y_train_mw, X_train2)
-OLSModel = OLS_obj.fit()
-
-r2_train = OLSModel.rsquared
-#r2_test = 1 - ((OLSModel.predict(X_test2)-y_test)*(OLSModel.predict(X_test2)-y_test)).sum() / ((y_test.mean()-y_test)*(y_test.mean()-y_test)).sum()
-print(f'R^2_train = {r2_train}')
-#print(f'R^2_test  = {r2_test}')
-print(f'Parâmetro_const  = {OLSModel.params[0]}')
-print(f'Parâmetro_Month  = {OLSModel.params[1]}')
-print(f'Parâmetro_Latitude  = {OLSModel.params[2]}')
-print(f'Parâmetro_Longitude  = {OLSModel.params[3]}')
-print(f'Parâmetro_sst  = {OLSModel.params[4]}')
-print(f'Parâmetro_rhum  = {OLSModel.params[5]}')
-print(f'Parâmetro_slp  = {OLSModel.params[6]}')
-print(f'Parâmetro_cldc  = {OLSModel.params[7]}')
-
-print(f'Parâmetro_Month^2  = {OLSModel.params[8]}')
-print(f'Parâmetro_Latitude^2  = {OLSModel.params[9]}')
-print(f'Parâmetro_Longitude^2  = {OLSModel.params[10]}')
-print(f'Parâmetro_sst^2  = {OLSModel.params[11]}')
-print(f'Parâmetro_rhum^2  = {OLSModel.params[12]}')
-print(f'Parâmetro_slp^2  = {OLSModel.params[13]}')
-print(f'Parâmetro_cldc^2  = {OLSModel.params[14]}')
-```
-
-    R^2_train = 0.057796565423244184
-    Parâmetro_const  = 55.44314399378881
-    Parâmetro_Month  = 0.8453623447457261
-    Parâmetro_Latitude  = 0.3457362098822069
-    Parâmetro_Longitude  = -0.02891517619557605
-    Parâmetro_sst  = 0.02964116885731194
-    Parâmetro_rhum  = 0.09964668732077198
-    Parâmetro_slp  = 0.289107953297979
-    Parâmetro_cldc  = -0.5559643046414668
-    Parâmetro_Month^2  = -0.48473747846473236
-    Parâmetro_Latitude^2  = -0.017728720785750357
-    Parâmetro_Longitude^2  = -0.00855022784566639
-    Parâmetro_sst^2  = 0.051566532947100174
-    Parâmetro_rhum^2  = 0.002209669018392528
-    Parâmetro_slp^2  = -0.03379242085061111
-    Parâmetro_cldc^2  = -0.16931736469014314
-
-
-
-```python
-X_train = data_atl_merged.drop(['ID', 'Name', 'Date', 'Time', 'Event', 'Status', 'Maximum Wind', 'Minimum Pressure', 'Date_c', 'Day', 'Latitude_c', 'Longitude_c', 'Duration', 'Year', 'wspd'], 1)
-y_train_mw = data_atl_merged['Maximum Wind']
-X_train, X_test, y_train_mw, y_test_mw = train_test_split(X_train, y_train_mw, random_state=1)
-print(len(X_train))
-X_train.head()
-
-```
-
-    16789
-
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Latitude</th>
-      <th>Longitude</th>
-      <th>Month</th>
-      <th>sst</th>
-      <th>rhum</th>
-      <th>slp</th>
-      <th>cldc</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>10353</th>
-      <td>26.2</td>
-      <td>-78.2</td>
-      <td>8</td>
-      <td>28.981304</td>
-      <td>82.394811</td>
-      <td>1006.801278</td>
-      <td>4.477195</td>
-    </tr>
-    <tr>
-      <th>19374</th>
-      <td>14.5</td>
-      <td>-69.6</td>
-      <td>10</td>
-      <td>28.904502</td>
-      <td>82.054564</td>
-      <td>1010.190954</td>
-      <td>5.367316</td>
-    </tr>
-    <tr>
-      <th>12393</th>
-      <td>30.7</td>
-      <td>-86.3</td>
-      <td>7</td>
-      <td>28.347659</td>
-      <td>82.523253</td>
-      <td>1000.820020</td>
-      <td>6.652682</td>
-    </tr>
-    <tr>
-      <th>3373</th>
-      <td>40.9</td>
-      <td>-70.7</td>
-      <td>9</td>
-      <td>24.981041</td>
-      <td>77.434502</td>
-      <td>1012.284426</td>
-      <td>4.131097</td>
-    </tr>
-    <tr>
-      <th>21173</th>
-      <td>25.8</td>
-      <td>-42.5</td>
-      <td>9</td>
-      <td>28.643885</td>
-      <td>78.809962</td>
-      <td>1013.124650</td>
-      <td>4.610140</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
 ### Random Forest
 
 Primeira tentativa de ajuste já nos parece promissor em relação aos demais.
 
 
+<details>
+<summary>Código</summary>
 ```python
 #X_train, y_train_mw = make_regression(n_features=7, n_informative=2, random_state=0, shuffle=False)
 regr = RandomForestRegressor(n_estimators=7, max_depth=20, random_state=0)
@@ -265,20 +122,18 @@ print(regr.score(X_train, y_train_mw))
 print(regr.score(X_test, y_test_mw))
 
 ```
+</details>
 
     0.8272253680614361
     0.4358801020027704
 
 
 
-```python
-#X_train = data_atl_merged.drop(['ID', 'Name', 'Date', 'Time', 'Event', 'Status', 'Maximum Wind', 'Minimum Pressure', 'Date_c', 'Day', 'Latitude_c', 'Longitude_c', 'Duration', 'Year', 'wspd'], 1)
-#X_train.head()
-```
 
 ### Multi Layer Perceptron
 
-
+<details>
+<summary>Código</summary>
 ```python
 #X_train, y_train_mw = make_regression(n_samples=200, random_state=1)
 regr = MLPRegressor(hidden_layer_sizes=(100,2), random_state=1, max_iter=1000, solver='lbfgs').fit(X_train, y_train_mw)
@@ -287,17 +142,11 @@ print(regr.score(X_train, y_train_mw))
 print(regr.score(X_test, y_test_mw))
 
 ```
+</details>
 
     0.09520915346048042
     0.08725614810614979
 
-
-    /home/gambitura/anaconda3/lib/python3.8/site-packages/sklearn/neural_network/_multilayer_perceptron.py:471: ConvergenceWarning: lbfgs failed to converge (status=1):
-    STOP: TOTAL NO. of ITERATIONS REACHED LIMIT.
-    
-    Increase the number of iterations (max_iter) or scale the data as shown in:
-        https://scikit-learn.org/stable/modules/preprocessing.html
-      self.n_iter_ = _check_optimize_result("lbfgs", opt_res, self.max_iter)
 
 
 ## Modelos com Separação em Conjuntos de Treino e Teste
