@@ -42,7 +42,7 @@ sns.set()
 
 
 ```python
-raw_pdi = pd.read_csv('Datasets/cyclone-power-dissipation-index.csv')
+raw_pdi = pd.read_csv('../Datasets/cyclone-power-dissipation-index.csv')
 raw_pdi.head()
 ```
 
@@ -174,7 +174,7 @@ Let's do the same smoothing operation in our "atlantic_mdr" dataset. We're gonna
 
 
 ```python
-atlantic_mdr = pd.read_csv('./Datasets/atlantic_mdr.csv')
+atlantic_mdr = pd.read_csv('../Datasets/atlantic_mdr.csv')
 
 def smooth(col):
     n = len(col)
@@ -733,7 +733,7 @@ plt.show()
 
 
 ```python
-data = pd.read_csv('Datasets/data_atl_merged2.csv',parse_dates=['Date'])
+data = pd.read_csv('../Datasets/data_atl_merged2.csv',parse_dates=['Date'])
 data = data[['ID', 'Name', 'Date','Year', 'Time', 'Event', 'Status', 'Latitude',
        'Longitude', 'Maximum Wind', 'sst', 'rhum',
        'wspd', 'slp', 'cldc']]

@@ -16,6 +16,10 @@ from sklearn.metrics import r2_score
 %matplotlib inline
 ```
 
+    /usr/local/lib/python3.6/dist-packages/statsmodels/tools/_testing.py:19: FutureWarning: pandas.util.testing is deprecated. Use the functions in the public API at pandas.testing instead.
+      import pandas.util.testing as tm
+
+
 
 ```python
 import tensorflow as tf
@@ -25,7 +29,7 @@ tf.keras.backend.clear_session()
 print(tf.__version__)
 ```
 
-    2.0.0
+    2.3.0
 
 
 ## Preparação dos dados
@@ -35,7 +39,7 @@ Iremos abaixo criar funções para preparar nossos dados para o modelo, e aplic�
 
 ```python
 #Leitura dos dados
-data = pd.read_csv('Datasets/data_atl_merged2.csv',parse_dates=['Date'])
+data = pd.read_csv('../Datasets/data_atl_merged2.csv',parse_dates=['Date'])
 data.columns
 ```
 
@@ -52,8 +56,21 @@ data.columns
 
 
 ```python
-## Funções de Padronização:
-
+## Funções de Padronização e Normalização:
+def min_max_scale(data,cols):
+    df = data.copy()
+    for col in cols:
+        min_ = df[col].min()
+        max_ = df[col].max()
+        df.loc[:,col] = (df[col]-min_)/(max_-min_)
+    return df[cols]
+def mim_max_scale_back(scaled,original,cols):
+    df = scaled.copy()
+    for col in cols:
+        min_ = original[col].min()
+        max_ = original[col].max()
+        df.loc[:,col] = df[col]*(max_-min_)+min_
+    return df[cols]
 def standard_scale(data,cols):
     df = data.copy()
     for col in cols:
@@ -104,7 +121,15 @@ na qual:
 
 - $s$ é o parâmetros "shift", que representa em quantos períodos passados basearemos a previsão futura. Por padrão, inicialmente, deixamos $s=3$. Como cada registro é espaçado por 6 horas, neste formado estamos usando daados do presente e de 12 horas atrás, pra projetar o dado futuro.
 
-O vetor $Y$ é composto por:
+Sendo assim, trabalhando com $s=3$ temos que as matrizes de X serão do tipo:
+
+$$\left[\begin{matrix}
+x_1^{(t-2)} & x_2^{(t-2)} & ...& x_n^{(t-2)}\\
+x_1^{(t-1)} & x_2^{(t-1)} & ...& x_n^{(t-1)}\\
+x_1^{(t)} & x_2^{(t)} & ...& x_n^{(t)}\end{matrix}\right]$$
+
+
+O vetor $Y$ geral é composto por:
 
 $$\left[\begin{matrix}lat^{(t+1)}&lon^{(t+1)}\\
 lat^{(t+2)}&lon^{(t+2)}\\
@@ -263,7 +288,7 @@ def train_val_test_split(df,t=0.7,v=0.2,input_cols=cols1,shift=3,pred=1):
     splitted_data = split(df)
     # Separamos os dados tempestade por tempestade para 
     # evitar cruzamento de dados entre eventos diferentes
-    n = len(splitted)
+    n = len(splitted_data)
     
     train_storms = splitted_data[0:int(n*t)]
     val_storms = splitted_data[int(n*t):int(n*(t+v))]
@@ -297,29 +322,22 @@ xtrain, ytrain, xval, yval, xtest, ytest = train_val_test_split(data_cleaned)
 xtrain.shape,ytrain.shape,xval.shape,yval.shape,xtest.shape,ytest.shape
 ```
 
-    CPU times: user 1min 1s, sys: 363 ms, total: 1min 2s
-    Wall time: 1min 1s
-
-
-
-
-
-    ((14010, 3, 4), (14010, 2), (4401, 3, 4), (4401, 2), (18482, 3, 4), (18482, 2))
-
+    CPU times: user 56.7 s, sys: 39.9 ms, total: 56.8 s
+    Wall time: 56.7 s
 
 
 
 ```python
 %%time
-## Modelo que usa sst, rhum e slp (Temperatura do mar, Umidade e Pressão)
-cols2 = input_cols +['sst','rhum','slp','cldc']
+## Modelo que usa sst, rhum, slp e cldc (Temperatura do mar, Umidade, Pressão e Nebulosidade)
+cols2 = cols1 + ['sst','rhum','slp','cldc']
 cleaned2 = clean_data(data,cols2)
 
 xtrain2, ytrain2, xval2, yval2, xtest2, ytest2 = train_val_test_split(cleaned2,input_cols=cols2)
 ```
 
-    CPU times: user 1min 32s, sys: 470 ms, total: 1min 32s
-    Wall time: 1min 31s
+    CPU times: user 56.6 s, sys: 90.9 ms, total: 56.7 s
+    Wall time: 56.6 s
 
 
 
@@ -330,7 +348,7 @@ xtrain2.shape
 
 
 
-    (14010, 3, 7)
+    (14010, 3, 8)
 
 
 
@@ -424,17 +442,17 @@ model_892.compile(optimizer=optimizer,
 model_432.summary()
 ```
 
-    Model: "sequential_6"
+    Model: "sequential"
     _________________________________________________________________
     Layer (type)                 Output Shape              Param #   
     =================================================================
-    flatten_6 (Flatten)          (None, 12)                0         
+    flatten (Flatten)            (None, 12)                0         
     _________________________________________________________________
-    dense_12 (Dense)             (None, 3)                 39        
+    dense (Dense)                (None, 3)                 39        
     _________________________________________________________________
-    dropout_6 (Dropout)          (None, 3)                 0         
+    dropout (Dropout)            (None, 3)                 0         
     _________________________________________________________________
-    dense_13 (Dense)             (None, 2)                 8         
+    dense_1 (Dense)              (None, 2)                 8         
     =================================================================
     Total params: 47
     Trainable params: 47
@@ -455,99 +473,98 @@ history_492 = model_492.fit(xtrain, ytrain, validation_data=(xval,yval), epochs=
 
 ```
 
-    Train on 14010 samples, validate on 4401 samples
     Epoch 1/45
-    14010/14010 [==============================] - 1s 80us/sample - loss: 0.0757 - val_loss: 0.0101
+    438/438 [==============================] - 1s 1ms/step - loss: 0.2730 - val_loss: 0.0672
     Epoch 2/45
-    14010/14010 [==============================] - 1s 77us/sample - loss: 0.0779 - val_loss: 0.0099
+    438/438 [==============================] - 1s 1ms/step - loss: 0.1533 - val_loss: 0.0552
     Epoch 3/45
-    14010/14010 [==============================] - 1s 92us/sample - loss: 0.0779 - val_loss: 0.0109
+    438/438 [==============================] - 1s 1ms/step - loss: 0.1363 - val_loss: 0.0472
     Epoch 4/45
-    14010/14010 [==============================] - 2s 121us/sample - loss: 0.0760 - val_loss: 0.0100
+    438/438 [==============================] - 1s 1ms/step - loss: 0.1216 - val_loss: 0.0384
     Epoch 5/45
-    14010/14010 [==============================] - 2s 111us/sample - loss: 0.0767 - val_loss: 0.0096
+    438/438 [==============================] - 1s 1ms/step - loss: 0.1126 - val_loss: 0.0314
     Epoch 6/45
-    14010/14010 [==============================] - 2s 152us/sample - loss: 0.0742 - val_loss: 0.0121
+    438/438 [==============================] - 1s 1ms/step - loss: 0.1063 - val_loss: 0.0260
     Epoch 7/45
-    14010/14010 [==============================] - 1s 90us/sample - loss: 0.0766 - val_loss: 0.0119
+    438/438 [==============================] - 1s 1ms/step - loss: 0.1021 - val_loss: 0.0214
     Epoch 8/45
-    14010/14010 [==============================] - 1s 73us/sample - loss: 0.0758 - val_loss: 0.0108
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0981 - val_loss: 0.0186
     Epoch 9/45
-    14010/14010 [==============================] - 1s 71us/sample - loss: 0.0779 - val_loss: 0.0107
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0928 - val_loss: 0.0171
     Epoch 10/45
-    14010/14010 [==============================] - 1s 78us/sample - loss: 0.0747 - val_loss: 0.0097
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0903 - val_loss: 0.0162
     Epoch 11/45
-    14010/14010 [==============================] - 1s 74us/sample - loss: 0.0771 - val_loss: 0.0106
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0925 - val_loss: 0.0149
     Epoch 12/45
-    14010/14010 [==============================] - 1s 74us/sample - loss: 0.0776 - val_loss: 0.0102
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0869 - val_loss: 0.0146
     Epoch 13/45
-    14010/14010 [==============================] - 1s 75us/sample - loss: 0.0786 - val_loss: 0.0102
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0860 - val_loss: 0.0145
     Epoch 14/45
-    14010/14010 [==============================] - 1s 75us/sample - loss: 0.0782 - val_loss: 0.0099
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0849 - val_loss: 0.0148
     Epoch 15/45
-    14010/14010 [==============================] - 1s 77us/sample - loss: 0.0783 - val_loss: 0.0106
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0817 - val_loss: 0.0149
     Epoch 16/45
-    14010/14010 [==============================] - 1s 75us/sample - loss: 0.0774 - val_loss: 0.0098
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0850 - val_loss: 0.0146
     Epoch 17/45
-    14010/14010 [==============================] - 1s 77us/sample - loss: 0.0758 - val_loss: 0.0102
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0854 - val_loss: 0.0140
     Epoch 18/45
-    14010/14010 [==============================] - 1s 78us/sample - loss: 0.0783 - val_loss: 0.0099
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0843 - val_loss: 0.0152
     Epoch 19/45
-    14010/14010 [==============================] - 2s 115us/sample - loss: 0.0749 - val_loss: 0.0103
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0831 - val_loss: 0.0145
     Epoch 20/45
-    14010/14010 [==============================] - 2s 134us/sample - loss: 0.0789 - val_loss: 0.0093
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0820 - val_loss: 0.0147
     Epoch 21/45
-    14010/14010 [==============================] - 2s 135us/sample - loss: 0.0778 - val_loss: 0.0104
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0854 - val_loss: 0.0145
     Epoch 22/45
-    14010/14010 [==============================] - 1s 83us/sample - loss: 0.0761 - val_loss: 0.0093
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0846 - val_loss: 0.0132
     Epoch 23/45
-    14010/14010 [==============================] - 1s 91us/sample - loss: 0.0763 - val_loss: 0.0105
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0846 - val_loss: 0.0139
     Epoch 24/45
-    14010/14010 [==============================] - 2s 115us/sample - loss: 0.0769 - val_loss: 0.0095
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0833 - val_loss: 0.0150
     Epoch 25/45
-    14010/14010 [==============================] - 1s 99us/sample - loss: 0.0812 - val_loss: 0.0086
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0814 - val_loss: 0.0153
     Epoch 26/45
-    14010/14010 [==============================] - 2s 114us/sample - loss: 0.0768 - val_loss: 0.0106
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0838 - val_loss: 0.0142
     Epoch 27/45
-    14010/14010 [==============================] - 1s 100us/sample - loss: 0.0782 - val_loss: 0.0101
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0815 - val_loss: 0.0151
     Epoch 28/45
-    14010/14010 [==============================] - 1s 78us/sample - loss: 0.0767 - val_loss: 0.0083
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0795 - val_loss: 0.0135
     Epoch 29/45
-    14010/14010 [==============================] - 1s 77us/sample - loss: 0.0795 - val_loss: 0.0094
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0841 - val_loss: 0.0139
     Epoch 30/45
-    14010/14010 [==============================] - 1s 75us/sample - loss: 0.0779 - val_loss: 0.0104
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0834 - val_loss: 0.0140
     Epoch 31/45
-    14010/14010 [==============================] - 1s 75us/sample - loss: 0.0768 - val_loss: 0.0101
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0846 - val_loss: 0.0133
     Epoch 32/45
-    14010/14010 [==============================] - 1s 77us/sample - loss: 0.0764 - val_loss: 0.0094
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0819 - val_loss: 0.0138
     Epoch 33/45
-    14010/14010 [==============================] - 1s 74us/sample - loss: 0.0765 - val_loss: 0.0091
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0815 - val_loss: 0.0139
     Epoch 34/45
-    14010/14010 [==============================] - 1s 76us/sample - loss: 0.0767 - val_loss: 0.0106
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0819 - val_loss: 0.0147
     Epoch 35/45
-    14010/14010 [==============================] - 1s 70us/sample - loss: 0.0780 - val_loss: 0.0099
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0829 - val_loss: 0.0129
     Epoch 36/45
-    14010/14010 [==============================] - 1s 74us/sample - loss: 0.0755 - val_loss: 0.0094
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0838 - val_loss: 0.0130
     Epoch 37/45
-    14010/14010 [==============================] - 1s 72us/sample - loss: 0.0764 - val_loss: 0.0095
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0832 - val_loss: 0.0134
     Epoch 38/45
-    14010/14010 [==============================] - 1s 72us/sample - loss: 0.0782 - val_loss: 0.0098
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0800 - val_loss: 0.0132
     Epoch 39/45
-    14010/14010 [==============================] - 1s 73us/sample - loss: 0.0783 - val_loss: 0.0087
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0816 - val_loss: 0.0128
     Epoch 40/45
-    14010/14010 [==============================] - 1s 72us/sample - loss: 0.0737 - val_loss: 0.0091
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0814 - val_loss: 0.0129
     Epoch 41/45
-    14010/14010 [==============================] - 1s 72us/sample - loss: 0.0775 - val_loss: 0.0094
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0811 - val_loss: 0.0139
     Epoch 42/45
-    14010/14010 [==============================] - 1s 75us/sample - loss: 0.0792 - val_loss: 0.0101
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0802 - val_loss: 0.0142
     Epoch 43/45
-    14010/14010 [==============================] - 1s 78us/sample - loss: 0.0762 - val_loss: 0.0087
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0790 - val_loss: 0.0140
     Epoch 44/45
-    14010/14010 [==============================] - 1s 73us/sample - loss: 0.0754 - val_loss: 0.0100
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0802 - val_loss: 0.0144
     Epoch 45/45
-    14010/14010 [==============================] - 1s 73us/sample - loss: 0.0767 - val_loss: 0.0093
-    CPU times: user 3min 50s, sys: 15.8 s, total: 4min 6s
-    Wall time: 2min 50s
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0795 - val_loss: 0.0124
+    CPU times: user 1min 9s, sys: 6.27 s, total: 1min 16s
+    Wall time: 58.9 s
 
 
 
@@ -562,118 +579,117 @@ history_892 = model_892.fit(xtrain2, ytrain2, validation_data=(xval2,yval2), epo
                     verbose=1)
 ```
 
-    Train on 14010 samples, validate on 4401 samples
     Epoch 1/45
-    14010/14010 [==============================] - 2s 111us/sample - loss: 0.3210 - val_loss: 0.0874
+    438/438 [==============================] - 1s 1ms/step - loss: 0.2866 - val_loss: 0.0705
     Epoch 2/45
-    14010/14010 [==============================] - 1s 58us/sample - loss: 0.1670 - val_loss: 0.0666
+    438/438 [==============================] - 0s 1ms/step - loss: 0.1502 - val_loss: 0.0557
     Epoch 3/45
-    14010/14010 [==============================] - 1s 61us/sample - loss: 0.1460 - val_loss: 0.0563
+    438/438 [==============================] - 0s 1ms/step - loss: 0.1358 - val_loss: 0.0487
     Epoch 4/45
-    14010/14010 [==============================] - 1s 61us/sample - loss: 0.1326 - val_loss: 0.0473
+    438/438 [==============================] - 0s 1ms/step - loss: 0.1260 - val_loss: 0.0413
     Epoch 5/45
-    14010/14010 [==============================] - 1s 66us/sample - loss: 0.1232 - val_loss: 0.0398
+    438/438 [==============================] - 0s 1ms/step - loss: 0.1158 - val_loss: 0.0338
     Epoch 6/45
-    14010/14010 [==============================] - 1s 61us/sample - loss: 0.1170 - val_loss: 0.0334
+    438/438 [==============================] - 1s 1ms/step - loss: 0.1067 - val_loss: 0.0282
     Epoch 7/45
-    14010/14010 [==============================] - 1s 59us/sample - loss: 0.1055 - val_loss: 0.0274
+    438/438 [==============================] - 1s 1ms/step - loss: 0.1013 - val_loss: 0.0243
     Epoch 8/45
-    14010/14010 [==============================] - 1s 62us/sample - loss: 0.1025 - val_loss: 0.0236
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0972 - val_loss: 0.0201
     Epoch 9/45
-    14010/14010 [==============================] - 1s 60us/sample - loss: 0.0974 - val_loss: 0.0209
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0939 - val_loss: 0.0181
     Epoch 10/45
-    14010/14010 [==============================] - 1s 63us/sample - loss: 0.0945 - val_loss: 0.0191
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0884 - val_loss: 0.0181
     Epoch 11/45
-    14010/14010 [==============================] - 1s 59us/sample - loss: 0.0924 - val_loss: 0.0179
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0871 - val_loss: 0.0155
     Epoch 12/45
-    14010/14010 [==============================] - 1s 60us/sample - loss: 0.0893 - val_loss: 0.0174
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0871 - val_loss: 0.0155
     Epoch 13/45
-    14010/14010 [==============================] - 1s 61us/sample - loss: 0.0884 - val_loss: 0.0182
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0870 - val_loss: 0.0156
     Epoch 14/45
-    14010/14010 [==============================] - 1s 61us/sample - loss: 0.0874 - val_loss: 0.0178
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0825 - val_loss: 0.0153
     Epoch 15/45
-    14010/14010 [==============================] - 1s 61us/sample - loss: 0.0844 - val_loss: 0.0163
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0836 - val_loss: 0.0136
     Epoch 16/45
-    14010/14010 [==============================] - 1s 61us/sample - loss: 0.0847 - val_loss: 0.0155
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0851 - val_loss: 0.0156
     Epoch 17/45
-    14010/14010 [==============================] - 1s 58us/sample - loss: 0.0852 - val_loss: 0.0161
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0850 - val_loss: 0.0149
     Epoch 18/45
-    14010/14010 [==============================] - 1s 59us/sample - loss: 0.0871 - val_loss: 0.0157
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0868 - val_loss: 0.0147
     Epoch 19/45
-    14010/14010 [==============================] - 1s 59us/sample - loss: 0.0825 - val_loss: 0.0161
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0823 - val_loss: 0.0154
     Epoch 20/45
-    14010/14010 [==============================] - 1s 61us/sample - loss: 0.0817 - val_loss: 0.0148
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0802 - val_loss: 0.0132
     Epoch 21/45
-    14010/14010 [==============================] - 1s 62us/sample - loss: 0.0853 - val_loss: 0.0149
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0807 - val_loss: 0.0158
     Epoch 22/45
-    14010/14010 [==============================] - 1s 61us/sample - loss: 0.0833 - val_loss: 0.0158
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0826 - val_loss: 0.0151
     Epoch 23/45
-    14010/14010 [==============================] - 1s 60us/sample - loss: 0.0804 - val_loss: 0.0156
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0820 - val_loss: 0.0134
     Epoch 24/45
-    14010/14010 [==============================] - 1s 59us/sample - loss: 0.0819 - val_loss: 0.0144
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0827 - val_loss: 0.0128
     Epoch 25/45
-    14010/14010 [==============================] - 1s 59us/sample - loss: 0.0836 - val_loss: 0.0142
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0831 - val_loss: 0.0125
     Epoch 26/45
-    14010/14010 [==============================] - 1s 61us/sample - loss: 0.0830 - val_loss: 0.0146
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0834 - val_loss: 0.0138
     Epoch 27/45
-    14010/14010 [==============================] - 1s 61us/sample - loss: 0.0834 - val_loss: 0.0146
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0816 - val_loss: 0.0141
     Epoch 28/45
-    14010/14010 [==============================] - 1s 59us/sample - loss: 0.0831 - val_loss: 0.0153
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0805 - val_loss: 0.0137
     Epoch 29/45
-    14010/14010 [==============================] - 1s 62us/sample - loss: 0.0812 - val_loss: 0.0141
+    438/438 [==============================] - 1s 1ms/step - loss: 0.0817 - val_loss: 0.0142
     Epoch 30/45
-    14010/14010 [==============================] - 1s 60us/sample - loss: 0.0820 - val_loss: 0.0141
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0807 - val_loss: 0.0139
     Epoch 31/45
-    14010/14010 [==============================] - 1s 61us/sample - loss: 0.0822 - val_loss: 0.0132
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0806 - val_loss: 0.0133
     Epoch 32/45
-    14010/14010 [==============================] - 1s 58us/sample - loss: 0.0810 - val_loss: 0.0129
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0823 - val_loss: 0.0131
     Epoch 33/45
-    14010/14010 [==============================] - 1s 60us/sample - loss: 0.0824 - val_loss: 0.0147
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0814 - val_loss: 0.0137
     Epoch 34/45
-    14010/14010 [==============================] - 1s 61us/sample - loss: 0.0812 - val_loss: 0.0138
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0804 - val_loss: 0.0134
     Epoch 35/45
-    14010/14010 [==============================] - 1s 61us/sample - loss: 0.0816 - val_loss: 0.0138
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0811 - val_loss: 0.0131
     Epoch 36/45
-    14010/14010 [==============================] - 1s 60us/sample - loss: 0.0803 - val_loss: 0.0121
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0798 - val_loss: 0.0141
     Epoch 37/45
-    14010/14010 [==============================] - 1s 60us/sample - loss: 0.0767 - val_loss: 0.0133
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0793 - val_loss: 0.0130
     Epoch 38/45
-    14010/14010 [==============================] - 1s 60us/sample - loss: 0.0780 - val_loss: 0.0125
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0830 - val_loss: 0.0120
     Epoch 39/45
-    14010/14010 [==============================] - 1s 60us/sample - loss: 0.0783 - val_loss: 0.0133
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0812 - val_loss: 0.0127
     Epoch 40/45
-    14010/14010 [==============================] - 1s 57us/sample - loss: 0.0795 - val_loss: 0.0121
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0816 - val_loss: 0.0123
     Epoch 41/45
-    14010/14010 [==============================] - 1s 61us/sample - loss: 0.0784 - val_loss: 0.0121
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0803 - val_loss: 0.0129
     Epoch 42/45
-    14010/14010 [==============================] - 1s 59us/sample - loss: 0.0807 - val_loss: 0.0121
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0791 - val_loss: 0.0124
     Epoch 43/45
-    14010/14010 [==============================] - 1s 59us/sample - loss: 0.0780 - val_loss: 0.0125
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0789 - val_loss: 0.0125
     Epoch 44/45
-    14010/14010 [==============================] - 1s 61us/sample - loss: 0.0811 - val_loss: 0.0144
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0801 - val_loss: 0.0138
     Epoch 45/45
-    14010/14010 [==============================] - 1s 59us/sample - loss: 0.0791 - val_loss: 0.0134
-    CPU times: user 3min 13s, sys: 12.5 s, total: 3min 25s
-    Wall time: 2min 20s
+    438/438 [==============================] - 0s 1ms/step - loss: 0.0799 - val_loss: 0.0116
+    CPU times: user 1min 7s, sys: 6.05 s, total: 1min 13s
+    Wall time: 57.1 s
 
 
 
 ```python
 # Salvando os modelos para uso futuro
-model_432.save('Saved_NN_Models/model_432.h5')
-model_462.save('Saved_NN_Models/model_462.h5')
-model_492.save('Saved_NN_Models/model_492.h5')
-model_832.save('Saved_NN_Models/model_832.h5')
-model_862.save('Saved_NN_Models/model_862.h5')
-model_892.save('Saved_NN_Models/model_892.h5')
+model_432.save('../Saved_NN_Models/model_432.h5')
+model_462.save('../Saved_NN_Models/model_462.h5')
+model_492.save('../Saved_NN_Models/model_492.h5')
+model_832.save('../Saved_NN_Models/model_832.h5')
+model_862.save('../Saved_NN_Models/model_862.h5')
+model_892.save('../Saved_NN_Models/model_892.h5')
 
 # Recreando os modelos dos arquivos salvos
-# model_432 = tf.keras.models.load_model('Saved_NN_Models/model_432.h5')
-# model_462 = tf.keras.models.load_model('Saved_NN_Models/model_462.h5')
-# model_492 = tf.keras.models.load_model('Saved_NN_Models/model_492.h5')
-# model_832 = tf.keras.models.load_model('Saved_NN_Models/model_832.h5')
-# model_862 = tf.keras.models.load_model('Saved_NN_Models/model_862.h5')
-# model_892 = tf.keras.models.load_model('Saved_NN_Models/model_892.h5')
+# model_432 = tf.keras.models.load_model('../Saved_NN_Models/model_432.h5')
+# model_462 = tf.keras.models.load_model('../Saved_NN_Models/model_462.h5')
+# model_492 = tf.keras.models.load_model('../Saved_NN_Models/model_492.h5')
+# model_832 = tf.keras.models.load_model('../Saved_NN_Models/model_832.h5')
+# model_862 = tf.keras.models.load_model('../Saved_NN_Models/model_862.h5')
+# model_892 = tf.keras.models.load_model('../Saved_NN_Models/model_892.h5')
 ```
 
 
@@ -703,7 +719,7 @@ ax.bar(np.arange(0,6),val_mse,label='Validação',width = wid)
 ax.bar(np.arange(0,6)+wid,test_mse,label = "Teste",width = wid)
 ax.set_xticklabels(['0']+labels,fontsize=12)
 ax.legend(loc='best',fontsize=14);
-plt.savefig('figs/NN_Models_MSE.jpg')
+plt.savefig('../figs/NN_Models_MSE.jpg')
 
 ```
 
@@ -711,11 +727,52 @@ plt.savefig('figs/NN_Models_MSE.jpg')
 ![png](NN-TrackPrediction_files/NN-TrackPrediction_22_0.png)
 
 
-Vemos que os modelos 4-9-2 e 8-9-2 performaram melhor em todos os conjuntos de dados. Vemos que 9 neurônios internos performam muito bem. Vamos trabalhar com esses modelos a partir daqui. Em especial, com o 8-9-2 que apesar de ter uma maior perda do que o 4-9-2, ele utiliza uma maior quantidade de informações climáticas.
+
+```python
+
+history_list = [history_492,history_892]
+
+labels = ['4-9-2','8-9-2']
+fig,ax = plt.subplots(1,1,figsize=(8,5))
+
+test_mse = []
+train_mse = []
+val_mse = []
+
+test_mse.append(model_492.evaluate(xtest,ytest,verbose=0))
+
+test_mse.append(model_892.evaluate(xtest2,ytest2,verbose=0))
+for history in history_list:
+    train_mse.append(np.mean(history.history['loss']))
+    val_mse.append(np.mean(history.history['val_loss']))
+wid = 0.8/3-0.0001
+ax.set_title("Perda (MSE) dos Modelos - Dados de Teste",fontsize=16)
+ax.set_ylabel("MSE",fontsize=14)
+ax.bar(np.arange(0,2)-wid,train_mse,label="Treino",width = wid)
+ax.bar(np.arange(0,2),val_mse,label='Validação',width = wid)
+ax.bar(np.arange(0,2)+wid,test_mse,label = "Teste",width = wid)
+ax.set_xticklabels(['','','4-9-2','','','','8-9-2'],fontsize=12)
+ax.legend(loc='best',fontsize=14);
+plt.savefig('../figs/NN_Models_4vs8.jpg')
+model_492.evaluate(xtest,ytest,verbose=0),model_892.evaluate(xtest2,ytest2,verbose=0)
+```
+
+
+
+
+    (0.012073151767253876, 0.01123854797333479)
+
+
+
+
+![png](NN-TrackPrediction_files/NN-TrackPrediction_23_1.png)
+
+
+Vemos que os modelos 4-9-2 e 8-9-2 performaram melhor em todos os conjuntos de dados. Vemos que 9 neurônios internos performam muito bem. Vamos trabalhar com esses modelos a partir daqui. Em especial, com o 8-9-2, que teve uma menor perda nos dados de teste; Ele utiliza uma maior quantidade de informações climáticas; esses dados climáticos à mais como entrada, apesar de serem médias mensais, possuem o caráter de localização geográfica imbutido, e podem prover informações sobre o comportamento futuro da trajetória de um furacão. Abaixo também podemos ver que a convergência dos dois modelos de 9 neurônios internos é parecida. 
 
 
 ```python
-# plot accuracy and loss for the test set
+# Plotando MSE para Treino e Validação
 fig, (ax,ax1) = plt.subplots(1,2, figsize=(20,6))
 
 ax.plot(history_492.history['loss'])
@@ -730,23 +787,22 @@ ax1.set_title('8-9-2 MSE',fontsize = 16)
 ax1.set_ylabel('MSE')
 ax1.set_xlabel('epoch')
 ax1.legend(['Treino', 'Validação'], fontsize=14,loc='best');
-plt.savefig('figs/MSE-epoch.jpg')
+plt.savefig('../figs/MSE-epoch.jpg')
 ```
 
 
-![png](NN-TrackPrediction_files/NN-TrackPrediction_24_0.png)
+![png](NN-TrackPrediction_files/NN-TrackPrediction_25_0.png)
 
 
 
 ```python
 from sklearn.metrics import r2_score
 ypred = model_892.predict(xtest2)
-# from sklearn.linear_model import LinearRegression
-# lr = LinearRegression().fit(ytest,ypred)
-# lr.score(ytest,ypred)
+
 lat_r2 = r2_score(ytest2[:,0],ypred[:,0])
 lon_r2 = r2_score(ytest2[:,1],ypred[:,1])
 tot_r2 = r2_score(ytest2,ypred)
+
 print(f"R2 Latitude Teste - {lat_r2}")
 print(f"R2 Longitude Teste - {lon_r2}")
 print(f"R2 Total Teste - {tot_r2}")
@@ -762,23 +818,25 @@ ax1.set_xlabel("Real",fontsize = 13)
 ax1.set_ylabel("Prevista",fontsize = 13)
 ax1.scatter(ytest2[:,1],ypred[:,1],alpha = 0.75, color = 'g',label = f"R2 = {round(lon_r2,3)}")
 ax1.legend(loc='best', fontsize = 13);
-plt.savefig('figs/lat_lon_teste.jpg')
+plt.savefig('../figs/lat_lon_teste.jpg')
 ```
 
-    R2 Latitude Teste - 0.988149240276217
-    R2 Longitude Teste - 0.9864725794069319
-    R2 Total Teste - 0.9873109098415744
+    R2 Latitude Teste - 0.9890722375652974
+    R2 Longitude Teste - 0.9879249013965508
+    R2 Total Teste - 0.9884985694809241
 
 
 
-![png](NN-TrackPrediction_files/NN-TrackPrediction_25_1.png)
+![png](NN-TrackPrediction_files/NN-TrackPrediction_26_1.png)
 
+
+Nos dados de teste, temos resultados muito bons! Abaixo vemos um esquema do modelo 8-9-2.
 
 
 ```python
 tf.keras.utils.plot_model(
     model_892,
-    to_file='figs/model_892.png', 
+    to_file='../figs/model_892.png', 
     show_shapes=True, 
     show_layer_names=True,
     rankdir='TB',
@@ -791,19 +849,217 @@ tf.keras.utils.plot_model(
 
 
 
-![png](NN-TrackPrediction_files/NN-TrackPrediction_26_0.png)
+![png](NN-TrackPrediction_files/NN-TrackPrediction_28_0.png)
+
+
+
+## Previsões
+
+Vamos testar a previsão para algumas tempestades específicas do conjunto de testes.
+
+
+```python
+splitted_data = split(data)
+n = len(splitted_data)
+test_storms = splitted_data[int(n*(0.9)):]
+data_test = pd.concat(test_storms)
+data_test.loc[:,'Hours'] = (data_test.loc[:,'Time_new']-pd.Timestamp(1951,1,1))/pd.Timedelta('1 hour')
+data_test.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Date</th>
+      <th>Time</th>
+      <th>Event</th>
+      <th>Status</th>
+      <th>Latitude</th>
+      <th>Longitude</th>
+      <th>Maximum Wind</th>
+      <th>Minimum Pressure</th>
+      <th>Date_c</th>
+      <th>Year</th>
+      <th>Month</th>
+      <th>Day</th>
+      <th>Latitude_c</th>
+      <th>Longitude_c</th>
+      <th>Duration</th>
+      <th>sst</th>
+      <th>rhum</th>
+      <th>wspd</th>
+      <th>slp</th>
+      <th>cldc</th>
+      <th>Time_new</th>
+      <th>Hours</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>20259</th>
+      <td>AL022011</td>
+      <td>BRET</td>
+      <td>2011-07-16</td>
+      <td>600</td>
+      <td>NaN</td>
+      <td>LO</td>
+      <td>30.7</td>
+      <td>-79.7</td>
+      <td>20</td>
+      <td>1014</td>
+      <td>2011-07-16</td>
+      <td>2011</td>
+      <td>7</td>
+      <td>16</td>
+      <td>30.7</td>
+      <td>-79.7</td>
+      <td>7</td>
+      <td>29.212346</td>
+      <td>81.503754</td>
+      <td>81.503754</td>
+      <td>1003.891696</td>
+      <td>4.721866</td>
+      <td>2011-07-16 06:00:00</td>
+      <td>530670.0</td>
+    </tr>
+    <tr>
+      <th>20260</th>
+      <td>AL022011</td>
+      <td>BRET</td>
+      <td>2011-07-16</td>
+      <td>1200</td>
+      <td>NaN</td>
+      <td>LO</td>
+      <td>30.3</td>
+      <td>-79.4</td>
+      <td>20</td>
+      <td>1014</td>
+      <td>2011-07-16</td>
+      <td>2011</td>
+      <td>7</td>
+      <td>16</td>
+      <td>30.3</td>
+      <td>-79.4</td>
+      <td>7</td>
+      <td>29.212489</td>
+      <td>81.512076</td>
+      <td>81.512076</td>
+      <td>1003.897948</td>
+      <td>4.720945</td>
+      <td>2011-07-16 12:00:00</td>
+      <td>530676.0</td>
+    </tr>
+    <tr>
+      <th>20261</th>
+      <td>AL022011</td>
+      <td>BRET</td>
+      <td>2011-07-16</td>
+      <td>1800</td>
+      <td>NaN</td>
+      <td>LO</td>
+      <td>29.8</td>
+      <td>-79.1</td>
+      <td>20</td>
+      <td>1014</td>
+      <td>2011-07-16</td>
+      <td>2011</td>
+      <td>7</td>
+      <td>16</td>
+      <td>29.8</td>
+      <td>-79.1</td>
+      <td>7</td>
+      <td>29.141944</td>
+      <td>82.018334</td>
+      <td>82.018334</td>
+      <td>1005.045524</td>
+      <td>4.940012</td>
+      <td>2011-07-16 18:00:00</td>
+      <td>530682.0</td>
+    </tr>
+    <tr>
+      <th>20262</th>
+      <td>AL022011</td>
+      <td>BRET</td>
+      <td>2011-07-17</td>
+      <td>0</td>
+      <td>NaN</td>
+      <td>LO</td>
+      <td>29.3</td>
+      <td>-78.8</td>
+      <td>20</td>
+      <td>1014</td>
+      <td>2011-07-17</td>
+      <td>2011</td>
+      <td>7</td>
+      <td>17</td>
+      <td>29.3</td>
+      <td>-78.8</td>
+      <td>7</td>
+      <td>28.998422</td>
+      <td>82.957671</td>
+      <td>82.957671</td>
+      <td>1005.403854</td>
+      <td>4.952418</td>
+      <td>2011-07-17 00:00:00</td>
+      <td>530688.0</td>
+    </tr>
+    <tr>
+      <th>20263</th>
+      <td>AL022011</td>
+      <td>BRET</td>
+      <td>2011-07-17</td>
+      <td>600</td>
+      <td>NaN</td>
+      <td>LO</td>
+      <td>28.8</td>
+      <td>-78.5</td>
+      <td>20</td>
+      <td>1014</td>
+      <td>2011-07-17</td>
+      <td>2011</td>
+      <td>7</td>
+      <td>17</td>
+      <td>28.8</td>
+      <td>-78.5</td>
+      <td>7</td>
+      <td>28.999376</td>
+      <td>82.953919</td>
+      <td>82.953919</td>
+      <td>1005.405851</td>
+      <td>4.950652</td>
+      <td>2011-07-17 06:00:00</td>
+      <td>530694.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
 
 
 
 
 ```python
-data_test = data.loc[int(n*0.9):,:]
-data_test.loc[:,'Hours'] = (data_test.loc[:,'Time_new']-pd.Timestamp(1951,1,1))/pd.Timedelta('1 hour')
-# data_test[data_test.Category=="Category 3"]
-irene = data_test[data_test.ID=='AL092011']
-irene.loc[:,cols2]=standard_scale(irene,cols2)
-ir = irene.loc[:,cols2]
-
+import warnings
+warnings.simplefilter("ignore")
 def predict(storm,model,shift=3,pred=1):
     storm = storm.set_index(np.arange(0,len(storm)))
     y_pred=[]
@@ -817,85 +1073,70 @@ def predict(storm,model,shift=3,pred=1):
         y_pred.append(model.predict(np.expand_dims(np.asarray(x),axis=0)).ravel())
         del x
     return np.array(y_pred)
-y_pred = predict(ir,model_892)
-y_pred.shape
-```
-
-
-
-
-    (39, 2)
-
-
-
-
-```python
-ir_plot = ir.iloc[0:-4,:]
-fig,ax = plt.subplots(1,2,figsize=(10,4))
-fig.suptitle("Hurricane Irene - 2011", fontsize=16,y=1.08)
-ax[0].set_title("Latitude")
-ax[1].set_title("Longitude")
-print(r2_score(ir_plot.Latitude,y_pred[:,0]))
-print(r2_score(ir_plot.Longitude,y_pred[:,1]))
-ax[0].scatter(ir_plot.Hours,ir_plot.Latitude,label = 'True')
-ax[0].scatter(ir_plot.Hours,y_pred[:,0],label = 'Predicted')
-ax[1].scatter(ir_plot.Hours,ir_plot.Longitude,label = 'True')
-ax[1].scatter(ir_plot.Hours,y_pred[:,1],label = 'Predicted')
-ax[0].legend(loc='best')
-ax[1].legend(loc='best')
-```
-
-    0.9124620701244499
-    0.8651593770302984
-
-
-
-
-
-    <matplotlib.legend.Legend at 0x7fcb1e25b390>
-
-
-
-
-![png](NN-TrackPrediction_files/NN-TrackPrediction_28_2.png)
-
-
-
-```python
-# input_cols = ['Hours','Latitude','Longitude','Maximum Wind']
-joaquin = data_test[data_test.ID=='AL112015']
-joaquin.loc[:,cols2]=standard_scale(joaquin,cols2)
-y_jq = predict(joaquin[cols2],model_892)
+def predict_storm(ID):
+    name = data_test[data_test.ID==ID].Name.iloc[0]
+    year = data_test[data_test.ID==ID].Year.iloc[0]
+    storm = data_test[data_test.ID==ID]
+    storm.loc[:,cols2]=standard_scale(storm,cols2)
+    st = storm.loc[:,cols2]
+    st_pred = predict(st,model_892)
+    st_plot = st.iloc[0:-4,:]
+    
+    fig,ax = plt.subplots(1,2,figsize=(10,4))
+    fig.suptitle(f"Furacão {name} - {year}", fontsize=16,y=1.08)
+    ax[0].set_title("Latitude")
+    ax[1].set_title("Longitude")
+    print(r2_score(st_plot.Latitude,st_pred[:,0]))
+    print(r2_score(st_plot.Longitude,st_pred[:,1]))
+    ax[0].scatter(st_plot.Hours,st_plot.Latitude,label = 'Real')
+    ax[0].scatter(st_plot.Hours,st_pred[:,0],label = 'Previsto')
+    ax[1].scatter(st_plot.Hours,st_plot.Longitude,label = 'Real')
+    ax[1].scatter(st_plot.Hours,st_pred[:,1],label = 'Previsto')
+    ax[0].legend(loc='best')
+    ax[1].legend(loc='best')
+    plt.savefig(f"../figs/NN-{name}.jpg")
 ```
 
 
 ```python
-jq_plot = joaquin[input_cols].iloc[0:-4,:]
-fig,ax = plt.subplots(1,2,figsize=(10,4))
-fig.suptitle("Hurricane Joaquin - 2015", fontsize=16,y=1.08)
-ax[0].set_title("Latitude")
-ax[1].set_title("Longitude")
-print(r2_score(jq_plot.Latitude,y_jq[:,0]))
-print(r2_score(jq_plot.Longitude,y_jq[:,1]))
-ax[0].scatter(jq_plot.Hours,jq_plot.Latitude,label = 'True')
-ax[0].scatter(jq_plot.Hours,y_jq[:,0],label = 'Predicted')
-ax[1].scatter(jq_plot.Hours,jq_plot.Longitude,label = 'True')
-ax[1].scatter(jq_plot.Hours,y_jq[:,1],label = 'Predicted')
-ax[0].legend(loc='best')
-ax[1].legend(loc='best')
+predict_storm('AL092011')
 ```
 
-    0.9645696502595049
-    0.9816239209481076
+    0.912396866066715
+    0.8587266243812284
 
 
 
-
-
-    <matplotlib.legend.Legend at 0x7fcb1c9b9b50>
-
+![png](NN-TrackPrediction_files/NN-TrackPrediction_32_1.png)
 
 
 
-![png](NN-TrackPrediction_files/NN-TrackPrediction_30_2.png)
+```python
+predict_storm('AL112015')
+```
+
+    0.9650855905600251
+    0.9805961966628389
+
+
+
+![png](NN-TrackPrediction_files/NN-TrackPrediction_33_1.png)
+
+
+
+```python
+# data_test[(data_test.Duration>7)&(data_test.Name!="IRENE")&(data_test.Name!="JOAQUIN")].sort_values(by='Maximum Wind',ascending=0)
+```
+
+
+```python
+predict_storm('AL122011')
+```
+
+    0.9235033244762332
+    0.8633440966820972
+
+
+
+![png](NN-TrackPrediction_files/NN-TrackPrediction_35_1.png)
 
