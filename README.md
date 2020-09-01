@@ -1,6 +1,6 @@
 # Hurricane Project
 
-## Pŕe-requisitos
+## Pré-requisitos
 
 Para garantir a correta execução de todos os notebooks certifique-se que possui todos os pré-requisitos do arquivo requirements.txt instalados. Para instalá-los, execute:
 
@@ -25,7 +25,7 @@ Nesta etapa descrevemos as fontes de nossos dados, extração e limpeza dos mesm
 ### Análise Temporal do PDI
 > [PowerDissipationIndex.ipynb](https://github.com/reneroliveira/Hurricane_Project/blob/master/Notebooks/PowerDissipationIndex.ipynb)
 
-O PDI ou Power Dissipation Index é um índice indicador de destrutibilidade de uma tempestade, o que será melhor explicado no notebook. Nesta estapa fazemos análises temporais desse índice com os dados gerados na etapa de limpeza, de forma a entender a relação de longo prazo entre as quantidades.
+O Power Dissipation Index (PDI) é um estatística indicadora de destrutividade de uma tempestade, o que será melhor explicado no notebook. Nesta estapa fazemos análises temporais desse índice com os dados gerados na etapa de limpeza, de forma a entender a relação de longo prazo entre as quantidades.
 
 ### Redes Neurais para Predição de Trajetória
 > [NN-TrackPrediction.ipynb](https://github.com/reneroliveira/Hurricane_Project/blob/master/Notebooks/NN-TrackPrediction.ipynb)
