@@ -19,5 +19,13 @@ Para a melhor compreensão das etapas, objetivos e conclusões de nosso projeto,
 
 Nesta etapa descrevemos as fontes de nossos dados, extração e limpeza dos mesmos, além de fazermos a análise exploratória e visualizações importantes.
 
-### Análise de Váriáveis
+### Modelos para Predição de Intensidade e Duração de Furacões
 > [Analises_variaveis.ipynb](https://github.com/reneroliveira/Hurricane_Project/blob/master/Notebooks/Analises_variaveis.ipynb)
+
+### Análise Temporal do PDI
+> [PowerDissipationIndex.ipynb](https://github.com/reneroliveira/Hurricane_Project/blob/master/Notebooks/PowerDissipationIndex.ipynb)
+
+O PDI ou Power Dissipation Index é um índice indicador de destrutibilidade de uma tempestade, o que será melhor explicado no notebook. Nesta estapa fazemos análises temporais desse índice com os dados gerados na etapa de limpeza, de forma a entender a relação de longo prazo entre as quantidades.
+
+### Redes Neurais para Predição de Trajetória
+> 
