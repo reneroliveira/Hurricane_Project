@@ -3,11 +3,11 @@ theme: readthedocs
 
 nav:
 - Home : index.md
-- Data Cleaning + EDA : Data_Cleaning_and_EDA.md 
+- Limpeza dos dados + EDA : Data_Cleaning_and_EDA.md 
 - Destrutividade no curto prazo: Analises_variaveis.md
 - Destrutividade no longo prazo: PowerDissipationIndex.md
 - Prevendo trajetórias: NN-TrackPrediction.md
-
+- Referências: bib.md
 
 extra_javascript: 
     - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML
