@@ -205,13 +205,14 @@ Veja abaixo código, os resultados de R2 e visualizações:
 
 <details>
 <summary>Código</summary>
+
 ```python
 regr_rf2 = RandomForestRegressor(n_estimators=50, max_depth=50, random_state=0, oob_score=True, bootstrap = True)
 regr_rf2.fit(data_train, data_train_mw)
 print(regr_rf2.score(data_train, data_train_mw))
 print(regr_rf2.score(data_test, data_test_mw))
 ```
-</detail>
+</details>
 
     0.9629951225598822
     0.7593567448937373
