@@ -58,7 +58,33 @@
                 <ul class="current">
                     <li class="toctree-l1 current"><a class="reference internal current" href="./">Destrutividade no curto prazo</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#instalacao-e-importacao-de-pacotes">Instalação e Importação de Pacotes</a>
+    <li class="toctree-l2"><a class="reference internal" href="#modelos">Modelos</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#regressao-linear">Regressão Linear</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#random-forest">Random Forest</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#multi-layer-perceptron">Multi Layer Perceptron</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#modelos-com-separacao-em-conjuntos-de-treino-e-teste">Modelos com Separação em Conjuntos de Treino e Teste</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#regressao-linear_1">Regressão Linear</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#random-forest_1">Random Forest</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#demais-previsoes-com-random-forest-melhor-ajuste">Demais Previsões com Random Forest (Melhor Ajuste)</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#previsao-da-duracao-dos-eventos-de-furacao">Previsão da duração dos eventos de Furacão</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#multi-layer-perceptron_1">Multi Layer Perceptron</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#support-vector-machine">Support Vector Machine</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#modelos-com-escala-padronizada">Modelos com Escala Padronizada</a>
+    </li>
+        </ul>
     </li>
     </ul>
                     </li>
@@ -104,427 +130,22 @@
             <div class="section">
               
                 <h1 id="aplicacao-de-modelos-de-regressao">Aplicação de Modelos de Regressão</h1>
-<p>Neste Notebook, iremos importar os dados já limpados/filtrados em etapas anteriores e iremos aplicar diversos algoritmos visando ajustar uma boa regressão que nos ajude a prever as velocidades dos ventos de um determinado evento (Tropical Storm ou Hurricane) ou a duração dos mesmos.
-Algumas pequenas transformações serão necessárias para ajuste das variáveis preditoras a serem consideradas em cada modelo.</p>
-<h2 id="instalacao-e-importacao-de-pacotes">Instalação e Importação de Pacotes</h2>
-<p>Os códigos de instalação abaixo estão comentados. Na primeira utilização do Notebook, pode-se descomentá-los para instalar os pacotes que ainda não estejam instalados no computador que se esteja utilizando.
-Além disso, alguns pacotes abaixo são para utilização nos demais notebooks do projeto.</p>
-<div class="codehilite"><pre><span></span><code><span class="c1"># !apt-get install libgeos-3.5.0</span>
-<span class="c1"># !apt-get install libgeos-dev</span>
-<span class="c1"># !pip install https://github.com/matplotlib/basemap/archive/master.zip</span>
-<span class="c1"># !pip install pyproj==1.9.6</span>
-<span class="c1"># !pip install netcdf4</span>
-
-<span class="c1"># Dependencies for Tropycal Package: https://pypi.org/project/tropycal/</span>
-<span class="c1"># matplotlib &gt;= 2.2.2</span>
-<span class="c1"># numpy &gt;= 1.14.3</span>
-<span class="c1"># scipy &gt;= 1.1.0</span>
-<span class="c1"># pandas &gt;= 0.23.0</span>
-<span class="c1"># geopy &gt;= 1.18.1</span>
-<span class="c1"># xarray &gt;= 0.10.7</span>
-<span class="c1"># networkx &gt;= 2.0.0</span>
-<span class="c1"># requests &gt;= 2.22.0</span>
-<span class="c1"># To fully leverage tropycal&#39;s plotting capabilities, it is strongly recommended to have cartopy &gt;= 0.17.0 installed.</span>
-
-<span class="c1"># !pip install numpy</span>
-<span class="c1"># !pip install pandas</span>
-<span class="c1"># !pip install matplotlib</span>
-<span class="c1"># !pip install scipy</span>
-<span class="c1"># !pip install geopy</span>
-<span class="c1"># !pip install xarray</span>
-<span class="c1"># !pip install networkx</span>
-<span class="c1"># !pip install requests</span>
-<span class="c1"># !pip install proj</span>
-<span class="c1"># !pip install proj-data</span>
-<span class="c1"># !pip install geos</span>
-<span class="c1"># #!pip uninstall cartopy</span>
-<span class="c1"># !apt-get -qq install python-cartopy python3-cartopy</span>
-<span class="c1"># !pip install cartopy</span>
-<span class="c1"># !pip install tropycal</span>
-<span class="c1"># #!pip freeze</span>
-</code></pre></div>
-
-
-<div class="codehilite"><pre><span></span><code><span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">matplotlib</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">matplotlib.colors</span> <span class="k">as</span> <span class="nn">c</span>
-<span class="c1">#from mpl_toolkits.basemap import Basemap,shiftgrid</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">netCDF4</span> <span class="k">as</span> <span class="nn">nc</span>
-<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
-<span class="kn">from</span> <span class="nn">netCDF4</span> <span class="kn">import</span> <span class="n">Dataset</span>
-<span class="kn">from</span> <span class="nn">netCDF4</span> <span class="kn">import</span> <span class="n">date2index</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
-<span class="kn">import</span> <span class="nn">scipy</span>
-<span class="kn">import</span> <span class="nn">geopy</span>
-<span class="kn">import</span> <span class="nn">xarray</span>
-<span class="kn">import</span> <span class="nn">networkx</span>
-<span class="kn">import</span> <span class="nn">requests</span>
-<span class="kn">import</span> <span class="nn">cartopy</span>
-<span class="kn">import</span> <span class="nn">tropycal</span>
-
-<span class="kn">import</span> <span class="nn">tropycal.tracks</span> <span class="k">as</span> <span class="nn">tracks</span>
-<span class="kn">import</span> <span class="nn">tropycal.tornado</span> <span class="k">as</span> <span class="nn">tornado</span>
-<span class="kn">import</span> <span class="nn">datetime</span> <span class="k">as</span> <span class="nn">dt</span>
-<span class="kn">import</span> <span class="nn">statsmodels.api</span> <span class="k">as</span> <span class="nn">sm</span>
-<span class="kn">from</span> <span class="nn">statsmodels.api</span> <span class="kn">import</span> <span class="n">OLS</span>
-
-<span class="c1"># Modelos para Testes Futuros de Regressão</span>
-<span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="kn">import</span> <span class="n">PCA</span>
-<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">LogisticRegression</span>
-<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">LogisticRegressionCV</span>
-<span class="kn">from</span> <span class="nn">sklearn.discriminant_analysis</span> <span class="kn">import</span> <span class="n">LinearDiscriminantAnalysis</span>
-<span class="kn">from</span> <span class="nn">sklearn.discriminant_analysis</span> <span class="kn">import</span> <span class="n">QuadraticDiscriminantAnalysis</span>
-<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">PolynomialFeatures</span>
-<span class="kn">from</span> <span class="nn">sklearn.neighbors</span> <span class="kn">import</span> <span class="n">KNeighborsClassifier</span>
-<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">cross_val_score</span>
-<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">accuracy_score</span>
-<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">KFold</span>
-
-<span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">gamma</span>
-
-<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
-<span class="n">sns</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
-
-<span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span>
-
-<span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">preprocessing</span>
-<span class="kn">from</span> <span class="nn">pandas.plotting</span> <span class="kn">import</span> <span class="n">scatter_matrix</span>
-
-<span class="kn">from</span> <span class="nn">sklearn.ensemble</span> <span class="kn">import</span> <span class="n">RandomForestRegressor</span>
-<span class="kn">from</span> <span class="nn">sklearn.neural_network</span> <span class="kn">import</span> <span class="n">MLPRegressor</span>
-<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
-<span class="kn">from</span> <span class="nn">sklearn</span> <span class="kn">import</span> <span class="n">svm</span>
-<span class="c1">#from sklearn.naive_bayes import GaussianNB</span>
-<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">StandardScaler</span>
-<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">GroupShuffleSplit</span>
-<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">GroupKFold</span>
-<span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">make_friedman2</span>
-<span class="kn">from</span> <span class="nn">sklearn.gaussian_process</span> <span class="kn">import</span> <span class="n">GaussianProcessRegressor</span>
-<span class="kn">from</span> <span class="nn">sklearn.gaussian_process.kernels</span> <span class="kn">import</span> <span class="n">DotProduct</span><span class="p">,</span> <span class="n">WhiteKernel</span>
-</code></pre></div>
-
-
-<h1 id="carregamento-e-preparacao-dos-dados">Carregamento e Preparação dos Dados</h1>
-<div class="codehilite"><pre><span></span><code><span class="c1">#Importação dos dados previamente estruturados</span>
-<span class="n">data_atl_merged</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;../Datasets/data_atl_merged2.csv&#39;</span><span class="p">)</span>
-</code></pre></div>
-
-
-<div class="codehilite"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="n">data_atl_merged</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-<span class="n">data_atl_merged</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
-</code></pre></div>
-
-
-<div class="codehilite"><pre><span></span><code><span class="err">Index([&#39;ID&#39;, &#39;Name&#39;, &#39;Date&#39;, &#39;Time&#39;, &#39;Event&#39;, &#39;Status&#39;, &#39;Latitude&#39;,</span>
-<span class="err">       &#39;Longitude&#39;, &#39;Maximum Wind&#39;, &#39;Minimum Pressure&#39;, &#39;Date_c&#39;, &#39;Year&#39;,</span>
-<span class="err">       &#39;Month&#39;, &#39;Day&#39;, &#39;Latitude_c&#39;, &#39;Longitude_c&#39;, &#39;Duration&#39;, &#39;sst&#39;, &#39;rhum&#39;,</span>
-<span class="err">       &#39;wspd&#39;, &#39;slp&#39;, &#39;cldc&#39;],</span>
-<span class="err">      dtype=&#39;object&#39;)</span>
-</code></pre></div>
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>ID</th>
-      <th>Name</th>
-      <th>Date</th>
-      <th>Time</th>
-      <th>Event</th>
-      <th>Status</th>
-      <th>Latitude</th>
-      <th>Longitude</th>
-      <th>Maximum Wind</th>
-      <th>Minimum Pressure</th>
-      <th>...</th>
-      <th>Month</th>
-      <th>Day</th>
-      <th>Latitude_c</th>
-      <th>Longitude_c</th>
-      <th>Duration</th>
-      <th>sst</th>
-      <th>rhum</th>
-      <th>wspd</th>
-      <th>slp</th>
-      <th>cldc</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>AL011951</td>
-      <td>UNNAMED</td>
-      <td>1951-01-02</td>
-      <td>1200</td>
-      <td>NaN</td>
-      <td>EX</td>
-      <td>30.5</td>
-      <td>-58.0</td>
-      <td>50</td>
-      <td>-999</td>
-      <td>...</td>
-      <td>1</td>
-      <td>2</td>
-      <td>30.5</td>
-      <td>-58.0</td>
-      <td>10</td>
-      <td>12.371029</td>
-      <td>72.457094</td>
-      <td>72.457094</td>
-      <td>1027.446055</td>
-      <td>5.219256</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>AL011951</td>
-      <td>UNNAMED</td>
-      <td>1951-01-02</td>
-      <td>1800</td>
-      <td>NaN</td>
-      <td>EX</td>
-      <td>29.9</td>
-      <td>-56.8</td>
-      <td>45</td>
-      <td>-999</td>
-      <td>...</td>
-      <td>1</td>
-      <td>2</td>
-      <td>29.9</td>
-      <td>-56.8</td>
-      <td>10</td>
-      <td>16.217764</td>
-      <td>80.423854</td>
-      <td>80.423854</td>
-      <td>1022.672978</td>
-      <td>5.756614</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>AL011951</td>
-      <td>UNNAMED</td>
-      <td>1951-01-03</td>
-      <td>0</td>
-      <td>NaN</td>
-      <td>EX</td>
-      <td>29.0</td>
-      <td>-55.7</td>
-      <td>45</td>
-      <td>-999</td>
-      <td>...</td>
-      <td>1</td>
-      <td>3</td>
-      <td>29.0</td>
-      <td>-55.7</td>
-      <td>10</td>
-      <td>15.491124</td>
-      <td>81.121590</td>
-      <td>81.121590</td>
-      <td>1023.151909</td>
-      <td>5.782474</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>AL011951</td>
-      <td>UNNAMED</td>
-      <td>1951-01-03</td>
-      <td>600</td>
-      <td>NaN</td>
-      <td>EX</td>
-      <td>27.5</td>
-      <td>-54.8</td>
-      <td>45</td>
-      <td>-999</td>
-      <td>...</td>
-      <td>1</td>
-      <td>3</td>
-      <td>27.5</td>
-      <td>-54.8</td>
-      <td>10</td>
-      <td>22.268075</td>
-      <td>84.264761</td>
-      <td>84.264761</td>
-      <td>1019.325138</td>
-      <td>5.651842</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>AL011951</td>
-      <td>UNNAMED</td>
-      <td>1951-01-03</td>
-      <td>1200</td>
-      <td>NaN</td>
-      <td>EX</td>
-      <td>26.5</td>
-      <td>-54.5</td>
-      <td>45</td>
-      <td>-999</td>
-      <td>...</td>
-      <td>1</td>
-      <td>3</td>
-      <td>26.5</td>
-      <td>-54.5</td>
-      <td>10</td>
-      <td>22.336746</td>
-      <td>84.458617</td>
-      <td>84.458617</td>
-      <td>1019.305866</td>
-      <td>5.645406</td>
-    </tr>
-  </tbody>
-</table>
-<p>5 rows × 22 columns</p>
-</div>
-
-<div class="codehilite"><pre><span></span><code><span class="n">y_train_mw</span> <span class="o">=</span> <span class="n">data_atl_merged</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">]</span>
-<span class="n">y_train_mp</span> <span class="o">=</span> <span class="n">data_atl_merged</span><span class="p">[</span><span class="s1">&#39;Minimum Pressure&#39;</span><span class="p">]</span>
-<span class="n">y_train_mp</span><span class="p">[</span><span class="n">y_train_mp</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-<span class="n">y_train_dur</span> <span class="o">=</span> <span class="n">data_atl_merged</span><span class="p">[</span><span class="s1">&#39;Duration&#39;</span><span class="p">]</span>
-<span class="n">X_train</span> <span class="o">=</span> <span class="n">data_atl_merged</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Name&#39;</span><span class="p">,</span> <span class="s1">&#39;Date&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">,</span> 
-                                <span class="s1">&#39;Event&#39;</span><span class="p">,</span> <span class="s1">&#39;Status&#39;</span><span class="p">,</span> <span class="s1">&#39;Maximum Wind&#39;</span><span class="p">,</span> 
-                                <span class="s1">&#39;Minimum Pressure&#39;</span><span class="p">,</span> <span class="s1">&#39;Date_c&#39;</span><span class="p">,</span> <span class="s1">&#39;Day&#39;</span><span class="p">,</span> 
-                                <span class="s1">&#39;Latitude_c&#39;</span><span class="p">,</span> <span class="s1">&#39;Longitude_c&#39;</span><span class="p">,</span> <span class="s1">&#39;Duration&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
-
-<span class="c1">#print(y_train_rad)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-<span class="n">X_train</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
-</code></pre></div>
-
-
-<div class="codehilite"><pre><span></span><code><span class="k">Index</span><span class="p">([</span><span class="s1">&#39;Latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;Longitude&#39;</span><span class="p">,</span> <span class="s1">&#39;Year&#39;</span><span class="p">,</span> <span class="s1">&#39;Month&#39;</span><span class="p">,</span> <span class="s1">&#39;sst&#39;</span><span class="p">,</span> <span class="s1">&#39;rhum&#39;</span><span class="p">,</span> <span class="s1">&#39;wspd&#39;</span><span class="p">,</span> <span class="s1">&#39;slp&#39;</span><span class="p">,</span>
-       <span class="s1">&#39;cldc&#39;</span><span class="p">],</span>
-      <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;object&#39;</span><span class="p">)</span>
-
-
-<span class="o">&lt;</span><span class="n">ipython</span><span class="o">-</span><span class="k">input</span><span class="o">-</span><span class="mi">16</span><span class="o">-</span><span class="mi">44</span><span class="n">f50b930158</span><span class="o">&gt;</span><span class="p">:</span><span class="mi">3</span><span class="p">:</span> <span class="n">SettingWithCopyWarning</span><span class="p">:</span> 
-<span class="n">A</span> <span class="n">value</span> <span class="k">is</span> <span class="n">trying</span> <span class="k">to</span> <span class="n">be</span> <span class="k">set</span> <span class="k">on</span> <span class="n">a</span> <span class="k">copy</span> <span class="k">of</span> <span class="n">a</span> <span class="n">slice</span> <span class="k">from</span> <span class="n">a</span> <span class="n">DataFrame</span>
-
-<span class="n">See</span> <span class="n">the</span> <span class="n">caveats</span> <span class="k">in</span> <span class="n">the</span> <span class="n">documentation</span><span class="p">:</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">pandas</span><span class="p">.</span><span class="n">pydata</span><span class="p">.</span><span class="n">org</span><span class="o">/</span><span class="n">pandas</span><span class="o">-</span><span class="n">docs</span><span class="o">/</span><span class="k">stable</span><span class="o">/</span><span class="n">user_guide</span><span class="o">/</span><span class="n">indexing</span><span class="p">.</span><span class="n">html</span><span class="o">#</span><span class="n">returning</span><span class="o">-</span><span class="n">a</span><span class="o">-</span><span class="k">view</span><span class="o">-</span><span class="n">versus</span><span class="o">-</span><span class="n">a</span><span class="o">-</span><span class="k">copy</span>
-  <span class="n">y_train_mp</span><span class="p">[</span><span class="n">y_train_mp</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
-</code></pre></div>
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Latitude</th>
-      <th>Longitude</th>
-      <th>Year</th>
-      <th>Month</th>
-      <th>sst</th>
-      <th>rhum</th>
-      <th>wspd</th>
-      <th>slp</th>
-      <th>cldc</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>30.5</td>
-      <td>-58.0</td>
-      <td>1951</td>
-      <td>1</td>
-      <td>12.371029</td>
-      <td>72.457094</td>
-      <td>72.457094</td>
-      <td>1027.446055</td>
-      <td>5.219256</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>29.9</td>
-      <td>-56.8</td>
-      <td>1951</td>
-      <td>1</td>
-      <td>16.217764</td>
-      <td>80.423854</td>
-      <td>80.423854</td>
-      <td>1022.672978</td>
-      <td>5.756614</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>29.0</td>
-      <td>-55.7</td>
-      <td>1951</td>
-      <td>1</td>
-      <td>15.491124</td>
-      <td>81.121590</td>
-      <td>81.121590</td>
-      <td>1023.151909</td>
-      <td>5.782474</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>27.5</td>
-      <td>-54.8</td>
-      <td>1951</td>
-      <td>1</td>
-      <td>22.268075</td>
-      <td>84.264761</td>
-      <td>84.264761</td>
-      <td>1019.325138</td>
-      <td>5.651842</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>26.5</td>
-      <td>-54.5</td>
-      <td>1951</td>
-      <td>1</td>
-      <td>22.336746</td>
-      <td>84.458617</td>
-      <td>84.458617</td>
-      <td>1019.305866</td>
-      <td>5.645406</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
+<p><a href="https://github.com/reneroliveira/Hurricane_Project/blob/master/Notebooks/Analises_variaveis.ipynb">Notebook referência</a></p>
+<p>Nesta página iremos mostrar os diversos algoritmos aplicados aos dados visando ajustar uma boa regressão que ajudasse a prever as velocidades dos ventos de um determinado evento (Tropical Storm ou Hurricane) ou a duração dos mesmos.
+Algumas pequenas transformações foram necessárias para ajuste das variáveis preditoras a serem consideradas em cada modelo. Para detalhes sobre o carregamento e preparação dos dados, veja o notebook referência.</p>
 <h2 id="modelos">Modelos</h2>
+<p>Segue abaixo o resultado da aplicação de uma regressão linear simples usando como variável alvo a velocidade de vento, dado usado em vários indicadores de destrutibilidade. Interessante notar os parâmetros com coeficientes positivos.</p>
+<details>
+<summary>Código</summary>
+
 <div class="codehilite"><pre><span></span><code><span class="n">X_train2</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span> <span class="c1">#np.array(X_train).reshape(X_train.shape[0],1)</span>
 <span class="n">OLS_obj</span> <span class="o">=</span> <span class="n">OLS</span><span class="p">(</span><span class="n">y_train_mw</span><span class="p">,</span> <span class="n">X_train2</span><span class="p">)</span>
 <span class="n">OLSModel</span> <span class="o">=</span> <span class="n">OLS_obj</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
 
 <span class="n">r2_train</span> <span class="o">=</span> <span class="n">OLSModel</span><span class="o">.</span><span class="n">rsquared</span>
-<span class="c1">#r2_test = 1 - ((OLSModel.predict(X_test2)-y_test)*(OLSModel.predict(X_test2)-y_test)).sum() / ((y_test.mean()-y_test)*(y_test.mean()-y_test)).sum()</span>
+
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;R^2_train = </span><span class="si">{</span><span class="n">r2_train</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="c1">#print(f&#39;R^2_test  = {r2_test}&#39;)</span>
+
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_const  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_Year  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_Month  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -537,6 +158,8 @@ Além disso, alguns pacotes abaixo são para utilização nos demais notebooks d
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_cldc  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 </code></pre></div>
 
+
+</details>
 
 <div class="codehilite"><pre><span></span><code><span class="err">R^2_train = 0.02385621171100183</span>
 <span class="err">Parâmetro_const  = 47.35464784180999</span>
@@ -552,213 +175,49 @@ Além disso, alguns pacotes abaixo são para utilização nos demais notebooks d
 </code></pre></div>
 
 
-<p>Os códigos abaixos nos geras uma visualização que pode trazer insights a respeito da relação entre as variáveis. A escolha das variáveis preditoras que servem de entrada para os modelos mais a frente foram pensadas também pela observação destes gráficos.</p>
+<p>Os códigos abaixos nos gera uma visualização que pode trazer insights a respeito da relação entre as variáveis. A escolha das variáveis preditoras que servem de entrada para os modelos mais a frente foram pensadas também pela observação destes gráficos.</p>
+<details>
+<summary>Código</summary>
+
 <div class="codehilite"><pre><span></span><code><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train_mw</span><span class="p">,</span> <span class="n">y_train_mp</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">scatter_matrix</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span> <span class="n">diagonal</span><span class="o">=</span><span class="s1">&#39;kde&#39;</span><span class="p">);</span>
 </code></pre></div>
 
 
+</details>
+
 <p><img alt="png" src="../Analises_variaveis_files/Analises_variaveis_13_0.png" /></p>
+<details>
+<summary>Código</summary>
+
 <div class="codehilite"><pre><span></span><code><span class="c1"># A princípio, não queremos que se faça alguma previsão com base no valor numérico do ano</span>
 <span class="c1"># Além disso, a variável wspd está altamente correlacionada com a rhum, podendo ser mantida apenas a última</span>
 <span class="n">X_train</span> <span class="o">=</span> <span class="n">data_atl_merged</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;Year&#39;</span><span class="p">,</span> <span class="s1">&#39;wspd&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
-</code></pre></div>
 
-
-<div class="codehilite"><pre><span></span><code><span class="c1">#   Mês      Latitude    Longitude    Temperatura, Umidade, Sea Level Pressure, Cloudiness]</span>
+<span class="c1">#   Mês      Latitude    Longitude    Temperatura, Umidade, Sea Level Pressure, Cloudiness]</span>
 <span class="c1"># [&#39;Month&#39;, &#39;Latitude&#39;, &#39;Longitude&#39;, &#39;sst&#39;,       &#39;rhum&#39;,  &#39;slp&#39;,              &#39;cldc&#39;]</span>
 
 <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">7</span><span class="p">)</span><span class="c1">#, figsize=(16,10))</span>
 <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Velocidade Máxima vs Variáveis Preditoras (1950-2015)&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">28</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.06</span><span class="p">)</span>
 
-<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Month&#39;</span><span class="p">],</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">],</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> <span class="c1">#, label=r&#39;$Furacões$ $=$ $0$&#39;)</span>
-<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Latitude&#39;</span><span class="p">],</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">],</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> <span class="c1">#, label=r&#39;$Furacões$ $=$ $0$&#39;)</span>
-<span class="n">ax</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Longitude&#39;</span><span class="p">],</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">],</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> <span class="c1">#, label=r&#39;$Furacões$ $=$ $0$&#39;)</span>
-<span class="n">ax</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;sst&#39;</span><span class="p">],</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">],</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> <span class="c1">#, label=r&#39;$Furacões$ $=$ $0$&#39;)</span>
-<span class="n">ax</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;rhum&#39;</span><span class="p">],</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">],</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> <span class="c1">#, label=r&#39;$Furacões$ $=$ $0$&#39;)</span>
-<span class="n">ax</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;slp&#39;</span><span class="p">],</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">],</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> <span class="c1">#, label=r&#39;$Furacões$ $=$ $0$&#39;)</span>
-<span class="n">ax</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;cldc&#39;</span><span class="p">],</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">],</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> <span class="c1">#, label=r&#39;$Furacões$ $=$ $0$&#39;)</span>
-<span class="c1">#ax.plot([1850, 2015], [w0, w1], ls = &#39;-.&#39;) #, label=r&#39;$Furacões$ $=$ $0$&#39;)</span>
-<span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">ax.tick_params(labelsize=24)</span>
-<span class="sd">ax.set_title(f&#39;Número de Furacões Anuais (1851-2015)&#39;, fontsize=24)</span>
-<span class="sd">ax.set_xlabel(r&#39;$Ano$&#39;, fontsize=16)</span>
-<span class="sd">ax.set_ylabel(r&#39;$Quantidade$&#39;, fontsize=16)</span>
-<span class="sd">&#39;&#39;&#39;</span>
-<span class="c1">#fig.legend(loc=&#39;best&#39;, fontsize=12);</span>
+<span class="n">ax</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Month&#39;</span><span class="p">],</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">],</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> 
+<span class="n">ax</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Latitude&#39;</span><span class="p">],</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">],</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> 
+<span class="n">ax</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Longitude&#39;</span><span class="p">],</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">],</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> 
+<span class="n">ax</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;sst&#39;</span><span class="p">],</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">],</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> 
+<span class="n">ax</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;rhum&#39;</span><span class="p">],</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">],</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> 
+<span class="n">ax</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;slp&#39;</span><span class="p">],</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">],</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> 
+<span class="n">ax</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;cldc&#39;</span><span class="p">],</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">],</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">ls</span> <span class="o">=</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span> 
+
 <span class="n">fig</span><span class="o">.</span><span class="n">set_figheight</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">fig</span><span class="o">.</span><span class="n">set_figwidth</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
 <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">(</span><span class="n">pad</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
 </code></pre></div>
 
 
+</details>
+
 <p><img alt="png" src="../Analises_variaveis_files/Analises_variaveis_15_0.png" /></p>
-<div class="codehilite"><pre><span></span><code><span class="n">X_train</span> <span class="o">=</span> <span class="n">data_atl_merged</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Name&#39;</span><span class="p">,</span> <span class="s1">&#39;Date&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="s1">&#39;Event&#39;</span><span class="p">,</span> <span class="s1">&#39;Status&#39;</span><span class="p">,</span> <span class="s1">&#39;Maximum Wind&#39;</span><span class="p">,</span> <span class="s1">&#39;Minimum Pressure&#39;</span><span class="p">,</span> <span class="s1">&#39;Date_c&#39;</span><span class="p">,</span> <span class="s1">&#39;Day&#39;</span><span class="p">,</span> <span class="s1">&#39;Latitude_c&#39;</span><span class="p">,</span> <span class="s1">&#39;Longitude_c&#39;</span><span class="p">,</span> <span class="s1">&#39;Duration&#39;</span><span class="p">,</span> <span class="s1">&#39;Year&#39;</span><span class="p">,</span> <span class="s1">&#39;wspd&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">X_train</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
-</code></pre></div>
-
-
-<div class="codehilite"><pre><span></span><code><span class="err">Latitude       27.466819</span>
-<span class="err">Longitude     -62.607058</span>
-<span class="err">Month           8.709729</span>
-<span class="err">sst            26.416134</span>
-<span class="err">rhum           81.284651</span>
-<span class="err">slp          1009.678574</span>
-<span class="err">cldc            5.137222</span>
-<span class="c">dtype: float64</span>
-</code></pre></div>
-
-
-<p>Uma primeira tentativa de ajuste foi feito através da centralização das variáveis preditoras em relação à média, adicionando também termos polinomiais de segunda ordem. No entanto, os resultados do ajuste não mostraram ganhos significativos para o modelo de Regressão Linear Múltipla, e até prejudicaram modelos mais complexos, como Random Forest, Multi Layer Perceptron, entre outros utilizados mais a frente.</p>
-<div class="codehilite"><pre><span></span><code><span class="c1"># Tentativa de ajuste através de transformação de variáveis e inclusão de termos polinomiais</span>
-<span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Month_mod&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Month&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mf">8.788781</span><span class="p">)</span>
-<span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Latitude_mod&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Latitude&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mf">17.943038</span><span class="p">)</span>
-<span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Longitude_mod&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Longitude&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mf">62.555538</span><span class="p">)</span>
-<span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;sst_mod&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;sst&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mf">28.888685</span><span class="p">)</span>
-<span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;rhum_mod&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;rhum&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mf">82.051702</span><span class="p">)</span>
-<span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;slp_mod&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;slp&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mf">1008.611661</span><span class="p">)</span>
-<span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;cldc_mod&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;cldc&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mf">5.223518</span><span class="p">)</span>
-
-<span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Month_mod^2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Month_mod&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
-<span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Latitude_mod^2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Latitude_mod&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
-<span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Longitude_mod^2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;Longitude_mod&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
-<span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;sst_mod^2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;sst_mod&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
-<span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;rhum_mod^2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;rhum_mod&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
-<span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;slp_mod^2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;slp_mod&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
-<span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;cldc_mod^2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">[</span><span class="s1">&#39;cldc_mod&#39;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
-
-<span class="n">X_train</span> <span class="o">=</span> <span class="n">X_train</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;Month&#39;</span><span class="p">,</span> <span class="s1">&#39;Latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;Longitude&#39;</span><span class="p">,</span> <span class="s1">&#39;sst&#39;</span><span class="p">,</span> <span class="s1">&#39;rhum&#39;</span><span class="p">,</span> <span class="s1">&#39;slp&#39;</span><span class="p">,</span> <span class="s1">&#39;cldc&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
-</code></pre></div>
-
-
-<div class="codehilite"><pre><span></span><code><span class="n">X_train</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
-</code></pre></div>
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Month_mod</th>
-      <th>Latitude_mod</th>
-      <th>Longitude_mod</th>
-      <th>sst_mod</th>
-      <th>rhum_mod</th>
-      <th>slp_mod</th>
-      <th>cldc_mod</th>
-      <th>Month_mod^2</th>
-      <th>Latitude_mod^2</th>
-      <th>Longitude_mod^2</th>
-      <th>sst_mod^2</th>
-      <th>rhum_mod^2</th>
-      <th>slp_mod^2</th>
-      <th>cldc_mod^2</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>-7.788781</td>
-      <td>12.556962</td>
-      <td>4.555538</td>
-      <td>-16.517656</td>
-      <td>-9.594608</td>
-      <td>18.834394</td>
-      <td>-0.004262</td>
-      <td>60.665109</td>
-      <td>157.677295</td>
-      <td>20.752926</td>
-      <td>272.832952</td>
-      <td>92.056509</td>
-      <td>354.734396</td>
-      <td>0.000018</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>-7.788781</td>
-      <td>11.956962</td>
-      <td>5.755538</td>
-      <td>-12.670921</td>
-      <td>-1.627848</td>
-      <td>14.061317</td>
-      <td>0.533096</td>
-      <td>60.665109</td>
-      <td>142.968940</td>
-      <td>33.126218</td>
-      <td>160.552231</td>
-      <td>2.649888</td>
-      <td>197.720622</td>
-      <td>0.284192</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>-7.788781</td>
-      <td>11.056962</td>
-      <td>6.855538</td>
-      <td>-13.397561</td>
-      <td>-0.930112</td>
-      <td>14.540248</td>
-      <td>0.558956</td>
-      <td>60.665109</td>
-      <td>122.256409</td>
-      <td>46.998401</td>
-      <td>179.494647</td>
-      <td>0.865108</td>
-      <td>211.418806</td>
-      <td>0.312431</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>-7.788781</td>
-      <td>9.556962</td>
-      <td>7.755538</td>
-      <td>-6.620610</td>
-      <td>2.213059</td>
-      <td>10.713477</td>
-      <td>0.428324</td>
-      <td>60.665109</td>
-      <td>91.335523</td>
-      <td>60.148370</td>
-      <td>43.832480</td>
-      <td>4.897629</td>
-      <td>114.778588</td>
-      <td>0.183461</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>-7.788781</td>
-      <td>8.556962</td>
-      <td>8.055538</td>
-      <td>-6.551939</td>
-      <td>2.406915</td>
-      <td>10.694205</td>
-      <td>0.421888</td>
-      <td>60.665109</td>
-      <td>73.221599</td>
-      <td>64.891692</td>
-      <td>42.927902</td>
-      <td>5.793238</td>
-      <td>114.366028</td>
-      <td>0.177989</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
+<p>Uma primeira tentativa de ajuste foi feito através da centralização das variáveis preditoras em relação à média, adicionando também termos polinomiais de segunda ordem. No entanto, os resultados do ajuste não mostraram ganhos significativos para o modelo de Regressão Linear Múltipla, e até prejudicaram modelos mais complexos, como Random Forest, Multi Layer Perceptron, entre outros utilizados mais a frente. Detalhes desta parte do código acesse o notebook referência, no link do início desta página.</p>
 <h3 id="regressao-linear">Regressão Linear</h3>
 <div class="codehilite"><pre><span></span><code><span class="n">X_train2</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span> <span class="c1">#np.array(X_train).reshape(X_train.shape[0],1)</span>
 <span class="n">OLS_obj</span> <span class="o">=</span> <span class="n">OLS</span><span class="p">(</span><span class="n">y_train_mw</span><span class="p">,</span> <span class="n">X_train2</span><span class="p">)</span>
