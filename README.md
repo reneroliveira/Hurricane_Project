@@ -8,7 +8,7 @@ Para garantir a correta execução de todos os notebooks certifique-se que possu
 
 Além disso, o Notebook Analise_variaveis.ipynb precisa dos pacotes adicionais para realizar alguns plots, mas no próprio notebook há o comando para instalá-los
 
-O download de parte dos dados também precisa ser feito de forma externa através do script download_data.sh. Mas se seguir a sequência de notebooks proposta abaixo, será instruído dentro delessobre como baixar esses dados.
+O download de parte dos dados também precisa ser feito de forma externa através do script download_data.sh. Mas se seguir a sequência de notebooks proposta abaixo, será instruído dentro deles sobre como baixar esses dados.
 
 ## Índice
 
