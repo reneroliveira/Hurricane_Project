@@ -2,6 +2,7 @@ site_name: Hurricanes in Atlantic
 theme: readthedocs
 
 nav:
+- Home : index.md
 - Data Cleaning + EDA : Data_Cleaning_and_EDA.md 
 - Destrutividade no curto prazo: Analises_variaveis.md
 - Destrutividade no longo prazo: PowerDissipationIndex.md
