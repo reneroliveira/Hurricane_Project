@@ -60,7 +60,7 @@
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#modelos">Modelos</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#regressao-linear">Regressão Linear</a>
+    <li class="toctree-l3"><a class="reference internal" href="#analises-iniciais">Análises Iniciais</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#random-forest">Random Forest</a>
     </li>
@@ -70,7 +70,7 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#modelos-com-separacao-em-conjuntos-de-treino-e-teste">Modelos com Separação em Conjuntos de Treino e Teste</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#regressao-linear_1">Regressão Linear</a>
+    <li class="toctree-l3"><a class="reference internal" href="#regressao-linear">Regressão Linear</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#random-forest_1">Random Forest</a>
     </li>
@@ -134,6 +134,7 @@
 <p>Nesta página iremos mostrar os diversos algoritmos aplicados aos dados visando ajustar uma boa regressão que ajudasse a prever as velocidades dos ventos de um determinado evento (Tropical Storm ou Hurricane) ou a duração dos mesmos.
 Algumas pequenas transformações foram necessárias para ajuste das variáveis preditoras a serem consideradas em cada modelo. Para detalhes sobre o carregamento e preparação dos dados, veja o notebook referência.</p>
 <h2 id="modelos">Modelos</h2>
+<h3 id="analises-iniciais">Análises Iniciais</h3>
 <p>Segue abaixo o resultado da aplicação de uma regressão linear simples usando como variável alvo a velocidade de vento, dado usado em vários indicadores de destrutibilidade. Interessante notar os parâmetros com coeficientes positivos.</p>
 <details>
 <summary>Código</summary>
@@ -218,149 +219,11 @@ Algumas pequenas transformações foram necessárias para ajuste das variáveis 
 
 <p><img alt="png" src="../Analises_variaveis_files/Analises_variaveis_15_0.png" /></p>
 <p>Uma primeira tentativa de ajuste foi feito através da centralização das variáveis preditoras em relação à média, adicionando também termos polinomiais de segunda ordem. No entanto, os resultados do ajuste não mostraram ganhos significativos para o modelo de Regressão Linear Múltipla, e até prejudicaram modelos mais complexos, como Random Forest, Multi Layer Perceptron, entre outros utilizados mais a frente. Detalhes desta parte do código acesse o notebook referência, no link do início desta página.</p>
-<h3 id="regressao-linear">Regressão Linear</h3>
-<div class="codehilite"><pre><span></span><code><span class="n">X_train2</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span> <span class="c1">#np.array(X_train).reshape(X_train.shape[0],1)</span>
-<span class="n">OLS_obj</span> <span class="o">=</span> <span class="n">OLS</span><span class="p">(</span><span class="n">y_train_mw</span><span class="p">,</span> <span class="n">X_train2</span><span class="p">)</span>
-<span class="n">OLSModel</span> <span class="o">=</span> <span class="n">OLS_obj</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
-
-<span class="n">r2_train</span> <span class="o">=</span> <span class="n">OLSModel</span><span class="o">.</span><span class="n">rsquared</span>
-<span class="c1">#r2_test = 1 - ((OLSModel.predict(X_test2)-y_test)*(OLSModel.predict(X_test2)-y_test)).sum() / ((y_test.mean()-y_test)*(y_test.mean()-y_test)).sum()</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;R^2_train = </span><span class="si">{</span><span class="n">r2_train</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="c1">#print(f&#39;R^2_test  = {r2_test}&#39;)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_const  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_Month  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_Latitude  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_Longitude  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_sst  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_rhum  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_slp  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_cldc  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_Month^2  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_Latitude^2  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_Longitude^2  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_sst^2  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">11</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_rhum^2  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">12</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_slp^2  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">13</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parâmetro_cldc^2  = </span><span class="si">{</span><span class="n">OLSModel</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">14</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-</code></pre></div>
-
-
-<div class="codehilite"><pre><span></span><code><span class="err">R^2_train = 0.057796565423244184</span>
-<span class="err">Parâmetro_const  = 55.44314399378881</span>
-<span class="err">Parâmetro_Month  = 0.8453623447457261</span>
-<span class="err">Parâmetro_Latitude  = 0.3457362098822069</span>
-<span class="err">Parâmetro_Longitude  = -0.02891517619557605</span>
-<span class="err">Parâmetro_sst  = 0.02964116885731194</span>
-<span class="err">Parâmetro_rhum  = 0.09964668732077198</span>
-<span class="err">Parâmetro_slp  = 0.289107953297979</span>
-<span class="err">Parâmetro_cldc  = -0.5559643046414668</span>
-<span class="err">Parâmetro_Month^2  = -0.48473747846473236</span>
-<span class="err">Parâmetro_Latitude^2  = -0.017728720785750357</span>
-<span class="err">Parâmetro_Longitude^2  = -0.00855022784566639</span>
-<span class="err">Parâmetro_sst^2  = 0.051566532947100174</span>
-<span class="err">Parâmetro_rhum^2  = 0.002209669018392528</span>
-<span class="err">Parâmetro_slp^2  = -0.03379242085061111</span>
-<span class="err">Parâmetro_cldc^2  = -0.16931736469014314</span>
-</code></pre></div>
-
-
-<div class="codehilite"><pre><span></span><code><span class="n">X_train</span> <span class="o">=</span> <span class="n">data_atl_merged</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Name&#39;</span><span class="p">,</span> <span class="s1">&#39;Date&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="s1">&#39;Event&#39;</span><span class="p">,</span> <span class="s1">&#39;Status&#39;</span><span class="p">,</span> <span class="s1">&#39;Maximum Wind&#39;</span><span class="p">,</span> <span class="s1">&#39;Minimum Pressure&#39;</span><span class="p">,</span> <span class="s1">&#39;Date_c&#39;</span><span class="p">,</span> <span class="s1">&#39;Day&#39;</span><span class="p">,</span> <span class="s1">&#39;Latitude_c&#39;</span><span class="p">,</span> <span class="s1">&#39;Longitude_c&#39;</span><span class="p">,</span> <span class="s1">&#39;Duration&#39;</span><span class="p">,</span> <span class="s1">&#39;Year&#39;</span><span class="p">,</span> <span class="s1">&#39;wspd&#39;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">y_train_mw</span> <span class="o">=</span> <span class="n">data_atl_merged</span><span class="p">[</span><span class="s1">&#39;Maximum Wind&#39;</span><span class="p">]</span>
-<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train_mw</span><span class="p">,</span> <span class="n">y_test_mw</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train_mw</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">))</span>
-<span class="n">X_train</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
-</code></pre></div>
-
-
-<div class="codehilite"><pre><span></span><code><span class="err">16789</span>
-</code></pre></div>
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Latitude</th>
-      <th>Longitude</th>
-      <th>Month</th>
-      <th>sst</th>
-      <th>rhum</th>
-      <th>slp</th>
-      <th>cldc</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>10353</th>
-      <td>26.2</td>
-      <td>-78.2</td>
-      <td>8</td>
-      <td>28.981304</td>
-      <td>82.394811</td>
-      <td>1006.801278</td>
-      <td>4.477195</td>
-    </tr>
-    <tr>
-      <th>19374</th>
-      <td>14.5</td>
-      <td>-69.6</td>
-      <td>10</td>
-      <td>28.904502</td>
-      <td>82.054564</td>
-      <td>1010.190954</td>
-      <td>5.367316</td>
-    </tr>
-    <tr>
-      <th>12393</th>
-      <td>30.7</td>
-      <td>-86.3</td>
-      <td>7</td>
-      <td>28.347659</td>
-      <td>82.523253</td>
-      <td>1000.820020</td>
-      <td>6.652682</td>
-    </tr>
-    <tr>
-      <th>3373</th>
-      <td>40.9</td>
-      <td>-70.7</td>
-      <td>9</td>
-      <td>24.981041</td>
-      <td>77.434502</td>
-      <td>1012.284426</td>
-      <td>4.131097</td>
-    </tr>
-    <tr>
-      <th>21173</th>
-      <td>25.8</td>
-      <td>-42.5</td>
-      <td>9</td>
-      <td>28.643885</td>
-      <td>78.809962</td>
-      <td>1013.124650</td>
-      <td>4.610140</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
 <h3 id="random-forest">Random Forest</h3>
 <p>Primeira tentativa de ajuste já nos parece promissor em relação aos demais.</p>
+<details>
+<summary>Código</summary>
+
 <div class="codehilite"><pre><span></span><code><span class="c1">#X_train, y_train_mw = make_regression(n_features=7, n_informative=2, random_state=0, shuffle=False)</span>
 <span class="n">regr</span> <span class="o">=</span> <span class="n">RandomForestRegressor</span><span class="p">(</span><span class="n">n_estimators</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">max_depth</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">regr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train_mw</span><span class="p">)</span>
@@ -369,17 +232,17 @@ Algumas pequenas transformações foram necessárias para ajuste das variáveis 
 </code></pre></div>
 
 
+</details>
+
 <div class="codehilite"><pre><span></span><code><span class="err">0.8272253680614361</span>
 <span class="err">0.4358801020027704</span>
 </code></pre></div>
 
 
-<div class="codehilite"><pre><span></span><code><span class="c1">#X_train = data_atl_merged.drop([&#39;ID&#39;, &#39;Name&#39;, &#39;Date&#39;, &#39;Time&#39;, &#39;Event&#39;, &#39;Status&#39;, &#39;Maximum Wind&#39;, &#39;Minimum Pressure&#39;, &#39;Date_c&#39;, &#39;Day&#39;, &#39;Latitude_c&#39;, &#39;Longitude_c&#39;, &#39;Duration&#39;, &#39;Year&#39;, &#39;wspd&#39;], 1)</span>
-<span class="c1">#X_train.head()</span>
-</code></pre></div>
-
-
 <h3 id="multi-layer-perceptron">Multi Layer Perceptron</h3>
+<details>
+<summary>Código</summary>
+
 <div class="codehilite"><pre><span></span><code><span class="c1">#X_train, y_train_mw = make_regression(n_samples=200, random_state=1)</span>
 <span class="n">regr</span> <span class="o">=</span> <span class="n">MLPRegressor</span><span class="p">(</span><span class="n">hidden_layer_sizes</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="s1">&#39;lbfgs&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train_mw</span><span class="p">)</span>
 <span class="c1">#regr.predict(X_test[:2])</span>
@@ -388,16 +251,10 @@ Algumas pequenas transformações foram necessárias para ajuste das variáveis 
 </code></pre></div>
 
 
-<div class="codehilite"><pre><span></span><code><span class="mi">0</span><span class="p">.</span><span class="mi">09520915346048042</span>
-<span class="mi">0</span><span class="p">.</span><span class="mi">08725614810614979</span>
+</details>
 
-
-<span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">gambitura</span><span class="o">/</span><span class="n">anaconda3</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="p">.</span><span class="mi">8</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">sklearn</span><span class="o">/</span><span class="n">neural_network</span><span class="o">/</span><span class="n">_multilayer_perceptron</span><span class="p">.</span><span class="n">py</span><span class="p">:</span><span class="mi">471</span><span class="p">:</span> <span class="n">ConvergenceWarning</span><span class="p">:</span> <span class="n">lbfgs</span> <span class="n">failed</span> <span class="k">to</span> <span class="n">converge</span> <span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-<span class="n">STOP</span><span class="p">:</span> <span class="n">TOTAL</span> <span class="k">NO</span><span class="p">.</span> <span class="k">of</span> <span class="n">ITERATIONS</span> <span class="n">REACHED</span> <span class="k">LIMIT</span><span class="p">.</span>
-
-<span class="n">Increase</span> <span class="n">the</span> <span class="nb">number</span> <span class="k">of</span> <span class="n">iterations</span> <span class="p">(</span><span class="n">max_iter</span><span class="p">)</span> <span class="k">or</span> <span class="k">scale</span> <span class="n">the</span> <span class="k">data</span> <span class="k">as</span> <span class="n">shown</span> <span class="k">in</span><span class="p">:</span>
-    <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">scikit</span><span class="o">-</span><span class="n">learn</span><span class="p">.</span><span class="n">org</span><span class="o">/</span><span class="k">stable</span><span class="o">/</span><span class="n">modules</span><span class="o">/</span><span class="n">preprocessing</span><span class="p">.</span><span class="n">html</span>
-  <span class="k">self</span><span class="p">.</span><span class="n">n_iter_</span> <span class="o">=</span> <span class="n">_check_optimize_result</span><span class="p">(</span><span class="ss">&quot;lbfgs&quot;</span><span class="p">,</span> <span class="n">opt_res</span><span class="p">,</span> <span class="k">self</span><span class="p">.</span><span class="n">max_iter</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="err">0.09520915346048042</span>
+<span class="err">0.08725614810614979</span>
 </code></pre></div>
 
 
@@ -412,7 +269,7 @@ Algumas pequenas transformações foram necessárias para ajuste das variáveis 
 </code></pre></div>
 
 
-<h3 id="regressao-linear_1">Regressão Linear</h3>
+<h3 id="regressao-linear">Regressão Linear</h3>
 <div class="codehilite"><pre><span></span><code><span class="n">X_train2</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span> <span class="c1">#np.array(X_train).reshape(X_train.shape[0],1)</span>
 <span class="n">X_test2</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">add_constant</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span> <span class="c1">#np.array(X_train).reshape(X_train.shape[0],1)</span>
 <span class="n">OLS_obj</span> <span class="o">=</span> <span class="n">OLS</span><span class="p">(</span><span class="n">y_train_mw</span><span class="p">,</span> <span class="n">X_train2</span><span class="p">)</span>
