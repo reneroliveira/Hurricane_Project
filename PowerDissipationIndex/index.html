@@ -9,7 +9,7 @@
   
   
   <link rel="shortcut icon" href="../img/favicon.ico">
-  <title>Destructivity - Hurricanes in Atlantic</title>
+  <title>Destrutividade no longo prazo - Hurricanes in Atlantic</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
 
   <link rel="stylesheet" href="../css/theme.css" />
@@ -18,7 +18,7 @@
   
   <script>
     // Current page data
-    var mkdocs_page_name = "Destructivity";
+    var mkdocs_page_name = "Destrutividade no longo prazo";
     var mkdocs_page_input_path = "PowerDissipationIndex.md";
     var mkdocs_page_url = null;
   </script>
@@ -48,15 +48,15 @@
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
                 <ul>
-                    <li class="toctree-l1"><a class="reference internal" href="../Exploratory_Data_Analysis/">EDA</a>
+                    <li class="toctree-l1"><a class="reference internal" href="../Data_Cleaning_and_EDA/">Data Cleaning + EDA</a>
                     </li>
                 </ul>
                 <ul>
-                    <li class="toctree-l1"><a class="reference internal" href="../NN-TrackPrediction/">NNtrack</a>
+                    <li class="toctree-l1"><a class="reference internal" href="../Analises_variaveis/">Destrutividade no curto prazo</a>
                     </li>
                 </ul>
                 <ul class="current">
-                    <li class="toctree-l1 current"><a class="reference internal current" href="./">Destructivity</a>
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">Destrutividade no longo prazo</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#definitions">Definitions</a>
     </li>
@@ -73,6 +73,10 @@
     <li class="toctree-l2"><a class="reference internal" href="#count">Count</a>
     </li>
     </ul>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../NN-TrackPrediction/">Prevendo trajetórias</a>
                     </li>
                 </ul>
       </div>
@@ -96,7 +100,7 @@
     
       
     
-    <li>Destructivity</li>
+    <li>Destrutividade no longo prazo</li>
     <li class="wy-breadcrumbs-aside">
       
     </li>
@@ -138,7 +142,7 @@
 </code></pre></div>
 
 
-<div class="codehilite"><pre><span></span><code><span class="n">raw_pdi</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;Datasets/cyclone-power-dissipation-index.csv&#39;</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="n">raw_pdi</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;../Datasets/cyclone-power-dissipation-index.csv&#39;</span><span class="p">)</span>
 <span class="n">raw_pdi</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 </code></pre></div>
 
@@ -250,7 +254,7 @@
 <p><img alt="png" src="../PowerDissipationIndex_files/PowerDissipationIndex_7_1.png" /></p>
 <h2 id="atlantic-mdr-climate-data">Atlantic MDR Climate Data</h2>
 <p>Let's do the same smoothing operation in our "atlantic_mdr" dataset. We're gonna apply a 1–3–4–3–1 weighted average <a href="ftp://texmex.mit.edu/pub/emanuel/PAPERS/Factors.pdf">Emanuel, 2007</a> on the data, to get out of interannual variability.</p>
-<div class="codehilite"><pre><span></span><code><span class="n">atlantic_mdr</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;./Datasets/atlantic_mdr.csv&#39;</span><span class="p">)</span>
+<div class="codehilite"><pre><span></span><code><span class="n">atlantic_mdr</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;../Datasets/atlantic_mdr.csv&#39;</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">smooth</span><span class="p">(</span><span class="n">col</span><span class="p">):</span>
     <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
@@ -738,7 +742,7 @@ strong multicollinearity or other numerical problems.
 <hr />
 <h2 id="count">Count</h2>
 <p>Medir destrutibilidade do furacão não é coisa trivial; não basta olhar o PDI visto que os nossos dados de PDI podem estar <a href="https://arxiv.org/abs/physics/0601050">errados</a> por medições inconsistentes de velocidade até os anos 90, onde começamos a ter um comportamento anômalo do ENSO; além da dinâmica sazonal de correntes termosalínicas gerarem sazonalidade nas temperaturas entre decádas (Atlantic Multidecadal Oscilation, AMO). Outras alternativas comumente consideradas são a de contagem de furacões no ano e de tamanho de cada furacão; cada uma delas com seus problemas particulares. Abaixo, fazemos um modelo simples de GLM para contagem usando como preditores as covari</p>
-<div class="codehilite"><pre><span></span><code><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;Datasets/data_atl_merged2.csv&#39;</span><span class="p">,</span><span class="n">parse_dates</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Date&#39;</span><span class="p">])</span>
+<div class="codehilite"><pre><span></span><code><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;../Datasets/data_atl_merged2.csv&#39;</span><span class="p">,</span><span class="n">parse_dates</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Date&#39;</span><span class="p">])</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[[</span><span class="s1">&#39;ID&#39;</span><span class="p">,</span> <span class="s1">&#39;Name&#39;</span><span class="p">,</span> <span class="s1">&#39;Date&#39;</span><span class="p">,</span><span class="s1">&#39;Year&#39;</span><span class="p">,</span> <span class="s1">&#39;Time&#39;</span><span class="p">,</span> <span class="s1">&#39;Event&#39;</span><span class="p">,</span> <span class="s1">&#39;Status&#39;</span><span class="p">,</span> <span class="s1">&#39;Latitude&#39;</span><span class="p">,</span>
        <span class="s1">&#39;Longitude&#39;</span><span class="p">,</span> <span class="s1">&#39;Maximum Wind&#39;</span><span class="p">,</span> <span class="s1">&#39;sst&#39;</span><span class="p">,</span> <span class="s1">&#39;rhum&#39;</span><span class="p">,</span>
        <span class="s1">&#39;wspd&#39;</span><span class="p">,</span> <span class="s1">&#39;slp&#39;</span><span class="p">,</span> <span class="s1">&#39;cldc&#39;</span><span class="p">]]</span>
@@ -816,8 +820,10 @@ wspd           0.0182      0.067      0.271      0.786      -0.113       0.150
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
+        <a href="../NN-TrackPrediction/" class="btn btn-neutral float-right" title="Prevendo trajetórias">Next <span class="icon icon-circle-arrow-right"></span></a>
       
-        <a href="../NN-TrackPrediction/" class="btn btn-neutral" title="NNtrack"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+        <a href="../Analises_variaveis/" class="btn btn-neutral" title="Destrutividade no curto prazo"><span class="icon icon-circle-arrow-left"></span> Previous</a>
       
     </div>
   
@@ -843,8 +849,10 @@ wspd           0.0182      0.067      0.271      0.786      -0.113       0.150
     <span class="rst-current-version" data-toggle="rst-current-version">
       
       
-        <span><a href="../NN-TrackPrediction/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+        <span><a href="../Analises_variaveis/" style="color: #fcfcfc;">&laquo; Previous</a></span>
       
+      
+        <span style="margin-left: 15px"><a href="../NN-TrackPrediction/" style="color: #fcfcfc">Next &raquo;</a></span>
       
     </span>
 </div>
