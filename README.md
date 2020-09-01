@@ -1,5 +1,7 @@
 # Hurricane Project
 
+Grupo: Alysson Espíndola de Sá Silveira, Rener de Souza Oliveira, Yuri Luis Faria Silva
+
 ## Pré-requisitos
 
 Para garantir a correta execução de todos os notebooks certifique-se que possui todos os pré-requisitos do arquivo requirements.txt instalados. Para instalá-los, execute:
