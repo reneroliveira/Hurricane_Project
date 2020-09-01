@@ -6,10 +6,7 @@ Nesta página iremos mostrar os diversos algoritmos aplicados aos dados visando 
 Algumas pequenas transformações foram necessárias para ajuste das variáveis preditoras a serem consideradas em cada modelo. Para detalhes sobre o carregamento e preparação dos dados, veja o notebook referência.
 
 
-## Modelos
-
-
-### Análises Iniciais
+## Análises Iniciais
 
 Segue abaixo o resultado da aplicação de uma regressão linear simples usando como variável alvo a velocidade de vento, dado usado em vários indicadores de destrutibilidade. Interessante notar os parâmetros com coeficientes positivos.
 
@@ -105,67 +102,17 @@ Uma primeira tentativa de ajuste foi feito através da centralização das vari�
 
 
 
-
-
-### Random Forest
-
-Primeira tentativa de ajuste já nos parece promissor em relação aos demais.
-
-
-<details>
-<summary>Código</summary>
-```python
-#X_train, y_train_mw = make_regression(n_features=7, n_informative=2, random_state=0, shuffle=False)
-regr = RandomForestRegressor(n_estimators=7, max_depth=20, random_state=0)
-regr.fit(X_train, y_train_mw)
-print(regr.score(X_train, y_train_mw))
-print(regr.score(X_test, y_test_mw))
-
-```
-</details>
-
-    0.8272253680614361
-    0.4358801020027704
-
-
-
-
-### Multi Layer Perceptron
-
-<details>
-<summary>Código</summary>
-```python
-#X_train, y_train_mw = make_regression(n_samples=200, random_state=1)
-regr = MLPRegressor(hidden_layer_sizes=(100,2), random_state=1, max_iter=1000, solver='lbfgs').fit(X_train, y_train_mw)
-#regr.predict(X_test[:2])
-print(regr.score(X_train, y_train_mw))
-print(regr.score(X_test, y_test_mw))
-
-```
-</details>
-
-    0.09520915346048042
-    0.08725614810614979
-
-
-
 ## Modelos com Separação em Conjuntos de Treino e Teste
 
 Separamos os dados em conjuntos de treino e de teste. Deste modo, podemos ajustar o algoritmo utilizando os dados de treino, e tentar utilizar esses dados de teste para previsão de outros dados, inclusive futuros.
 
 
-```python
-X_train = data_atl_merged.drop(['ID', 'Name', 'Date', 'Time', 'Event', 'Status', 'Maximum Wind', 'Minimum Pressure', 'Date_c', 'Day', 'Latitude_c', 'Longitude_c', 'Duration', 'Year', 'wspd'], 1)
-y_train_mw = data_atl_merged['Maximum Wind']
-#print(len(X_train))
-#X_train.head()
 
-X_train, X_test, y_train_mw, y_test_mw = train_test_split(X_train, y_train_mw, random_state=1)
-```
 
 ### Regressão Linear
 
-
+<details>
+<summary>Código</summary>
 ```python
 X_train2 = sm.add_constant(X_train) #np.array(X_train).reshape(X_train.shape[0],1)
 X_test2 = sm.add_constant(X_test) #np.array(X_train).reshape(X_train.shape[0],1)
@@ -195,44 +142,14 @@ print(f'Parâmetro_slp^2  = {OLSModel.params[13]}')
 print(f'Parâmetro_cldc^2  = {OLSModel.params[14]}')
 '''
 ```
+</details>
 
     R^2_train = 0.019806236602926464
     R^2_test  = 0.01874952522766249
 
 
 
-
-
-    "\nprint(f'Parâmetro_const  = {OLSModel.params[0]}')\nprint(f'Parâmetro_Month  = {OLSModel.params[1]}')\nprint(f'Parâmetro_Latitude  = {OLSModel.params[2]}')\nprint(f'Parâmetro_Longitude  = {OLSModel.params[3]}')\nprint(f'Parâmetro_sst  = {OLSModel.params[4]}')\nprint(f'Parâmetro_rhum  = {OLSModel.params[5]}')\nprint(f'Parâmetro_slp  = {OLSModel.params[6]}')\nprint(f'Parâmetro_cldc  = {OLSModel.params[7]}')\n\nprint(f'Parâmetro_Month^2  = {OLSModel.params[8]}')\nprint(f'Parâmetro_Latitude^2  = {OLSModel.params[9]}')\nprint(f'Parâmetro_Longitude^2  = {OLSModel.params[10]}')\nprint(f'Parâmetro_sst^2  = {OLSModel.params[11]}')\nprint(f'Parâmetro_rhum^2  = {OLSModel.params[12]}')\nprint(f'Parâmetro_slp^2  = {OLSModel.params[13]}')\nprint(f'Parâmetro_cldc^2  = {OLSModel.params[14]}')\n"
-
-
-
-
-```python
-fig, ax = plt.subplots(1,2)#, figsize=(16,10))
-#fig.suptitle('Velocidade Máxima vs Pressão Mínima (1851-2015)', fontsize=28, y=1.06)
-
-ax[0].scatter(X_train['sst'], y_train_mw, alpha=0.5, label=r'$Dados$ $de$ $Treino$')
-ax[0].scatter(X_train['sst'], OLSModel.predict(X_train2), alpha=0.5, label=r'$Previsão$')
-ax[1].scatter(X_test['sst'], y_test_mw, alpha=0.5, label=r'$Dados$ $de$ $Teste$')
-ax[1].scatter(X_test['sst'], OLSModel.predict(X_test2), alpha=0.5, label=r'$Previsão$')
-
-ax[0].tick_params(labelsize=24)
-ax[0].set_title(f'Previsão de Maximal Wind por Regressão Linear (Treino)', fontsize=24)
-ax[0].set_xlabel(r'$sst$', fontsize=16)
-ax[0].set_ylabel(r'$Maximal$ $Wind$', fontsize=16)
-ax[0].legend(loc='best', fontsize=12);
-
-ax[1].tick_params(labelsize=24)
-ax[1].set_title(f'Previsão de Maximal Wind por Regressão Linear (Teste)', fontsize=24)
-ax[1].set_xlabel(r'$sst$', fontsize=16)
-ax[1].set_ylabel(r'$Maximal$ $Wind$', fontsize=16)
-ax[1].legend(loc='best', fontsize=12);
-
-fig.set_figheight(5)
-fig.set_figwidth(20)
-fig.tight_layout(pad=2.0)
-```
+Veja abaixo as previsões:
 
 
 ![png](Analises_variaveis_files/Analises_variaveis_34_0.png)
@@ -240,121 +157,20 @@ fig.tight_layout(pad=2.0)
 
 ### Random Forest
 
-Pelos ajustes anteriores, vimos que esse algoritmo promove um bom ajuste nos dados. Um novo ajuste com aplicação de parâmetros melhor sintonizados com os dados é buscado pelo código abaixo.
+Pelos ajustes feitos no notebook com os dados completos usando Random Forest, vimos que esse algoritmo promove um bom ajuste nos dados. Um novo ajuste com aplicação de parâmetros melhor sintonizados com os dados é buscado pelo código abaixo.
 
 
+<details>
+<summary>Código - Random Forest</summary>
 ```python
 # Parâmetros com bom ajuste para Random Forest: n_estimators = 50, max_depth = 75
 for i in [25, 50, 75, 100, 125]:
     for j in [25, 50, 75, 100, 125]:
         regr_rf = RandomForestRegressor(n_estimators=i, max_depth=j, random_state=0, oob_score=True, bootstrap = True)
         regr_rf.fit(X_train, y_train_mw)
-        print(f'\n n_estimators={i}, max_depth={j}')
-        print(regr_rf.score(X_train, y_train_mw))
-        print(regr_rf.score(X_test, y_test_mw))
 
 ```
-
-    
-     n_estimators=25, max_depth=25
-    0.9109127406378082
-    0.5049385543175804
-    
-     n_estimators=25, max_depth=50
-    0.9231191839999706
-    0.5083859136052509
-    
-     n_estimators=25, max_depth=75
-    0.9231191839999706
-    0.5083859136052509
-    
-     n_estimators=25, max_depth=100
-    0.9231191839999706
-    0.5083859136052509
-    
-     n_estimators=25, max_depth=125
-    0.9231191839999706
-    0.5083859136052509
-    
-     n_estimators=50, max_depth=25
-    0.9177312843005485
-    0.5190516352697632
-    
-     n_estimators=50, max_depth=50
-    0.9298001112559356
-    0.5227899508473133
-    
-     n_estimators=50, max_depth=75
-    0.9298001112559356
-    0.5227899508473133
-    
-     n_estimators=50, max_depth=100
-    0.9298001112559356
-    0.5227899508473133
-    
-     n_estimators=50, max_depth=125
-    0.9298001112559356
-    0.5227899508473133
-    
-     n_estimators=75, max_depth=25
-    0.9198026089627763
-    0.5227499387064152
-    
-     n_estimators=75, max_depth=50
-    0.9323017737677339
-    0.5256624725114608
-    
-     n_estimators=75, max_depth=75
-    0.9323017737677339
-    0.5256624725114608
-    
-     n_estimators=75, max_depth=100
-    0.9323017737677339
-    0.5256624725114608
-    
-     n_estimators=75, max_depth=125
-    0.9323017737677339
-    0.5256624725114608
-    
-     n_estimators=100, max_depth=25
-    0.9198383784088979
-    0.5224954900261807
-    
-     n_estimators=100, max_depth=50
-    0.9336736647334395
-    0.5269361337556209
-    
-     n_estimators=100, max_depth=75
-    0.9336736647334395
-    0.5269361337556209
-    
-     n_estimators=100, max_depth=100
-    0.9336736647334395
-    0.5269361337556209
-    
-     n_estimators=100, max_depth=125
-    0.9336736647334395
-    0.5269361337556209
-    
-     n_estimators=125, max_depth=25
-    0.9204444093451314
-    0.5234545174002654
-    
-     n_estimators=125, max_depth=50
-    0.9344355008748928
-    0.5280216690661794
-    
-     n_estimators=125, max_depth=75
-    0.9344355008748928
-    0.5280216690661794
-    
-     n_estimators=125, max_depth=100
-    0.9344355008748928
-    0.5280216690661794
-    
-     n_estimators=125, max_depth=125
-    0.9344355008748928
-    0.5280216690661794
+</details>
 
 
 O R2 Score obtido abaixo mostra o melhor ajuste do modelo quando tentamos prever a Velocidade Máxima Sustentada pelo algoritmo do Random Forest. O ajuste aos dados de treino ficam
