@@ -49,7 +49,7 @@ print(f'Parâmetro_cldc  = {OLSModel.params[9]}')
     Parâmetro_cldc  = -1.5161434590996923
 
 
-Os códigos abaixos nos gera uma visualização que pode trazer insights a respeito da relação entre as variáveis. A escolha das variáveis preditoras que servem de entrada para os modelos mais a frente foram pensadas também pela observação destes gráficos.
+Os códigos abaixos nos geram visualizações que podem trazer insights a respeito da relação entre as variáveis. A escolha das variáveis preditoras que servem de entrada para os modelos mais a frente foram pensadas também pela observação destes gráficos.
 
 
 <details>
@@ -173,108 +173,16 @@ for i in [25, 50, 75, 100, 125]:
 </details>
 
 
-O R2 Score obtido abaixo mostra o melhor ajuste do modelo quando tentamos prever a Velocidade Máxima Sustentada pelo algoritmo do Random Forest. O ajuste aos dados de treino fica bem superior aos de teste. Isso se deve em parte porque os dados se dão em grupos de registros, associados aos eventos de furacões. Assim, um algoritmo acaba por detectar a correlação dos dados dentro de um mesmo evento e busca ajustá-los de modo específico no conjunto de treinamento. No conjunto de teste, quando algum dado se encontra "distante" dos registros que foram utilizados, ele acaba não tendo o mesmo ajuste.
+O R2 Score obtido mostra o melhor ajuste do modelo quando tentamos prever a Velocidade Máxima Sustentada pelo algoritmo do Random Forest. O ajuste aos dados de treino (0.93) fica bem superior aos de teste (0.52). Isso se deve em parte porque os dados se dão em grupos de registros, associados aos eventos de furacões. Assim, um algoritmo acaba por detectar a correlação dos dados dentro de um mesmo evento e busca ajustá-los de modo específico no conjunto de treinamento. No conjunto de teste, quando algum dado se encontra "distante" dos registros que foram utilizados, ele acaba não tendo o mesmo ajuste.
 
 
-```python
-regr_rf = RandomForestRegressor(n_estimators=50, max_depth=75, random_state=0, oob_score=True, bootstrap = True)
-regr_rf.fit(X_train, y_train_mw)
-print(regr_rf.score(X_train, y_train_mw))
-print(regr_rf.score(X_test, y_test_mw))
-```
-
-    0.9298001112559356
-    0.5227899508473133
+Retirando os dados climáticos, observamos que o ajuste fica bem pior, (Treino - 0.86 e Teste - 0.06) mostrando a importância dos mesmos para a predição. Fizemos mais alguns fits, que podem ser consultados no notebook referência.
 
 
 
-```python
-X_train_red = X_train.drop(['sst', 'rhum', 'slp', 'cldc'], 1)
-X_test_red = X_test.drop(['sst', 'rhum', 'slp', 'cldc'], 1)
-
-```
-
-Retirando os dados climáticos, observamos que o ajuste fica bem pior, mostrando a importância dos mesmos para a predição
 
 
-```python
-regr_rf_red = RandomForestRegressor(n_estimators=50, max_depth=75, random_state=0, oob_score=True, bootstrap = True)
-regr_rf_red.fit(X_train_red, y_train_mw)
-print(regr_rf_red.score(X_train_red, y_train_mw))
-print(regr_rf_red.score(X_test_red, y_test_mw))
-```
-
-    0.8598571752407663
-    0.06143697855472363
-
-
-
-```python
-X_train_red = X_train.drop(['Month', 'Latitude', 'Longitude'], 1)
-X_test_red = X_test.drop(['Month', 'Latitude', 'Longitude'], 1)
-
-```
-
-
-```python
-regr_rf_red = RandomForestRegressor(n_estimators=50, max_depth=75, random_state=0, oob_score=True, bootstrap = True)
-regr_rf_red.fit(X_train_red, y_train_mw)
-print(regr_rf_red.score(X_train_red, y_train_mw))
-print(regr_rf_red.score(X_test_red, y_test_mw))
-```
-
-    0.9072010288584739
-    0.3833348196160016
-
-
-
-```python
-#['Month', 'Latitude', 'Longitude', 'sst', 'rhum', 'slp', 'cldc']
-X_train_red = X_train.drop(['Month'], 1)
-X_test_red = X_test.drop(['Month'], 1)
-
-```
-
-
-```python
-regr_rf_red = RandomForestRegressor(n_estimators=50, max_depth=75, random_state=0, oob_score=True, bootstrap = True)
-regr_rf_red.fit(X_train_red, y_train_mw)
-print(regr_rf_red.score(X_train_red, y_train_mw))
-print(regr_rf_red.score(X_test_red, y_test_mw))
-```
-
-    0.9230537875398801
-    0.4840455607978509
-
-
-Ajuste da predição em relação à variável sst (temperatura mensal média)
-
-
-```python
-fig, ax = plt.subplots(1,2)#, figsize=(16,10))
-#fig.suptitle('Velocidade Máxima vs Pressão Mínima (1851-2015)', fontsize=28, y=1.06)
-
-ax[0].scatter(X_train['sst'], y_train_mw, alpha=0.5, label=r'$Dados$ $de$ $Treino$')
-ax[0].scatter(X_train['sst'], regr_rf.predict(X_train), alpha=0.5, label=r'$Previsão$')
-ax[1].scatter(X_test['sst'], y_test_mw, alpha=0.5, label=r'$Dados$ $de$ $Teste$')
-ax[1].scatter(X_test['sst'], regr_rf.predict(X_test), alpha=0.5, label=r'$Previsão$')
-
-ax[0].tick_params(labelsize=24)
-ax[0].set_title(f'Previsão de Maximal Wind por Random Forest (Treino)', fontsize=24)
-ax[0].set_xlabel(r'$sst$', fontsize=16)
-ax[0].set_ylabel(r'$Maximal$ $Wind$', fontsize=16)
-ax[0].legend(loc='best', fontsize=12);
-
-ax[1].tick_params(labelsize=24)
-ax[1].set_title(f'Previsão de Maximal Wind por Random Forest (Teste)', fontsize=24)
-ax[1].set_xlabel(r'$sst$', fontsize=16)
-ax[1].set_ylabel(r'$Maximal$ $Wind$', fontsize=16)
-ax[1].legend(loc='best', fontsize=12);
-
-fig.set_figheight(5)
-fig.set_figwidth(20)
-fig.tight_layout(pad=2.0)
-```
+**Ajuste da predição em relação à variável sst (temperatura mensal média)**
 
 
 ![png](Analises_variaveis_files/Analises_variaveis_48_0.png)
@@ -282,228 +190,36 @@ fig.tight_layout(pad=2.0)
 
 ### Demais Previsões com Random Forest (Melhor Ajuste)
 
-Adicionando as variáveis Ano e Dia, conseguimos melhorar significativamente a capacidade de previsão do nosso modelo.
+Adicionando as variáveis Ano e Dia, conseguimos melhorar significativamente a capacidade de previsão do nosso modelo (Treino - 0.95 e Teste - 0.66).
 Se adicionarmos primeiramente apenas a variável Ano, percebemos que cada variável contribui um pouco para a melhoria da previsão.
 
-
-```python
-data_train_sd = data_atl_merged.drop(['ID', 'Name', 'Date', 'Time', 'Event', 'Status', 'Maximum Wind', 'Minimum Pressure', 'Date_c', 'Latitude_c', 'Longitude_c', 'Duration', 'wspd', 'Day'], 1)
-data_train_mw_sd = data_atl_merged['Maximum Wind']
-#print(len(data_train))
-#data_train.head()
-data_train_sd, data_test_sd, data_train_mw_sd, data_test_mw_sd = train_test_split(data_train_sd, data_train_mw_sd, random_state=1)
-
-```
+Fizemos também um ajuste fino dos parâmetros do Random Forest, de forma a encontrar os valores ótimos para os mesmos. 
 
 
-```python
-regr_rf2_sd = RandomForestRegressor(n_estimators=50, max_depth=75, random_state=0, oob_score=True, bootstrap = True)
-regr_rf2_sd.fit(data_train_sd, data_train_mw_sd)
-print(regr_rf2_sd.score(data_train_sd, data_train_mw_sd))
-print(regr_rf2_sd.score(data_test_sd, data_test_mw_sd))
-```
-
-    0.9502630426894276
-    0.6609429559863542
+   
 
 
+O melhor ajuste para previsão de Maximal Wind ocorreu com número de árvores (num_estimators) igual a 50 e uma profundidade máxima (max_depth) também igual a 50.
 
-```python
-data_train = data_atl_merged.drop(['ID', 'Name', 'Date', 'Time', 'Event', 'Status', 'Maximum Wind', 'Minimum Pressure', 'Date_c', 'Latitude_c', 'Longitude_c', 'Duration', 'wspd'], 1)
-data_train_mw = data_atl_merged['Maximum Wind']
-#print(len(data_train))
-#data_train.head()
-data_train, data_test, data_train_mw, data_test_mw = train_test_split(data_train, data_train_mw, random_state=1)
-```
+Veja abaixo código, os resultados de R2 e visualizações:
 
-Ajuste fino dos parâmetros do Random Forest
-
-
-```python
-for i in [25, 50, 75, 100, 125]:
-    for j in [25, 50, 75, 100, 125]:
-        regr_rf2 = RandomForestRegressor(n_estimators=i, max_depth=j, random_state=0, oob_score=True, bootstrap = True)
-        regr_rf2.fit(data_train, data_train_mw)
-        print(f'\n n_estimators={i}, max_depth={j}')
-        print(regr_rf2.score(data_train, data_train_mw))
-        print(regr_rf2.score(data_test, data_test_mw))
-```
-
-    
-     n_estimators=25, max_depth=25
-    0.957264562824329
-    0.7444676687346707
-    
-     n_estimators=25, max_depth=50
-    0.9582917968925033
-    0.7442935073801389
-    
-     n_estimators=25, max_depth=75
-    0.9582917968925033
-    0.7442935073801389
-    
-     n_estimators=25, max_depth=100
-    0.9582917968925033
-    0.7442935073801389
-    
-     n_estimators=25, max_depth=125
-    0.9582917968925033
-    0.7442935073801389
-    
-     n_estimators=50, max_depth=25
-    0.9617003376388379
-    0.7583441990969142
-    
-     n_estimators=50, max_depth=50
-    0.9629951225598822
-    0.7593567448937373
-    
-     n_estimators=50, max_depth=75
-    0.9629951225598822
-    0.7593567448937373
-    
-     n_estimators=50, max_depth=100
-    0.9629951225598822
-    0.7593567448937373
-    
-     n_estimators=50, max_depth=125
-    0.9629951225598822
-    0.7593567448937373
-    
-     n_estimators=75, max_depth=25
-    0.9637876668338223
-    0.7615184996888411
-    
-     n_estimators=75, max_depth=50
-    0.9651229272756359
-    0.7623946732426374
-    
-     n_estimators=75, max_depth=75
-    0.9651229272756359
-    0.7623946732426374
-    
-     n_estimators=75, max_depth=100
-    0.9651229272756359
-    0.7623946732426374
-    
-     n_estimators=75, max_depth=125
-    0.9651229272756359
-    0.7623946732426374
-    
-     n_estimators=100, max_depth=25
-    0.9643667689055675
-    0.7618762745120209
-    
-     n_estimators=100, max_depth=50
-    0.9657927394363737
-    0.7630103360785616
-    
-     n_estimators=100, max_depth=75
-    0.9657927394363737
-    0.7630103360785616
-    
-     n_estimators=100, max_depth=100
-    0.9657927394363737
-    0.7630103360785616
-    
-     n_estimators=100, max_depth=125
-    0.9657927394363737
-    0.7630103360785616
-    
-     n_estimators=125, max_depth=25
-    0.9647081307547872
-    0.762938280257875
-    
-     n_estimators=125, max_depth=50
-    0.9661419630929642
-    0.7643016255435418
-    
-     n_estimators=125, max_depth=75
-    0.9661419630929642
-    0.7643016255435418
-    
-     n_estimators=125, max_depth=100
-    0.9661419630929642
-    0.7643016255435418
-    
-     n_estimators=125, max_depth=125
-    0.9661419630929642
-    0.7643016255435418
-
-
-Melhor ajuste para Previsão de Maximal Wind
-
-
+<details>
+<summary>Código</summary>
 ```python
 regr_rf2 = RandomForestRegressor(n_estimators=50, max_depth=50, random_state=0, oob_score=True, bootstrap = True)
 regr_rf2.fit(data_train, data_train_mw)
 print(regr_rf2.score(data_train, data_train_mw))
 print(regr_rf2.score(data_test, data_test_mw))
 ```
+</detail>
 
     0.9629951225598822
     0.7593567448937373
 
 
 
-```python
-fig, ax = plt.subplots(1,2)#, figsize=(16,10))
-#fig.suptitle('Velocidade Máxima vs Pressão Mínima (1851-2015)', fontsize=28, y=1.06)
-
-ax[0].scatter(data_train['sst'], data_train_mw, alpha=0.5, label=r'$Dados$ $de$ $Treino$')
-ax[0].scatter(data_train['sst'], regr_rf2.predict(data_train), alpha=0.5, label=r'$Previsão$')
-ax[1].scatter(data_test['sst'], data_test_mw, alpha=0.5, label=r'$Dados$ $de$ $Teste$')
-ax[1].scatter(data_test['sst'], regr_rf2.predict(data_test), alpha=0.5, label=r'$Previsão$')
-
-ax[0].tick_params(labelsize=24)
-ax[0].set_title(f'Previsão de Maximal Wind por Random Forest (Treino)', fontsize=24)
-ax[0].set_xlabel(r'$sst$', fontsize=16)
-ax[0].set_ylabel(r'$Maximal$ $Wind$', fontsize=16)
-ax[0].legend(loc='best', fontsize=12);
-
-ax[1].tick_params(labelsize=24)
-ax[1].set_title(f'Previsão de Maximal Wind por Random Forest (Teste)', fontsize=24)
-ax[1].set_xlabel(r'$sst$', fontsize=16)
-ax[1].set_ylabel(r'$Maximal$ $Wind$', fontsize=16)
-ax[1].legend(loc='best', fontsize=12);
-
-fig.set_figheight(5)
-fig.set_figwidth(20)
-fig.tight_layout(pad=2.0)
-```
-
-
 ![png](Analises_variaveis_files/Analises_variaveis_58_0.png)
 
-
-
-```python
-fig, ax = plt.subplots(1,2)#, figsize=(16,10))
-#fig.suptitle('Velocidade Máxima vs Pressão Mínima (1851-2015)', fontsize=28, y=1.06)
-data_concat_train = pd.concat([data_train, data_train_mw], axis=1)
-data_concat_test = pd.concat([data_test, data_test_mw], axis=1)
-
-ax[0].scatter(data_concat_train['Year'], data_concat_train['Maximum Wind'], alpha=0.5, label=r'$Dados$ $de$ $Treino$')
-ax[0].scatter(data_concat_train['Year'], regr_rf2.predict(data_train), alpha=0.5, label=r'$Previsão$')
-ax[1].scatter(data_concat_test['Year'], data_concat_test['Maximum Wind'], alpha=0.5, label=r'$Dados$ $de$ $Teste$')
-ax[1].scatter(data_concat_test['Year'], regr_rf2.predict(data_test), alpha=0.5, label=r'$Previsão$')
-
-ax[0].tick_params(labelsize=24)
-ax[0].set_title(f'Previsão de Maximal Wind por Random Forest (Treino)', fontsize=24)
-ax[0].set_xlabel(r'$Ano$', fontsize=16)
-ax[0].set_ylabel(r'$Maximal$ $Wind$', fontsize=16)
-ax[0].legend(loc='best', fontsize=12);
-
-ax[1].tick_params(labelsize=24)
-ax[1].set_title(f'Previsão de Maximal Wind por Random Forest (Teste)', fontsize=24)
-ax[1].set_xlabel(r'$Ano$', fontsize=16)
-ax[1].set_ylabel(r'$Maximal$ $Wind$', fontsize=16)
-ax[1].legend(loc='best', fontsize=12);
-
-fig.set_figheight(5)
-fig.set_figwidth(20)
-fig.tight_layout(pad=2.0)
-```
 
 
 ![png](Analises_variaveis_files/Analises_variaveis_59_0.png)
@@ -512,79 +228,36 @@ fig.tight_layout(pad=2.0)
 ### Previsão da duração dos eventos de Furacão
 
 
-```python
-data_train2 = data_atl_merged.drop(['ID', 'Name', 'Date', 'Time', 'Event', 'Status', 'Maximum Wind', 'Minimum Pressure', 'Date_c', 'Latitude_c', 'Longitude_c', 'Duration', 'wspd'], 1)
-#data_train_mw = data_atl_merged['Maximum Wind']
-data_train_dur = data_atl_merged['Duration']
-#print(len(data_train))
-#data_train.head()
-data_train2, data_test2, data_train_dur, data_test_dur = train_test_split(data_train2, data_train_dur, random_state=1)
+Fizemos também a previsão da duração de um Furacão. O ajuste fica bem preciso, como se pode ver pelo R2 Score
 
-```
-
-Abaixo, faremos também a previsão da duração de um Furacão. O ajuste fica bem preciso, como se pode ver pelo R2 Score
-
-
+<details>
+<summary>Code</summary>
 ```python
 regr_rf3 = RandomForestRegressor(n_estimators=50, max_depth=75, random_state=0, oob_score=True, bootstrap = True)
 regr_rf3.fit(data_train2, data_train_dur)
 print(regr_rf3.score(data_train2, data_train_dur))
 print(regr_rf3.score(data_test2, data_test_dur))
 ```
+</details>
+
 
     0.9883397102866289
     0.9289716458290775
-
-
-
-```python
-fig, ax = plt.subplots(1,2)#, figsize=(16,10))
-#fig.suptitle('Velocidade Máxima vs Pressão Mínima (1851-2015)', fontsize=28, y=1.06)
-data_concat_train = pd.concat([data_train, data_train_mw, data_train_dur], axis=1)
-data_concat_test = pd.concat([data_test, data_test_mw, data_test_dur], axis=1)
-
-ax[0].scatter(data_concat_train['Year'], data_concat_train['Duration'], alpha=0.05, label=r'$Dados$ $de$ $Treino$')
-ax[0].scatter(data_concat_train['Year'], regr_rf3.predict(data_train2), alpha=0.05, label=r'$Previsão$')
-ax[1].scatter(data_concat_test['Year'], data_concat_test['Duration'], alpha=0.05, label=r'$Dados$ $de$ $Teste$')
-ax[1].scatter(data_concat_test['Year'], regr_rf3.predict(data_test2), alpha=0.05, label=r'$Previsão$')
-
-ax[0].tick_params(labelsize=24)
-ax[0].set_title(f'Previsão da Duração por Random Forest (Treino)', fontsize=24)
-ax[0].set_xlabel(r'$Ano$', fontsize=16)
-ax[0].set_ylabel(r'$Duração$', fontsize=16)
-ax[0].legend(loc='best', fontsize=12);
-
-ax[1].tick_params(labelsize=24)
-ax[1].set_title(f'Previsão da Duração por Random Forest (Teste)', fontsize=24)
-ax[1].set_xlabel(r'$Ano$', fontsize=16)
-ax[1].set_ylabel(r'$Duração$', fontsize=16)
-ax[1].legend(loc='best', fontsize=12);
-
-fig.set_figheight(5)
-fig.set_figwidth(20)
-fig.tight_layout(pad=2.0)
-```
-
 
 ![png](Analises_variaveis_files/Analises_variaveis_64_0.png)
 
 
 ### Multi Layer Perceptron
 
-
+<details>
+<summary>Código </summary>
 ```python
 regr_mlp = MLPRegressor(hidden_layer_sizes=(100,2), random_state=1, max_iter=1000, solver='lbfgs', activation='relu').fit(X_train, y_train_mw)
 #regr.predict(X_test[:2])
 print(regr_mlp.score(X_train, y_train_mw))
 print(regr_mlp.score(X_test, y_test_mw))
 ```
-
-    /home/gambitura/anaconda3/lib/python3.8/site-packages/sklearn/neural_network/_multilayer_perceptron.py:471: ConvergenceWarning: lbfgs failed to converge (status=1):
-    STOP: TOTAL NO. of ITERATIONS REACHED LIMIT.
-    
-    Increase the number of iterations (max_iter) or scale the data as shown in:
-        https://scikit-learn.org/stable/modules/preprocessing.html
-      self.n_iter_ = _check_optimize_result("lbfgs", opt_res, self.max_iter)
+</details>
 
 
     0.09520915346048042
