@@ -1,447 +1,27 @@
 # Aplicação de Modelos de Regressão
 
-Neste Notebook, iremos importar os dados já limpados/filtrados em etapas anteriores e iremos aplicar diversos algoritmos visando ajustar uma boa regressão que nos ajude a prever as velocidades dos ventos de um determinado evento (Tropical Storm ou Hurricane) ou a duração dos mesmos.
-Algumas pequenas transformações serão necessárias para ajuste das variáveis preditoras a serem consideradas em cada modelo.
+[Notebook referência](https://github.com/reneroliveira/Hurricane_Project/blob/master/Notebooks/Analises_variaveis.ipynb)
 
-## Instalação e Importação de Pacotes
-
-Os códigos de instalação abaixo estão comentados. Na primeira utilização do Notebook, pode-se descomentá-los para instalar os pacotes que ainda não estejam instalados no computador que se esteja utilizando.
-Além disso, alguns pacotes abaixo são para utilização nos demais notebooks do projeto.
-
-
-```python
-# !apt-get install libgeos-3.5.0
-# !apt-get install libgeos-dev
-# !pip install https://github.com/matplotlib/basemap/archive/master.zip
-# !pip install pyproj==1.9.6
-# !pip install netcdf4
-
-# Dependencies for Tropycal Package: https://pypi.org/project/tropycal/
-# matplotlib >= 2.2.2
-# numpy >= 1.14.3
-# scipy >= 1.1.0
-# pandas >= 0.23.0
-# geopy >= 1.18.1
-# xarray >= 0.10.7
-# networkx >= 2.0.0
-# requests >= 2.22.0
-# To fully leverage tropycal's plotting capabilities, it is strongly recommended to have cartopy >= 0.17.0 installed.
-
-# !pip install numpy
-# !pip install pandas
-# !pip install matplotlib
-# !pip install scipy
-# !pip install geopy
-# !pip install xarray
-# !pip install networkx
-# !pip install requests
-# !pip install proj
-# !pip install proj-data
-# !pip install geos
-# #!pip uninstall cartopy
-# !apt-get -qq install python-cartopy python3-cartopy
-# !pip install cartopy
-# !pip install tropycal
-# #!pip freeze
-
-```
-
-
-```python
-%matplotlib inline
-import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
-import matplotlib.colors as c
-#from mpl_toolkits.basemap import Basemap,shiftgrid
-import pandas as pd
-import netCDF4 as nc
-from itertools import chain
-from netCDF4 import Dataset
-from netCDF4 import date2index
-from datetime import datetime
-import scipy
-import geopy
-import xarray
-import networkx
-import requests
-import cartopy
-import tropycal
-
-import tropycal.tracks as tracks
-import tropycal.tornado as tornado
-import datetime as dt
-import statsmodels.api as sm
-from statsmodels.api import OLS
-
-# Modelos para Testes Futuros de Regressão
-from sklearn.decomposition import PCA
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import LogisticRegressionCV
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import cross_val_score
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import KFold
-
-import math
-from scipy.special import gamma
-
-import seaborn as sns
-sns.set()
-
-alpha = 0.5
-
-from sklearn import preprocessing
-from pandas.plotting import scatter_matrix
-
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.neural_network import MLPRegressor
-from sklearn.model_selection import train_test_split
-from sklearn import svm
-#from sklearn.naive_bayes import GaussianNB
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import GroupShuffleSplit
-from sklearn.model_selection import GroupKFold
-from sklearn.datasets import make_friedman2
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import DotProduct, WhiteKernel
-```
-
-# Carregamento e Preparação dos Dados
-
-
-```python
-#Importação dos dados previamente estruturados
-data_atl_merged = pd.read_csv('../Datasets/data_atl_merged2.csv')
-```
-
-
-```python
-print(data_atl_merged.columns)
-data_atl_merged.head()
-```
-
-    Index(['ID', 'Name', 'Date', 'Time', 'Event', 'Status', 'Latitude',
-           'Longitude', 'Maximum Wind', 'Minimum Pressure', 'Date_c', 'Year',
-           'Month', 'Day', 'Latitude_c', 'Longitude_c', 'Duration', 'sst', 'rhum',
-           'wspd', 'slp', 'cldc'],
-          dtype='object')
-
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>ID</th>
-      <th>Name</th>
-      <th>Date</th>
-      <th>Time</th>
-      <th>Event</th>
-      <th>Status</th>
-      <th>Latitude</th>
-      <th>Longitude</th>
-      <th>Maximum Wind</th>
-      <th>Minimum Pressure</th>
-      <th>...</th>
-      <th>Month</th>
-      <th>Day</th>
-      <th>Latitude_c</th>
-      <th>Longitude_c</th>
-      <th>Duration</th>
-      <th>sst</th>
-      <th>rhum</th>
-      <th>wspd</th>
-      <th>slp</th>
-      <th>cldc</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>AL011951</td>
-      <td>UNNAMED</td>
-      <td>1951-01-02</td>
-      <td>1200</td>
-      <td>NaN</td>
-      <td>EX</td>
-      <td>30.5</td>
-      <td>-58.0</td>
-      <td>50</td>
-      <td>-999</td>
-      <td>...</td>
-      <td>1</td>
-      <td>2</td>
-      <td>30.5</td>
-      <td>-58.0</td>
-      <td>10</td>
-      <td>12.371029</td>
-      <td>72.457094</td>
-      <td>72.457094</td>
-      <td>1027.446055</td>
-      <td>5.219256</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>AL011951</td>
-      <td>UNNAMED</td>
-      <td>1951-01-02</td>
-      <td>1800</td>
-      <td>NaN</td>
-      <td>EX</td>
-      <td>29.9</td>
-      <td>-56.8</td>
-      <td>45</td>
-      <td>-999</td>
-      <td>...</td>
-      <td>1</td>
-      <td>2</td>
-      <td>29.9</td>
-      <td>-56.8</td>
-      <td>10</td>
-      <td>16.217764</td>
-      <td>80.423854</td>
-      <td>80.423854</td>
-      <td>1022.672978</td>
-      <td>5.756614</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>AL011951</td>
-      <td>UNNAMED</td>
-      <td>1951-01-03</td>
-      <td>0</td>
-      <td>NaN</td>
-      <td>EX</td>
-      <td>29.0</td>
-      <td>-55.7</td>
-      <td>45</td>
-      <td>-999</td>
-      <td>...</td>
-      <td>1</td>
-      <td>3</td>
-      <td>29.0</td>
-      <td>-55.7</td>
-      <td>10</td>
-      <td>15.491124</td>
-      <td>81.121590</td>
-      <td>81.121590</td>
-      <td>1023.151909</td>
-      <td>5.782474</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>AL011951</td>
-      <td>UNNAMED</td>
-      <td>1951-01-03</td>
-      <td>600</td>
-      <td>NaN</td>
-      <td>EX</td>
-      <td>27.5</td>
-      <td>-54.8</td>
-      <td>45</td>
-      <td>-999</td>
-      <td>...</td>
-      <td>1</td>
-      <td>3</td>
-      <td>27.5</td>
-      <td>-54.8</td>
-      <td>10</td>
-      <td>22.268075</td>
-      <td>84.264761</td>
-      <td>84.264761</td>
-      <td>1019.325138</td>
-      <td>5.651842</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>AL011951</td>
-      <td>UNNAMED</td>
-      <td>1951-01-03</td>
-      <td>1200</td>
-      <td>NaN</td>
-      <td>EX</td>
-      <td>26.5</td>
-      <td>-54.5</td>
-      <td>45</td>
-      <td>-999</td>
-      <td>...</td>
-      <td>1</td>
-      <td>3</td>
-      <td>26.5</td>
-      <td>-54.5</td>
-      <td>10</td>
-      <td>22.336746</td>
-      <td>84.458617</td>
-      <td>84.458617</td>
-      <td>1019.305866</td>
-      <td>5.645406</td>
-    </tr>
-  </tbody>
-</table>
-<p>5 rows × 22 columns</p>
-</div>
-
-
-
-
-```python
-y_train_mw = data_atl_merged['Maximum Wind']
-y_train_mp = data_atl_merged['Minimum Pressure']
-y_train_mp[y_train_mp < 0] = -1
-y_train_dur = data_atl_merged['Duration']
-X_train = data_atl_merged.drop(['ID', 'Name', 'Date', 'Time', 
-                                'Event', 'Status', 'Maximum Wind', 
-                                'Minimum Pressure', 'Date_c', 'Day', 
-                                'Latitude_c', 'Longitude_c', 'Duration'], 1)
-
-#print(y_train_rad)
-print(X_train.columns)
-X_train.head()
-```
-
-    Index(['Latitude', 'Longitude', 'Year', 'Month', 'sst', 'rhum', 'wspd', 'slp',
-           'cldc'],
-          dtype='object')
-
-
-    <ipython-input-16-44f50b930158>:3: SettingWithCopyWarning: 
-    A value is trying to be set on a copy of a slice from a DataFrame
-    
-    See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
-      y_train_mp[y_train_mp < 0] = -1
-
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Latitude</th>
-      <th>Longitude</th>
-      <th>Year</th>
-      <th>Month</th>
-      <th>sst</th>
-      <th>rhum</th>
-      <th>wspd</th>
-      <th>slp</th>
-      <th>cldc</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>30.5</td>
-      <td>-58.0</td>
-      <td>1951</td>
-      <td>1</td>
-      <td>12.371029</td>
-      <td>72.457094</td>
-      <td>72.457094</td>
-      <td>1027.446055</td>
-      <td>5.219256</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>29.9</td>
-      <td>-56.8</td>
-      <td>1951</td>
-      <td>1</td>
-      <td>16.217764</td>
-      <td>80.423854</td>
-      <td>80.423854</td>
-      <td>1022.672978</td>
-      <td>5.756614</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>29.0</td>
-      <td>-55.7</td>
-      <td>1951</td>
-      <td>1</td>
-      <td>15.491124</td>
-      <td>81.121590</td>
-      <td>81.121590</td>
-      <td>1023.151909</td>
-      <td>5.782474</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>27.5</td>
-      <td>-54.8</td>
-      <td>1951</td>
-      <td>1</td>
-      <td>22.268075</td>
-      <td>84.264761</td>
-      <td>84.264761</td>
-      <td>1019.325138</td>
-      <td>5.651842</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>26.5</td>
-      <td>-54.5</td>
-      <td>1951</td>
-      <td>1</td>
-      <td>22.336746</td>
-      <td>84.458617</td>
-      <td>84.458617</td>
-      <td>1019.305866</td>
-      <td>5.645406</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
+Nesta página iremos mostrar os diversos algoritmos aplicados aos dados visando ajustar uma boa regressão que ajudasse a prever as velocidades dos ventos de um determinado evento (Tropical Storm ou Hurricane) ou a duração dos mesmos.
+Algumas pequenas transformações foram necessárias para ajuste das variáveis preditoras a serem consideradas em cada modelo. Para detalhes sobre o carregamento e preparação dos dados, veja o notebook referência.
 
 
 ## Modelos
 
+Segue abaixo o resultado da aplicação de uma regressão linear simples usando como variável alvo a velocidade de vento, dado usado em vários indicadores de destrutibilidade. Interessante notar os parâmetros com coeficientes positivos.
 
+
+<details>
+<summary>Código</summary>
 ```python
 X_train2 = sm.add_constant(X_train) #np.array(X_train).reshape(X_train.shape[0],1)
 OLS_obj = OLS(y_train_mw, X_train2)
 OLSModel = OLS_obj.fit()
 
 r2_train = OLSModel.rsquared
-#r2_test = 1 - ((OLSModel.predict(X_test2)-y_test)*(OLSModel.predict(X_test2)-y_test)).sum() / ((y_test.mean()-y_test)*(y_test.mean()-y_test)).sum()
+
 print(f'R^2_train = {r2_train}')
-#print(f'R^2_test  = {r2_test}')
+
 print(f'Parâmetro_const  = {OLSModel.params[0]}')
 print(f'Parâmetro_Year  = {OLSModel.params[1]}')
 print(f'Parâmetro_Month  = {OLSModel.params[2]}')
@@ -454,6 +34,7 @@ print(f'Parâmetro_slp  = {OLSModel.params[8]}')
 print(f'Parâmetro_cldc  = {OLSModel.params[9]}')
 
 ```
+</details>
 
     R^2_train = 0.02385621171100183
     Parâmetro_const  = 47.35464784180999
@@ -468,234 +49,58 @@ print(f'Parâmetro_cldc  = {OLSModel.params[9]}')
     Parâmetro_cldc  = -1.5161434590996923
 
 
-Os códigos abaixos nos geras uma visualização que pode trazer insights a respeito da relação entre as variáveis. A escolha das variáveis preditoras que servem de entrada para os modelos mais a frente foram pensadas também pela observação destes gráficos.
+Os códigos abaixos nos gera uma visualização que pode trazer insights a respeito da relação entre as variáveis. A escolha das variáveis preditoras que servem de entrada para os modelos mais a frente foram pensadas também pela observação destes gráficos.
 
 
+<details>
+<summary>Código</summary>
 ```python
 df = pd.concat([X_train, y_train_mw, y_train_mp], axis=1)
 scatter_matrix(df, alpha=0.8, figsize=(15, 15), diagonal='kde');
 
 ```
-
+</details>
 
 ![png](Analises_variaveis_files/Analises_variaveis_13_0.png)
 
 
-
+<details>
+<summary>Código</summary>
 ```python
 # A princípio, não queremos que se faça alguma previsão com base no valor numérico do ano
 # Além disso, a variável wspd está altamente correlacionada com a rhum, podendo ser mantida apenas a última
 X_train = data_atl_merged.drop(['Year', 'wspd'], 1)
-```
 
-
-```python
 #   Mês      Latitude    Longitude    Temperatura, Umidade, Sea Level Pressure, Cloudiness]
 # ['Month', 'Latitude', 'Longitude', 'sst',       'rhum',  'slp',              'cldc']
 
 fig, ax = plt.subplots(1,7)#, figsize=(16,10))
 fig.suptitle('Velocidade Máxima vs Variáveis Preditoras (1950-2015)', fontsize=28, y=1.06)
 
-ax[0].scatter(X_train['Month'], X_train['Maximum Wind'], alpha = 0.5, ls = '--') #, label=r'$Furacões$ $=$ $0$')
-ax[1].scatter(X_train['Latitude'], X_train['Maximum Wind'], alpha = 0.5, ls = '--') #, label=r'$Furacões$ $=$ $0$')
-ax[2].scatter(X_train['Longitude'], X_train['Maximum Wind'], alpha = 0.5, ls = '--') #, label=r'$Furacões$ $=$ $0$')
-ax[3].scatter(X_train['sst'], X_train['Maximum Wind'], alpha = 0.5, ls = '--') #, label=r'$Furacões$ $=$ $0$')
-ax[4].scatter(X_train['rhum'], X_train['Maximum Wind'], alpha = 0.5, ls = '--') #, label=r'$Furacões$ $=$ $0$')
-ax[5].scatter(X_train['slp'], X_train['Maximum Wind'], alpha = 0.5, ls = '--') #, label=r'$Furacões$ $=$ $0$')
-ax[6].scatter(X_train['cldc'], X_train['Maximum Wind'], alpha = 0.5, ls = '--') #, label=r'$Furacões$ $=$ $0$')
-#ax.plot([1850, 2015], [w0, w1], ls = '-.') #, label=r'$Furacões$ $=$ $0$')
-'''
-ax.tick_params(labelsize=24)
-ax.set_title(f'Número de Furacões Anuais (1851-2015)', fontsize=24)
-ax.set_xlabel(r'$Ano$', fontsize=16)
-ax.set_ylabel(r'$Quantidade$', fontsize=16)
-'''
-#fig.legend(loc='best', fontsize=12);
+ax[0].scatter(X_train['Month'], X_train['Maximum Wind'], alpha = 0.5, ls = '--') 
+ax[1].scatter(X_train['Latitude'], X_train['Maximum Wind'], alpha = 0.5, ls = '--') 
+ax[2].scatter(X_train['Longitude'], X_train['Maximum Wind'], alpha = 0.5, ls = '--') 
+ax[3].scatter(X_train['sst'], X_train['Maximum Wind'], alpha = 0.5, ls = '--') 
+ax[4].scatter(X_train['rhum'], X_train['Maximum Wind'], alpha = 0.5, ls = '--') 
+ax[5].scatter(X_train['slp'], X_train['Maximum Wind'], alpha = 0.5, ls = '--') 
+ax[6].scatter(X_train['cldc'], X_train['Maximum Wind'], alpha = 0.5, ls = '--') 
+
 fig.set_figheight(5)
 fig.set_figwidth(20)
 fig.tight_layout(pad=2.0)
 ```
-
+</details>
 
 ![png](Analises_variaveis_files/Analises_variaveis_15_0.png)
 
 
 
-```python
-X_train = data_atl_merged.drop(['ID', 'Name', 'Date', 'Time', 'Event', 'Status', 'Maximum Wind', 'Minimum Pressure', 'Date_c', 'Day', 'Latitude_c', 'Longitude_c', 'Duration', 'Year', 'wspd'], 1)
-X_train.mean()
 
-```
+Uma primeira tentativa de ajuste foi feito através da centralização das variáveis preditoras em relação à média, adicionando também termos polinomiais de segunda ordem. No entanto, os resultados do ajuste não mostraram ganhos significativos para o modelo de Regressão Linear Múltipla, e até prejudicaram modelos mais complexos, como Random Forest, Multi Layer Perceptron, entre outros utilizados mais a frente. Detalhes desta parte do código acesse o notebook referência, no link do início desta página.
 
 
 
 
-    Latitude       27.466819
-    Longitude     -62.607058
-    Month           8.709729
-    sst            26.416134
-    rhum           81.284651
-    slp          1009.678574
-    cldc            5.137222
-    dtype: float64
-
-
-
-Uma primeira tentativa de ajuste foi feito através da centralização das variáveis preditoras em relação à média, adicionando também termos polinomiais de segunda ordem. No entanto, os resultados do ajuste não mostraram ganhos significativos para o modelo de Regressão Linear Múltipla, e até prejudicaram modelos mais complexos, como Random Forest, Multi Layer Perceptron, entre outros utilizados mais a frente.
-
-
-```python
-# Tentativa de ajuste através de transformação de variáveis e inclusão de termos polinomiais
-X_train['Month_mod'] = (X_train['Month'] - 8.788781)
-X_train['Latitude_mod'] = (X_train['Latitude'] - 17.943038)
-X_train['Longitude_mod'] = (X_train['Longitude'] + 62.555538)
-X_train['sst_mod'] = (X_train['sst'] - 28.888685)
-X_train['rhum_mod'] = (X_train['rhum'] - 82.051702)
-X_train['slp_mod'] = (X_train['slp'] - 1008.611661)
-X_train['cldc_mod'] = (X_train['cldc'] - 5.223518)
-
-X_train['Month_mod^2'] = X_train['Month_mod']**2
-X_train['Latitude_mod^2'] = X_train['Latitude_mod']**2
-X_train['Longitude_mod^2'] = X_train['Longitude_mod']**2
-X_train['sst_mod^2'] = X_train['sst_mod']**2
-X_train['rhum_mod^2'] = X_train['rhum_mod']**2
-X_train['slp_mod^2'] = X_train['slp_mod']**2
-X_train['cldc_mod^2'] = X_train['cldc_mod']**2
-
-X_train = X_train.drop(['Month', 'Latitude', 'Longitude', 'sst', 'rhum', 'slp', 'cldc'], 1)
-```
-
-
-```python
-X_train.head()
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Month_mod</th>
-      <th>Latitude_mod</th>
-      <th>Longitude_mod</th>
-      <th>sst_mod</th>
-      <th>rhum_mod</th>
-      <th>slp_mod</th>
-      <th>cldc_mod</th>
-      <th>Month_mod^2</th>
-      <th>Latitude_mod^2</th>
-      <th>Longitude_mod^2</th>
-      <th>sst_mod^2</th>
-      <th>rhum_mod^2</th>
-      <th>slp_mod^2</th>
-      <th>cldc_mod^2</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>-7.788781</td>
-      <td>12.556962</td>
-      <td>4.555538</td>
-      <td>-16.517656</td>
-      <td>-9.594608</td>
-      <td>18.834394</td>
-      <td>-0.004262</td>
-      <td>60.665109</td>
-      <td>157.677295</td>
-      <td>20.752926</td>
-      <td>272.832952</td>
-      <td>92.056509</td>
-      <td>354.734396</td>
-      <td>0.000018</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>-7.788781</td>
-      <td>11.956962</td>
-      <td>5.755538</td>
-      <td>-12.670921</td>
-      <td>-1.627848</td>
-      <td>14.061317</td>
-      <td>0.533096</td>
-      <td>60.665109</td>
-      <td>142.968940</td>
-      <td>33.126218</td>
-      <td>160.552231</td>
-      <td>2.649888</td>
-      <td>197.720622</td>
-      <td>0.284192</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>-7.788781</td>
-      <td>11.056962</td>
-      <td>6.855538</td>
-      <td>-13.397561</td>
-      <td>-0.930112</td>
-      <td>14.540248</td>
-      <td>0.558956</td>
-      <td>60.665109</td>
-      <td>122.256409</td>
-      <td>46.998401</td>
-      <td>179.494647</td>
-      <td>0.865108</td>
-      <td>211.418806</td>
-      <td>0.312431</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>-7.788781</td>
-      <td>9.556962</td>
-      <td>7.755538</td>
-      <td>-6.620610</td>
-      <td>2.213059</td>
-      <td>10.713477</td>
-      <td>0.428324</td>
-      <td>60.665109</td>
-      <td>91.335523</td>
-      <td>60.148370</td>
-      <td>43.832480</td>
-      <td>4.897629</td>
-      <td>114.778588</td>
-      <td>0.183461</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>-7.788781</td>
-      <td>8.556962</td>
-      <td>8.055538</td>
-      <td>-6.551939</td>
-      <td>2.406915</td>
-      <td>10.694205</td>
-      <td>0.421888</td>
-      <td>60.665109</td>
-      <td>73.221599</td>
-      <td>64.891692</td>
-      <td>42.927902</td>
-      <td>5.793238</td>
-      <td>114.366028</td>
-      <td>0.177989</td>
-    </tr>
-  </tbody>
-</table>
-</div>
 
 
 
