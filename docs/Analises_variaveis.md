@@ -232,7 +232,7 @@ print(regr_rf2.score(data_test, data_test_mw))
 Fizemos também a previsão da duração de um Furacão. O ajuste fica bem preciso, como se pode ver pelo R2 Score
 
 <details>
-<summary>Code</summary>
+<summary>Código </summary>
 ```python
 regr_rf3 = RandomForestRegressor(n_estimators=50, max_depth=75, random_state=0, oob_score=True, bootstrap = True)
 regr_rf3.fit(data_train2, data_train_dur)
@@ -248,119 +248,4 @@ print(regr_rf3.score(data_test2, data_test_dur))
 ![png](Analises_variaveis_files/Analises_variaveis_64_0.png)
 
 
-### Multi Layer Perceptron
-
-<details>
-<summary>Código </summary>
-```python
-regr_mlp = MLPRegressor(hidden_layer_sizes=(100,2), random_state=1, max_iter=1000, solver='lbfgs', activation='relu').fit(X_train, y_train_mw)
-#regr.predict(X_test[:2])
-print(regr_mlp.score(X_train, y_train_mw))
-print(regr_mlp.score(X_test, y_test_mw))
-```
-</details>
-
-
-    0.09520915346048042
-    0.08725614810614979
-
-
-
-```python
-fig, ax = plt.subplots(1,2)#, figsize=(16,10))
-#fig.suptitle('Velocidade Máxima vs Pressão Mínima (1851-2015)', fontsize=28, y=1.06)
-
-ax[0].scatter(X_train['sst'], y_train_mw, alpha=0.5, label=r'$Dados$ $de$ $Treino$')
-ax[0].scatter(X_train['sst'], regr_mlp.predict(X_train), alpha=0.5, label=r'$Previsão$')
-ax[1].scatter(X_test['sst'], y_test_mw, alpha=0.5, label=r'$Dados$ $de$ $Teste$')
-ax[1].scatter(X_test['sst'], regr_mlp.predict(X_test), alpha=0.5, label=r'$Previsão$')
-
-ax[0].tick_params(labelsize=24)
-ax[0].set_title(f'Previsão de Maximal Wind por MLPRegressor (Treino)', fontsize=24)
-ax[0].set_xlabel(r'$sst$', fontsize=16)
-ax[0].set_ylabel(r'$Maximal$ $Wind$', fontsize=16)
-ax[0].legend(loc='best', fontsize=12);
-
-ax[1].tick_params(labelsize=24)
-ax[1].set_title(f'Previsão de Maximal Wind por MLPRegressor (Teste)', fontsize=24)
-ax[1].set_xlabel(r'$sst$', fontsize=16)
-ax[1].set_ylabel(r'$Maximal$ $Wind$', fontsize=16)
-ax[1].legend(loc='best', fontsize=12);
-
-fig.set_figheight(5)
-fig.set_figwidth(20)
-fig.tight_layout(pad=2.0)
-```
-
-
-![png](Analises_variaveis_files/Analises_variaveis_67_0.png)
-
-
-### Support Vector Machine
-
-
-```python
-regr_svr = svm.SVR()
-regr_svr.fit(X_train, y_train_mw)
-print(regr_svr.score(X_train, y_train_mw))
-print(regr_svr.score(X_test, y_test_mw))
-```
-
-    -0.06514630260669341
-    -0.058505019763586796
-
-
-### Modelos com Escala Padronizada
-
-
-```python
-# Padronização da Escala
-scaler = StandardScaler()  # doctest: +SKIP
-scaler.fit(X_train)  # doctest: +SKIP
-X_train_std = scaler.transform(X_train)  # doctest: +SKIP
-X_test_std = scaler.transform(X_test)
-```
-
-
-```python
-regr_svr_std = svm.SVR()
-regr_svr_std.fit(X_train_std, y_train_mw)
-print(regr_svr_std.score(X_train_std, y_train_mw))
-print(regr_svr_std.score(X_test_std, y_test_mw))
-```
-
-    0.07772469466765619
-    0.07604328404370786
-
-
-
-```python
-regr_mlp_std = MLPRegressor(hidden_layer_sizes=(100,2), random_state=1, max_iter=1000, solver='lbfgs', activation='relu').fit(X_train, y_train_mw)
-#regr.predict(X_test[:2])
-print(regr_mlp_std.score(X_train_std, y_train_mw))
-print(regr_mlp_std.score(X_test_std, y_test_mw))
-```
-
-    /home/gambitura/anaconda3/lib/python3.8/site-packages/sklearn/neural_network/_multilayer_perceptron.py:471: ConvergenceWarning: lbfgs failed to converge (status=1):
-    STOP: TOTAL NO. of ITERATIONS REACHED LIMIT.
-    
-    Increase the number of iterations (max_iter) or scale the data as shown in:
-        https://scikit-learn.org/stable/modules/preprocessing.html
-      self.n_iter_ = _check_optimize_result("lbfgs", opt_res, self.max_iter)
-
-
-    -4.16270156850149
-    -4.153096948726193
-
-
-
-```python
-regr_rf_std= RandomForestRegressor(n_estimators=50, max_depth=75, random_state=0, oob_score=True, bootstrap = True)
-regr_rf_std.fit(X_train_std, y_train_mw)
-print(regr_rf_std.score(X_train_std, y_train_mw))
-print(regr_rf_std.score(X_test_std, y_test_mw))
-```
-
-    0.9298162379440262
-    0.5220914993160997
 
