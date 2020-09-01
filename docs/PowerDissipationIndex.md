@@ -2,143 +2,23 @@
 
 ## Definitions 
 
-PDI is an index that represents the destructive power of a storm combining together, intensity, duration, and frequency.
+PDI é um índice criado para medir a destrutividade de um furacão, levando em conta sua intensidade por meio de uma transformação velocidade máxima média, a sua duração e, caso estejamos medindo varios furacões, consideramos o número deles.
 
 References: [Emanuel, 2005](ftp://texmex.mit.edu/pub/emanuel/PAPERS/NATURE03906.pdf) and [Emanuel, 2007](ftp://texmex.mit.edu/pub/emanuel/PAPERS/Factors.pdf)
 
-In the references, Kerry Emanuel defines the index as:
+Nas referências, Kerry Emanuel define o PDI como:
 
 $$PDI\equiv\int_0^{\tau}V^3_{max}dt~,$$
 
-where $V_{max}$ is the maximum sustained wind speed, and $\tau$ is the lifetime of the storm event.
-
+onde $V_{max}$ é a velocidade tangencial máxima dos ventos do furacão e $\tau$ é o tempo de duração do furacão.
 
 
 ## The PDI Dataset
 
-We're gonna use the PDI calculated by [National Oceanic & Atmospheric Administration (NOAA)](https://www.noaa.gov) which data is avaible at [Our World in Data](https://ourworldindata.org/grapher/cyclone-power-dissipation-index). It covers the North Atlantic, Caribbean and Gulf of Mexico storms.
+Vamos usar o PDI calculado pela [National Oceanic & Atmospheric Administration (NOAA)](https://www.noaa.gov) por meio do site [Our World in Data](https://ourworldindata.org/grapher/cyclone-power-dissipation-index). Esses dados cobrem todo o Atlântico Norte, o mar do Caribe e o Golfo do México. Esses dados passam por smooth de fazer média podendara de 5 observações próximas, filtro esse.
 
-The data has been smoothed through a five-year weighted average plotted at the center, in order to remove interannual variability. We're gonna o the same smooth with our climate dataset of Atlantic MDR.
-
-
-```python
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import statsmodels.api as sm
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score
-import scipy.stats as stats
-from math import *
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-from statsmodels.tsa.holtwinters import ExponentialSmoothing, HoltWintersResults
-from statsmodels.tsa.stattools import adfuller
-from sklearn.model_selection import TimeSeriesSplit
-import datetime as dt
-sns.set()
-%matplotlib inline
-```
-
-
-```python
-raw_pdi = pd.read_csv('../Datasets/cyclone-power-dissipation-index.csv')
-raw_pdi.head()
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>Entity</th>
-      <th>Code</th>
-      <th>Year</th>
-      <th>Cyclone Power Dissipation Index (PDI) (HUDRAT, NOAA)</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>North Atlantic</td>
-      <td>NaN</td>
-      <td>1951</td>
-      <td>2.7846</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>North Atlantic</td>
-      <td>NaN</td>
-      <td>1952</td>
-      <td>2.3445</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>North Atlantic</td>
-      <td>NaN</td>
-      <td>1953</td>
-      <td>2.2639</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>North Atlantic</td>
-      <td>NaN</td>
-      <td>1954</td>
-      <td>2.4730</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>North Atlantic</td>
-      <td>NaN</td>
-      <td>1955</td>
-      <td>2.4041</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-
-```python
-raw_pdi.dtypes
-```
-
-
-
-
-    Entity                                                   object
-    Code                                                    float64
-    Year                                                      int64
-    Cyclone Power Dissipation Index (PDI) (HUDRAT, NOAA)    float64
-    dtype: object
-
-
-
-
-```python
-PDI = raw_pdi[['Year','Cyclone Power Dissipation Index (PDI) (HUDRAT, NOAA)']].rename(
-    columns={'Year': 'Year','Cyclone Power Dissipation Index (PDI) (HUDRAT, NOAA)':'PDI'})
-PDI = PDI.set_index('Year')
-```
-
-
+<details>
+  <summary>Code</summary>
 ```python
 fig,axs = plt.subplots(2,2, figsize=(15,9))
 axs[0,0].set_title("Power Dissipation Index 1951 - 2013",fontsize = 18)
@@ -156,63 +36,16 @@ axs[0,1].plot(PDI.index, np.log(PDI.PDI),lw = 4)
 sns.distplot(PDI.PDI, ax=axs[1,0])
 sns.distplot(np.log(PDI.PDI), ax=axs[1,1])
 ```
-
-
-
-
-    <matplotlib.axes._subplots.AxesSubplot at 0x7f0a8ef52a30>
-
-
-
+</details>
 
 ![png](PowerDissipationIndex_files/PowerDissipationIndex_7_1.png)
 
-
-## Atlantic MDR Climate Data
-
-Let's do the same smoothing operation in our "atlantic_mdr" dataset. We're gonna apply a 1–3–4–3–1 weighted average [Emanuel, 2007](ftp://texmex.mit.edu/pub/emanuel/PAPERS/Factors.pdf) on the data, to get out of interannual variability.
-
-
-```python
-atlantic_mdr = pd.read_csv('../Datasets/atlantic_mdr.csv')
-
-def smooth(col):
-    n = len(col)
-    new_col = np.zeros([n,1])
-    w = np.array([[1,3,4,3,1]])
-    
-    for i in range(2,n-2):
-        new_col[i] = w.dot(np.array(col[i-2:i+3]).reshape(-1,1))/12
-    return new_col.ravel()
-
-```
-
-
-```python
-# atlantic_mdr = atlantic_mdr[(atlantic_mdr.Month>=8) & (atlantic_mdr.Month<=10)]
-mdr_annual = atlantic_mdr.groupby('Year').agg({'sst':np.mean,
-                                               'rhum':np.mean,
-                                               'wspd':np.mean,
-                                               'slp':np.mean,
-                                               'vwnd':np.mean,
-                                               'cldc':np.mean})
-
-
-for col in mdr_annual.columns:
-    mdr_annual.loc[:,col] = smooth(mdr_annual[col])
-mdr_annual = mdr_annual.loc[1951:2013,:]
-# mdr_annual
-```
-
-
-```python
-mdr_annual['PDI'] = np.array(PDI.PDI).reshape(-1,1)
-# mdr_annual
-```
-
 ## Analysing Correlation
 
-
+   Uma hipótese comum diante das ideias cientificamente popularizadas é a de que as mudanças climáticas, ao provocarem aquecimento do mar, fazem com que os furacões fiquem mais intensos. De certo modo a intuição poderia falar nessa direção sabendo o processo de formação dos furacões; precisamos ver se essa ideia se mostra nos dados.
+   
+<details>
+  <summary>Code</summary>
 ```python
 # corr = mdr_annual.corr()
 # corr.style.background_gradient(cmap='coolwarm')
@@ -232,12 +65,16 @@ sns.heatmap(df.corr().round(2),
     cmap='coolwarm',annot = True,annot_kws={"size": 13}, ax=axs[1]);
 plt.show()
 ```
+</details>
 
+Tanto o PDI quando o logPDI tiveram correlação de aproximadamente $0.64$.
 
 ![png](PowerDissipationIndex_files/PowerDissipationIndex_13_0.png)
 
 
 
+<details>
+  <summary>Code</summary>
 ```python
 fig,ax = plt.subplots(figsize=(10,6))
 plt.title("North Atlantic MDR SST vs PDI",fontsize = 18)
@@ -256,22 +93,18 @@ ax2.set_ylabel("Power Dissipation Index",fontsize=14)
 
 fig.legend(loc="upper left",fontsize=14,bbox_to_anchor=(0,1), bbox_transform=ax.transAxes);
 ```
-
+</details>
 
 ![png](PowerDissipationIndex_files/PowerDissipationIndex_14_0.png)
 
 
 
-```python
-# sns.scatterplot(x=np.log(mdr_annual['sst']), y=np.log(mdr_annual['PDI']))
-# sns.scatterplot(x=X.sst, y=mdr_annual['PDI'])
-```
+## Modelos lineares
 
-## Simple Linear Model
+Quanto à trajetória do PDI, é observável uma leve tendência positiva tendo nos últimos 20 anos um comportamento bem irregular, o que pode ser explicado pela excepcionalidade da ENSO (El-Niño Southern Oscilation) nesse período.
 
-Quanto à trajetória do PDI, é observável uma leve tendência positiva.
-
-
+<details>
+  <summary>Code</summary>
 ```python
 # Aparentemente o PDI cresceu:
 X = mdr_annual.drop(columns="PDI") 
@@ -283,21 +116,17 @@ plt.plot(PDI)
 plt.plot(model.fittedvalues)
 plt.title("Evolução do PDI com o tempo e a tendência de crescimento com uma reta")
 ```
-
-
-
-
-    Text(0.5, 1.0, 'Evolução do PDI com o tempo e a tendência de crescimento com uma reta')
-
-
-
+</details>
 
 ![png](PowerDissipationIndex_files/PowerDissipationIndex_18_1.png)
 
 
-Usando as covariáveis do dataset, podemos fazer um modelo onde achamos relação com a pressão ao nivel do mar (slp), a humidade (rhum) e a "cloudin.
+Usando as covariáveis do dataset, podemos fazer um modelo onde achamos relação com a pressão ao nivel do mar (slp), a humidade (rhum) e a "cloudiness", ou nebulosidade (cldc).
 
 
+<details>
+  <summary>Code</summary>
+  
 ```python
 # X['sst'] = np.log(X['sst'])
 (xtrain, xtest, ytrain, ytest)  = train_test_split(X.drop(columns=["sst", "wspd", "vwnd", "Year"]), np.log(Y))
@@ -306,6 +135,7 @@ ypred = model.predict(xtest)
 print("R2 nos dados separados para teste:",r2_score(ytest,ypred))
 print(model.summary())
 ```
+</details>
 
     R2 nos dados separados para teste: 0.2268374488496503
                                 OLS Regression Results                            
@@ -332,22 +162,20 @@ print(model.summary())
     Skew:                          -0.468   Prob(JB):                        0.182
     Kurtosis:                       3.932   Cond. No.                     5.42e+06
     ==============================================================================
-    
-    Warnings:
-    [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-    [2] The condition number is large, 5.42e+06. This might indicate that there are
-    strong multicollinearity or other numerical problems.
 
 
 ----
 
 Pode parecer um pouco contraintuitivo a princípio não achar relação significativa da temperatura do mar e da intensidade (na verdade, a destrutibilidade, o PDI) dos furacões. Uma explicação plausivel para isso é que os dados de temperatura conseguem ser explicados pelas outras variáveis:
 
+<details>
+  <summary>Code</summary>
 
 ```python
 model = sm.OLS(X['sst'], X.drop(columns=['vwnd','wspd', 'Year', 'sst'])).fit()
 print(model.summary())
 ```
+</details>
 
                                 OLS Regression Results                            
     ==============================================================================
@@ -373,99 +201,19 @@ print(model.summary())
     Skew:                          -0.023   Prob(JB):                        0.787
     Kurtosis:                       2.575   Cond. No.                     5.52e+06
     ==============================================================================
-    
-    Warnings:
-    [1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
-    [2] The condition number is large, 5.52e+06. This might indicate that there are
-    strong multicollinearity or other numerical problems.
-
 
 ----
 
 ## Time series Analysis
 
+ Não conseguimos modelar essas variações do PDI com o tempo muito bem com os modelos de regressão, embora ganhamos algum insight sobre como as outras variáveis climáticas estão relacionadas com ele. Sendo assim, agora vamos tratar a trajetória do PDI como uma série temporal; a relação dele com o tempo vai nos dar informação sobre se é esperado que ele cresça nos próximos anos. Inicialmente, vamos ajustar um modelo autorregressivo de ordem 2 sendo que essa ordem do modelo foi escolhida com critérios de informação:
 
-```python
-tsPDI = pd.DataFrame(Y, index = [dt.datetime(x, 1, 1) for x in mdr_annual.index], columns=["PDI"])
-tsPDI.head()
-```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>PDI</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>1951-01-01</th>
-      <td>2.7846</td>
-    </tr>
-    <tr>
-      <th>1952-01-01</th>
-      <td>2.3445</td>
-    </tr>
-    <tr>
-      <th>1953-01-01</th>
-      <td>2.2639</td>
-    </tr>
-    <tr>
-      <th>1954-01-01</th>
-      <td>2.4730</td>
-    </tr>
-    <tr>
-      <th>1955-01-01</th>
-      <td>2.4041</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-Vamos tratar agora a trajetória do PDI como uma série temporal. Inicialmente, vamos ajustar um modelo autorregressivo de ordem 2:
-
-
+<details>
+  <summary>Code</summary>
 ```python
 mod = sm.tsa.ARIMA(tsPDI, order=(2, 0, 0))
 modfit = mod.fit()
 # modfit.summary()
-```
-
-    /home/gambitura/anaconda3/lib/python3.8/site-packages/statsmodels/tsa/base/tsa_model.py:159: ValueWarning: No frequency information was provided, so inferred frequency AS-JAN will be used.
-      warnings.warn('No frequency information was'
-
-
-
-```python
-# fig, axs = plt.subplots(2,2, figsize = (10,4))
-# plot_acf(modfit.resid, ax = axs[0, 0])
-# plot_pacf(modfit.resid, ax = axs[0, 1])
-# sm.qqplot(modfit.resid, dist=stats.norm, line="s", ax = axs[1, 0])
-# sns.distplot(modfit.resid, ax = axs[1, 1])
-# plt.show()# modfit.plot_diagnostics()
-```
-
-
-```python
 fig, axs = plt.subplots(1,2, figsize = (16,6))
 
 # With CI:
@@ -490,38 +238,26 @@ axs[0].set_title('Média das previsões com intervalo de confiança (a = 0.05)')
 axs[1].set_title('Simulações do PDI')
 plt.show()
 ```
+</details>
 
 
 ![png](PowerDissipationIndex_files/PowerDissipationIndex_28_0.png)
 
+Uma outra forma de modelar no tempo que facilita a análise do modelo é trabalhar com o log dessa série. Isso ajuda a diminuir o pico no crescimento da destrutibilidade e induz na escala original do PDI a não ter valores negativos, o que está de acordo com a definição do PDI.
 
-Modelando o log da série:
-
-
+<details>
+  <summary>Code</summary>
 ```python
 tsLogPDI = tsPDI.apply(np.log)
 #sm.tsa.stattools.adfuller(tsLogPDI['PDI']) ainda não é estacionaria a 5% de significancia
 mod2 = sm.tsa.ARIMA(tsLogPDI, order=(2, 0, 0))
 modfit2 = mod2.fit()
-# modfit2.summary()
-```
-
-    /home/gambitura/anaconda3/lib/python3.8/site-packages/statsmodels/tsa/base/tsa_model.py:159: ValueWarning: No frequency information was provided, so inferred frequency AS-JAN will be used.
-      warnings.warn('No frequency information was'
-
-
-
-```python
 # fig, axs = plt.subplots(2,2, figsize = (10,4))
 # plot_acf(modfit2.resid, ax = axs[0, 0])
 # plot_pacf(modfit2.resid, ax = axs[0, 1])
 # sm.qqplot(modfit2.resid, dist=stats.norm, line="s", ax = axs[1, 0])
 # sns.distplot(modfit2.resid, ax = axs[1, 1])
 # plt.show()
-```
-
-
-```python
 fig, axs = plt.subplots(1,2, figsize = (16,6))
 
 # With CI:
@@ -540,18 +276,19 @@ for i in range(500):
 
 axs[1].plot(tsLogPDI['PDI'])
 for i in range(40):
-    axs[1].plot(x, sims[i], color = "k", alpha=.1) #teste de sanidade
+    axs[1].plot(x, sims[i], color = "k", alpha=.1)
 
 axs[0].set_title('Média do log(PDI) predito com intervalo de confiança (a = 0.05)')
 axs[1].set_title('Simulações do PDI')
 plt.show()
 ```
-
+</details>
 
 ![png](PowerDissipationIndex_files/PowerDissipationIndex_32_0.png)
 
 
-
+<details>
+  <summary>Code</summary>
 ```python
 fig, axs = plt.subplots(1,2, figsize = (16,6))
 
@@ -582,38 +319,29 @@ axs[0].set_title('Média do PDI predito com intervalo de confiança (a = 0.05)')
 axs[1].set_title('Simulações do PDI')
 plt.show()
 ```
-
+</details>
 
 ![png](PowerDissipationIndex_files/PowerDissipationIndex_33_0.png)
 
 
+Além disso, conseguimos achar uma certa transformação nos dados que é estacionária; permitindo um bom ajuste do modelo ARIMA. Passando as predições para o espaço do PDI, temos as seguintes previsões:
 
+<details>
+  <summary>Code</summary>
 ```python
 # plt.plot(np.log(np.diff(np.log(mdr_annual['PDI'])) + 1))
 # sm.tsa.stattools.adfuller(np.log(np.diff(np.log(mdr_annual['PDI'])) + 1))
 tsTr = np.log(np.diff(np.log(tsPDI['PDI']))+1)
-```
-
-
-```python
 # terceiro modelo: log(delta(log(PDI))+1) como ARMA(2,1)
 mod3 = sm.tsa.ARIMA(tsTr, order=(2,0,1))
 modfit3 = mod3.fit()
 # modfit3.summary()
-```
-
-
-```python
 # fig, axs = plt.subplots(2,2, figsize = (10,4))
 # plot_acf(modfit3.resid, ax = axs[0, 0])
 # plot_pacf(modfit3.resid, ax = axs[0, 1])
 # sm.qqplot(modfit3.resid, dist=stats.norm, line="s", ax = axs[1, 0])
 # sns.distplot(modfit3.resid, ax = axs[1, 1])
 # plt.show()
-```
-
-
-```python
 fig, axs = plt.subplots(1,2, figsize = (16,6))
 
 # With CI:
@@ -636,18 +364,6 @@ for i in range(40):
 
 axs[0].set_title('Média da transformação predita com intervalo de confiança (a = 0.05)')
 axs[1].set_title('Simulações da transformação')
-plt.show()
-```
-
-
-![png](PowerDissipationIndex_files/PowerDissipationIndex_37_0.png)
-
-
-
-```python
-fig, axs = plt.subplots(1,2, figsize = (16,6))
-
-# With CI:
 axs[0].plot(tsLogPDI['PDI'])
 # plt.plot(tsPDI['PDI'], axs = axs[0])
 step = 10
@@ -676,14 +392,6 @@ for i in range(50):
 axs[0].set_title('Média do log(PDI) predito com intervalo de confiança (a = 0.05)')
 axs[1].set_title('Simulações do log(PDI)')
 plt.show()
-```
-
-
-![png](PowerDissipationIndex_files/PowerDissipationIndex_38_0.png)
-
-
-
-```python
 fig, axs = plt.subplots(1,2, figsize = (16,6))
 
 # With CI:
@@ -716,12 +424,11 @@ axs[0].set_title('Média do PDI predito com intervalo de confiança (a = 0.05)')
 axs[1].set_title('Simulações do PDI')
 plt.show()
 ```
-
+</details>
 
 ![png](PowerDissipationIndex_files/PowerDissipationIndex_39_0.png)
 
-
-----
+Embora todos esses métodos tenham alguma razoabilidade, eles as previsões claramente tem uma variância muito grande, refletindo a dificuldade em prever esse dado dado que ele não tem nenhum padrão claro. 
 
 ----
 
@@ -730,8 +437,8 @@ plt.show()
   Medir destrutibilidade do furacão não é coisa trivial; não basta olhar o PDI visto que os nossos dados de PDI podem estar [errados](https://arxiv.org/abs/physics/0601050) por medições inconsistentes de velocidade até os anos 90, onde começamos a ter um comportamento anômalo do ENSO; além da dinâmica sazonal de correntes termosalínicas gerarem sazonalidade nas temperaturas entre decádas (Atlantic Multidecadal Oscilation, AMO). Outras alternativas comumente consideradas são a de contagem de furacões no ano e de tamanho de cada furacão; cada uma delas com seus problemas particulares. Abaixo, fazemos um modelo simples de GLM para contagem usando como preditores as covari
   
   
-
-
+<details>
+  <summary>Code</summary>
 ```python
 data = pd.read_csv('../Datasets/data_atl_merged2.csv',parse_dates=['Date'])
 data = data[['ID', 'Name', 'Date','Year', 'Time', 'Event', 'Status', 'Latitude',
@@ -756,23 +463,8 @@ cat_id = data.groupby('ID')['Maximum Wind'].max().apply(category)
 data.loc[:,'Category']=data.ID.apply(lambda x:cat_id[x])
 # data.groupby('Category')['ID'].count().plot.bar();
 major_df = data[data.Category.apply(lambda x: 0 if x[-1]=='m' else int(x[-1]))>=3]
-major_df.groupby('Year')['ID'].count().plot()
+#major_df.groupby('Year')['ID'].count().plot()
 #sm.tsa.stattools.adfuller(count)
-```
-
-
-
-
-    <matplotlib.axes._subplots.AxesSubplot at 0x7f0a8ec16a60>
-
-
-
-
-![png](PowerDissipationIndex_files/PowerDissipationIndex_41_1.png)
-
-
-
-```python
 count = major_df.groupby("Year")["ID"].count()
 X = pd.pivot_table(major_df, index="Year", values=["sst", "rhum", "wspd", "slp", "cldc"])
 X['Y'] = X.index.values
@@ -783,6 +475,7 @@ plt.plot(count)
 plt.plot(countFit.predict(sm.add_constant(X)))
 plt.show()
 ```
+</details>
 
                      Generalized Linear Model Regression Results                  
     ==============================================================================
@@ -810,4 +503,6 @@ plt.show()
 
 
 ![png](PowerDissipationIndex_files/PowerDissipationIndex_42_1.png)
+
+Olhando esse gráfico do ajuste e a tabela com as estatísticas do ajuste, vemos que o modelo da binomial negativa claramente não consegue capturar muitas informações relevantes que o número de furacões nos dá. Outra medida também comum de destrutividade dos furacões é o tamanho do raio, que não será analisado nesse trabalho.
 
