@@ -28,4 +28,5 @@ Nesta etapa descrevemos as fontes de nossos dados, extração e limpeza dos mesm
 O PDI ou Power Dissipation Index é um índice indicador de destrutibilidade de uma tempestade, o que será melhor explicado no notebook. Nesta estapa fazemos análises temporais desse índice com os dados gerados na etapa de limpeza, de forma a entender a relação de longo prazo entre as quantidades.
 
 ### Redes Neurais para Predição de Trajetória
-> 
+> [NN-TrackPrediction.ipynb](https://github.com/reneroliveira/Hurricane_Project/blob/master/Notebooks/NN-TrackPrediction.ipynb)
+Usando os dados gerados na etapa de limpeza, criamos nesta etapa alguns modelos de redes neurais que visavem prever a trajetória futura de um furacão ou tempestade, baseando-se em movimentos e situação climática do passado. O objetivo dos modelos é usar registros de 18h anteriores para prever as coordenadas do centro da tempestade 6 horas depois.
