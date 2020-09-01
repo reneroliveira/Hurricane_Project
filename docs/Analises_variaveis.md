@@ -173,7 +173,7 @@ for i in [25, 50, 75, 100, 125]:
 </details>
 
 
-O R2 Score obtido abaixo mostra o melhor ajuste do modelo quando tentamos prever a Velocidade Máxima Sustentada pelo algoritmo do Random Forest. O ajuste aos dados de treino ficam
+O R2 Score obtido abaixo mostra o melhor ajuste do modelo quando tentamos prever a Velocidade Máxima Sustentada pelo algoritmo do Random Forest. O ajuste aos dados de treino fica bem superior aos de teste. Isso se deve em parte porque os dados se dão em grupos de registros, associados aos eventos de furacões. Assim, um algoritmo acaba por detectar a correlação dos dados dentro de um mesmo evento e busca ajustá-los de modo específico no conjunto de treinamento. No conjunto de teste, quando algum dado se encontra "distante" dos registros que foram utilizados, ele acaba não tendo o mesmo ajuste.
 
 
 ```python
