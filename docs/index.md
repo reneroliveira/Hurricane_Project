@@ -4,7 +4,7 @@
 
 Este projeto foi desenvolvido como trabalho final da disciplina de Fundamentos de Data Science da grade de Mestrado em Modelagem Matemática da EMAp-FGV, Escola de Matemática Aplicada da Fundação Getúlio Vargas. 
 
-**Integrantes:**:
+**Integrantes:**
 
  - Alysson Espíndola de Sá Silveira [(GitHub)](https://github.com/Alyssoness)
  - Rener de Souza Oliveira [(GitHub)](https://github.com/reneroliveira)
