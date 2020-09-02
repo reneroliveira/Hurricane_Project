@@ -9,3 +9,4 @@
 - [An apparent hiatus in global warming?](https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2013EF000165)
 - [Referência do ARCGIS Pro sobre como IDW funciona](https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/how-idw-works.htm)
 - [Comments on "Increasing destructiveness of tropical cyclones over the past 30 years" by Kerry Emanuel, Nature, 31 July 2005, Vol. 436, pp. 686-688](https://arxiv.org/abs/physics/0601050)
+- [Applying Neural Network Models to Prediction and Data Analysis in Meteorology and Oceanography](https://journals.ametsoc.org/bams/article/79/9/1855/56447/Applying-Neural-Network-Models-to-Prediction-and)
