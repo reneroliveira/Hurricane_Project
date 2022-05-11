@@ -24,6 +24,6 @@ jinja2
 xarray==0.16.0
 tropycal
 statsmodels
-tensorflow==2.5.1
+tensorflow==2.5.3
 sklearn
 
